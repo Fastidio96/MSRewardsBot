@@ -11,16 +11,18 @@ namespace MSRewardsBot.Server.Core
     {
         private readonly ILogger<Server> _logger;
         private readonly IConnectionManager _connectionManager;
+        private readonly CommandHubProxy _commandHub;
 
         private Thread _mainThread;
         private bool _isDisposing = false;
 
         private TaskScheduler _taskScheduler;
 
-        public Server(ILogger<Server> logger, IConnectionManager connectionManager)
+        public Server(ILogger<Server> logger, IConnectionManager connectionManager, CommandHubProxy commandHubProxy)
         {
             _logger = logger;
             _connectionManager = connectionManager;
+            _commandHub = commandHubProxy;
         }
 
         public void Start()
@@ -45,9 +47,12 @@ namespace MSRewardsBot.Server.Core
                     {
                         DateTime now = DateTime.Now;
 
-                        if (DateTimeUtilities.HasElapsed(now, client.LastDashboardUpdate, new TimeSpan(0, 30, 0)))
+                        if (DateTimeUtilities.HasElapsed(now, client.LastDashboardUpdate, new TimeSpan(0, 0, 10)))
                         {
                             //Send command dashboard update to the client
+                            _commandHub.SetConnectionId(client.ConnectionId);
+                            _commandHub.SendTestMessage("test");
+                            client.LastDashboardUpdate = now;
                         }
 
 

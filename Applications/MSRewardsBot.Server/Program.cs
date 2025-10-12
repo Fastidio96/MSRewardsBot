@@ -20,6 +20,7 @@ namespace MSRewardsBot.Server
             builder.Services.AddAuthorization();
             builder.Services.AddSingleton<IConnectionManager, ConnectionManager>();
             builder.Services.AddSingleton<Core.Server>();
+            builder.Services.AddSingleton<CommandHubProxy>();
             builder.Services.AddSignalR();
 
             builder.Services.AddResponseCompression(opts =>

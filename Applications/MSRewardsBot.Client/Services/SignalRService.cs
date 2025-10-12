@@ -23,15 +23,8 @@ namespace MSRewardsBot.Client.Services
         public async Task SendTestMessage(string m)
         {
             Debug.WriteLine($"Command received: {m}");
-            await App.Current.Dispatcher.InvokeAsync(delegate ()
-            {
-            });
+            await _connection.InvokeAsync(nameof(IBotAPI.SendTestMessage), "THIS IS A TEST MESSAGE");
         }
-
-        //public async Task SendTestMessage(string m)
-        //{
-        //    await _connection.InvokeAsync(nameof(IClientMethods.SendTestMessage), "THIS IS A TEST MESSAGE");
-        //}
 
 
     }

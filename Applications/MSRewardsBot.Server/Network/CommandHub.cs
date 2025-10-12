@@ -15,11 +15,13 @@ namespace MSRewardsBot.Server.Network
         private string _connectionId => Context.ConnectionId;
         private readonly ILogger<CommandHub> _logger;
         private readonly IConnectionManager _connectionManager;
+        private readonly CommandHubProxy _hubProxy;
 
-        public CommandHub(ILogger<CommandHub> logger, IConnectionManager connectionManager)
+        public CommandHub(ILogger<CommandHub> logger, IConnectionManager connectionManager, CommandHubProxy proxy)
         {
             _logger = logger;
             _connectionManager = connectionManager;
+            _hubProxy = proxy;
         }
 
         public override Task OnConnectedAsync()
@@ -41,20 +43,11 @@ namespace MSRewardsBot.Server.Network
             return base.OnDisconnectedAsync(exception);
         }
 
-        #region Commands
-
-        //public void ReceiveTest(string message)
-        //{
-        //    _logger.LogInformation($"S{message}");
-        //}
-
         public Task SendTestMessage(string m)
         {
-            Task.Delay(2500);
-            _logger.LogInformation($"Sent command {nameof(SendTestMessage)} to {_connectionId}");
-            return Clients.Client(_connectionId).SendAsync(nameof(IBotAPI.SendTestMessage), m);
+            _logger.Log(LogLevel.Information, m);
+            _hubProxy.SetConnectionId(_connectionId);
+            return _hubProxy.SendTestMessage(m);
         }
-
-        #endregion
     }
 }

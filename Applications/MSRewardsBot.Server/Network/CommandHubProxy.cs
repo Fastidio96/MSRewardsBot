@@ -9,6 +9,7 @@ namespace MSRewardsBot.Server.Network
     {
         private readonly IHubContext<CommandHub> _commandHub;
         private readonly ILogger<CommandHubProxy> _logger;
+        private string _connectionId;
 
         public CommandHubProxy(ILogger<CommandHubProxy> logger, IHubContext<CommandHub> commandHub)
         {
@@ -16,9 +17,14 @@ namespace MSRewardsBot.Server.Network
             _logger = logger;
         }
 
+        public void SetConnectionId(string connectionId)
+        {
+            _connectionId = connectionId;
+        }
+
+
         public Task SendTestMessage(string m)
         {
-            Task.Delay(2500);
             _logger.LogInformation($"Sent command {nameof(SendTestMessage)} to {_connectionId}");
             return _commandHub.Clients.Client(_connectionId).SendAsync(nameof(IBotAPI.SendTestMessage), m);
         }
