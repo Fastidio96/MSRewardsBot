@@ -1,0 +1,61 @@
+﻿using System;
+using System.Linq;
+using Microsoft.AspNetCore.Builder;
+using Microsoft.AspNetCore.ResponseCompression;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
+using MSRewardsBot.Server.Network;
+
+namespace MSRewardsBot.Server
+{
+    public class Program
+    {
+        public static void Main(string[] args)
+        {
+            WebApplicationBuilder builder = WebApplication.CreateBuilder(args);
+            builder.Logging.ClearProviders();
+            builder.Logging.AddConsole();
+
+            // Add services to the container.
+            builder.Services.AddAuthorization();
+            builder.Services.AddSingleton<IConnectionManager, ConnectionManager>();
+            builder.Services.AddSingleton<Core.Server>();
+            builder.Services.AddSignalR();
+
+            builder.Services.AddResponseCompression(opts =>
+            {
+                opts.MimeTypes = ResponseCompressionDefaults.MimeTypes.Concat(
+                    ["application/octet-stream"]);
+            });
+
+            WebApplication app = builder.Build();
+            app.UseResponseCompression();
+            app.Use(async (context, next) =>
+            {
+                try
+                {
+                    //app.Logger.LogInformation("User " + context.Connection.Id + " requested " + GetLoggerHttpRequestInfo(context));
+                    await next.Invoke();
+                }
+                catch (Exception ex)
+                {
+                    app.Logger.LogError(ex.Message);
+                }
+            });
+
+            Core.Server server = app.Services.GetRequiredService<Core.Server>();
+            app.MapHub<CommandHub>("/cmdhub");
+
+            // Configure the HTTP request pipeline.
+
+            //app.UseHttpsRedirection();
+
+            app.UseAuthorization();
+
+            server.Start();
+            app.Logger.LogInformation(">> MS Rewards bot server started <<");
+
+            app.Run();
+        }
+    }
+}
