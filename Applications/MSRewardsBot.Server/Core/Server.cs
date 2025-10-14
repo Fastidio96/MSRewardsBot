@@ -47,7 +47,7 @@ namespace MSRewardsBot.Server.Core
                     {
                         DateTime now = DateTime.Now;
 
-                        if (DateTimeUtilities.HasElapsed(now, client.LastDashboardUpdate, new TimeSpan(0, 0, 10)))
+                        if (DateTimeUtilities.HasElapsed(now, client.LastDashboardUpdate, new TimeSpan(0, 5, 0)))
                         {
                             //Send command dashboard update to the client
                             _commandHub.SetConnectionId(client.ConnectionId);
