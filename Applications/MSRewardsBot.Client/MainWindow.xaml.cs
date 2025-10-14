@@ -8,22 +8,15 @@ namespace MSRewardsBot.Client
     /// </summary>
     public partial class MainWindow : Window
     {
-        private readonly SignalRService _connection;
+        private readonly ViewModel _vm;
 
-        public MainWindow()
+        public MainWindow(ViewModel vm)
         {
             InitializeComponent();
 
-            App.Current.MainWindow = this;
-
-            _connection = new SignalRService();
-            this.Loaded += MainWindow_Loaded;
+            _vm = vm;
         }
 
-        private async void MainWindow_Loaded(object sender, RoutedEventArgs e)
-        {
-            await _connection.ConnectAsync();
-        }
 
 
 

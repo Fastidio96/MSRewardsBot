@@ -5,7 +5,7 @@ using MSRewardsBot.Common.DataEntities.Interfaces;
 
 namespace MSRewardsBot.Client.Services
 {
-    public class SignalRService : IBotAPI
+    public class ConnectionService : IBotAPI
     {
         private HubConnection _connection { get; set; }
 
@@ -23,7 +23,7 @@ namespace MSRewardsBot.Client.Services
         public async Task SendTestMessage(string m)
         {
             Debug.WriteLine($"Command received: {m}");
-            await _connection.InvokeAsync(nameof(IBotAPI.SendTestMessage), "THIS IS A TEST MESSAGE");
+            //await _connection.InvokeAsync(nameof(IBotAPI.SendTestMessage), "THIS IS A TEST MESSAGE");
         }
 
 
