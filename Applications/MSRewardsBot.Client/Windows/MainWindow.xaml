@@ -5,7 +5,9 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:MSRewardsBot.Client"
         mc:Ignorable="d"
-        Title="MS Rewards Bot Client" Height="450" Width="800">
+        Title="MS Rewards Bot" 
+        Height="450" Width="800"
+        WindowStartupLocation="CenterScreen" ResizeMode="CanMinimize">
     <Grid>
         <Grid.RowDefinitions>
             <RowDefinition Height="60px"/>
@@ -18,11 +20,6 @@
             <ColumnDefinition Width="*"/>
         </Grid.ColumnDefinitions>
 
-        <StackPanel Orientation="Horizontal" Grid.Row="0" Grid.Column="1">
-            <TextBlock Text="Status: "/>
-            <TextBlock Text="Unknown" x:Name="lblStatus"/>
-        </StackPanel>
-
-        <TextBox x:Name="txtTest" Grid.Row="0" Grid.Column="0"/>
+        
     </Grid>
 </Window>
