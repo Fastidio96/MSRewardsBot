@@ -10,6 +10,7 @@ namespace MSRewardsBot.Client
     {
         private SplashScreenWindow _splashScreenWindow;
         private MainWindow _mainWindow;
+        private UserLoginWindow _userLoginWindow;
         private ViewModel _viewModel;
 
         public App()
@@ -29,8 +30,16 @@ namespace MSRewardsBot.Client
             _viewModel.Init();
 
             _mainWindow = new MainWindow(_viewModel, _splashScreenWindow);
-
             App.Current.MainWindow = _mainWindow;
+
+            _userLoginWindow = new UserLoginWindow(_viewModel, _splashScreenWindow);
+            _userLoginWindow.Closed += UserLoginWindow_Closed;
+            _userLoginWindow.Show();
+        }
+
+        private void UserLoginWindow_Closed(object? sender, System.EventArgs e)
+        {
+            _userLoginWindow.Closed -= UserLoginWindow_Closed;
             _mainWindow.Show();
         }
 

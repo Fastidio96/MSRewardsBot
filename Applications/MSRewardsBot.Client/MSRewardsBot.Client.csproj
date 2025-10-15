@@ -6,6 +6,11 @@
 		<ImplicitUsings>disable</ImplicitUsings>
 		<Nullable>annotations</Nullable>
 		<UseWPF>true</UseWPF>
+		<NoWin32Manifest>true</NoWin32Manifest>
+	</PropertyGroup>
+
+	<PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">
+	  <DebugType>none</DebugType>
 	</PropertyGroup>
 
 	<ItemGroup>

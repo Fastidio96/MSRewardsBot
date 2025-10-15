@@ -1,0 +1,67 @@
+﻿using System.Windows;
+
+namespace MSRewardsBot.Client.Windows
+{
+    /// <summary>
+    /// Interaction logic for UserLoginWindow.xaml
+    /// </summary>
+    public partial class UserLoginWindow : Window
+    {
+        private readonly ViewModel _viewModel;
+        private readonly SplashScreenWindow _splashScreenWindow;
+
+        public UserLoginWindow(ViewModel viewModel, SplashScreenWindow splashScreenWindow)
+        {
+            InitializeComponent();
+
+            _viewModel = viewModel;
+            _splashScreenWindow = splashScreenWindow;
+
+            this.Loaded += UserLoginWindow_Loaded;
+        }
+
+        private void UserLoginWindow_Loaded(object sender, RoutedEventArgs e)
+        {
+            _splashScreenWindow.Hide();
+        }
+
+        private void BtnSubmit_Click(object sender, RoutedEventArgs e)
+        {
+            if (btnToggle.IsChecked == true)
+            {
+                //Register
+            }
+            else
+            {
+                //Login
+            }
+
+            _splashScreenWindow.Show();
+            this.Close();
+        }
+
+        private void ToggleButton_Click(object sender, RoutedEventArgs e)
+        {
+            if (btnToggle.IsChecked == true)
+            {
+                SwitchToRegister();
+            }
+            else
+            {
+                SwitchToLogin();
+            }
+        }
+
+        private void SwitchToRegister()
+        {
+            lblTitle.Text = "Register new account";
+            btnToggle.Content = "Log in";
+        }
+
+        private void SwitchToLogin()
+        {
+            lblTitle.Text = "Log in";
+            btnToggle.Content = "Register new account";
+        }
+    }
+}

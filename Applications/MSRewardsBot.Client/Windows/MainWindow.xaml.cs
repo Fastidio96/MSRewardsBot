@@ -26,7 +26,7 @@ namespace MSRewardsBot.Client
         private void MainWindow_Loaded(object sender, RoutedEventArgs e)
         {
             this.Loaded -= MainWindow_Loaded;
-            _splashScreenWindow.Close();
+            _splashScreenWindow.Hide();
 
             _appInfo = new AppInfo();
             _vm.SetInstanceAppInfo(_appInfo);

@@ -4,6 +4,11 @@
 		<TargetFramework>net9.0</TargetFramework>
 		<ImplicitUsings>disable</ImplicitUsings>
 		<Nullable>annotations</Nullable>
+		<NoWin32Manifest>true</NoWin32Manifest>
+	</PropertyGroup>
+
+	<PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">
+	  <DebugType>none</DebugType>
 	</PropertyGroup>
 
 </Project>
