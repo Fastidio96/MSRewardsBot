@@ -1,4 +1,5 @@
-﻿using MSRewardsBot.Client.DataEntities;
+﻿using System.Threading.Tasks;
+using MSRewardsBot.Client.DataEntities;
 using MSRewardsBot.Client.Services;
 
 namespace MSRewardsBot.Client
@@ -13,11 +14,11 @@ namespace MSRewardsBot.Client
             _connection = new ConnectionService();
         }
 
-        public async void Init()
+        public Task Init()
         {
             Microsoft.Playwright.Program.Main(["install"]);
 
-            await _connection.ConnectAsync();
+            return _connection.ConnectAsync();
         }
 
         public void SetInstanceAppInfo(AppInfo appInfo)
