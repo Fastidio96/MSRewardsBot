@@ -361,3 +361,6 @@ MigrationBackup/
 
 # Fody - auto-generated XML schema
 FodyWeavers.xsd
+/Applications/MSRewardsBot.Server/data.db
+/Applications/MSRewardsBot.Server/data.db-shm
+/Applications/MSRewardsBot.Server/data.db-wal

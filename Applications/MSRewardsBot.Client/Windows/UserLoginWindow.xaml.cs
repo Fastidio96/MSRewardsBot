@@ -1,4 +1,7 @@
-﻿using System.Windows;
+﻿using System;
+using System.Threading.Tasks;
+using System.Windows;
+using MSRewardsBot.Common.DataEntities.Accounting;
 
 namespace MSRewardsBot.Client.Windows
 {
@@ -25,15 +28,27 @@ namespace MSRewardsBot.Client.Windows
             _splashScreenWindow.Hide();
         }
 
-        private void BtnSubmit_Click(object sender, RoutedEventArgs e)
+        private async void BtnSubmit_Click(object sender, RoutedEventArgs e)
         {
+            User user = new User()
+            {
+                Username = txtUsername.Text,
+                Password = txtPassword.Text
+            };
+
+            Guid token;
             if (btnToggle.IsChecked == true)
             {
-                //Register
+                token = await _viewModel.Register(user);
             }
             else
             {
-                //Login
+                token = await _viewModel.Login(user);
+            }
+
+            if (token == Guid.Empty)
+            {
+                return;
             }
 
             _splashScreenWindow.Show();
@@ -62,6 +77,30 @@ namespace MSRewardsBot.Client.Windows
         {
             lblTitle.Text = "Log in";
             btnToggle.Content = "Register new account";
+        }
+
+        private void TxtUsername_TextChanged(object sender, System.Windows.Controls.TextChangedEventArgs e)
+        {
+            string test = txtUsername.Text;
+            if (test.Length == 0 || test.Length > 32)
+            {
+                btnSubmit.IsEnabled = false;
+                return;
+            }
+
+            btnSubmit.IsEnabled = true;
+        }
+
+        private void TxtPassword_TextChanged(object sender, System.Windows.Controls.TextChangedEventArgs e)
+        {
+            string test = txtPassword.Text;
+            if (test.Length == 0 || test.Length > 32)
+            {
+                btnSubmit.IsEnabled = false;
+                return;
+            }
+
+            btnSubmit.IsEnabled = true;
         }
     }
 }

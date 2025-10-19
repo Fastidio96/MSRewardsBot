@@ -28,9 +28,9 @@
                 FontSize="18" FontWeight="DemiBold" 
                 Margin="0 0 0 10" HorizontalAlignment="Center"/>
             <Label>Username</Label>
-            <TextBox TabIndex="0" Name="txtUsername" MaxLength="32"/>
+            <TextBox TabIndex="0" Name="txtUsername" MaxLength="32" TextChanged="TxtUsername_TextChanged"/>
             <Label>Password</Label>
-            <TextBox TabIndex="1" Name="txtPassword" MaxLength="32"/>
+            <TextBox TabIndex="1" Name="txtPassword" MaxLength="32" TextChanged="TxtPassword_TextChanged"/>
             <Button Content="Submit" Margin="0 20" Name="btnSubmit" Click="BtnSubmit_Click"/>
         </StackPanel>
         <StackPanel Grid.Row="2" Grid.Column="1" Margin="20 0" HorizontalAlignment="Right">

@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.ResponseCompression;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
+using MSRewardsBot.Server.Core;
 using MSRewardsBot.Server.Network;
 
 namespace MSRewardsBot.Server
@@ -21,6 +22,7 @@ namespace MSRewardsBot.Server
             builder.Services.AddSingleton<IConnectionManager, ConnectionManager>();
             builder.Services.AddSingleton<Core.Server>();
             builder.Services.AddSingleton<CommandHubProxy>();
+            builder.Services.AddSingleton<BusinessLayer>();
             builder.Services.AddSignalR();
 
             builder.Services.AddResponseCompression(opts =>
@@ -35,12 +37,11 @@ namespace MSRewardsBot.Server
             {
                 try
                 {
-                    //app.Logger.LogInformation("User " + context.Connection.Id + " requested " + GetLoggerHttpRequestInfo(context));
                     await next.Invoke();
                 }
                 catch (Exception ex)
                 {
-                    app.Logger.LogError(ex.Message);
+                    app.Logger.LogError("Error: {ErrMessage}", ex.Message);
                 }
             });
 

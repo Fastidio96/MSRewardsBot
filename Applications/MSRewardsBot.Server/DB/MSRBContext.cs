@@ -7,26 +7,26 @@ namespace MSRewardsBot.Server.DB
 {
     public class MSRBContext : DbContext
     {
-        public DbSet<Account> Accounts { get; set; }
+        public DbSet<MSAccount> Accounts { get; set; }
         public DbSet<AccountCookie> AccountCookies { get; set; }
-        public DbSet<AccountCookie> Users { get; set; }
-        public DbSet<AccountCookie> UserAuthTokens { get; set; }
+        public DbSet<User> Users { get; set; }
+        public DbSet<UserAuthToken> UserAuthTokens { get; set; }
 
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
         {
-            optionsBuilder.UseSqlite("FileName=data.db", (option) =>
-            {
-                option.MigrationsAssembly(GetFolderDB());
-            });
+            string dbPath = Path.Combine(GetFolderDB(), "data.db");
+            optionsBuilder.UseSqlite($"Data Source={dbPath}");
 
             base.OnConfiguring(optionsBuilder);
         }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
-            modelBuilder.Entity<Account>();
-            modelBuilder.Entity<AccountCookie>();
-            modelBuilder.Entity<AccountCookie>();
+            modelBuilder.Entity<User>()
+                .Property<int?>("AuthTokenId")
+                .IsRequired(false);
+            modelBuilder.Entity<UserAuthToken>();
+            modelBuilder.Entity<MSAccount>();
             modelBuilder.Entity<AccountCookie>();
 
             base.OnModelCreating(modelBuilder);
@@ -35,7 +35,7 @@ namespace MSRewardsBot.Server.DB
 
         private static string GetFolderDB()
         {
-            string path = new Uri(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData) + @"\msrb").LocalPath;
+            string path = new Uri(AppDomain.CurrentDomain.BaseDirectory + "MSRB").LocalPath;
             if (!Directory.Exists(path))
             {
                 Directory.CreateDirectory(path);

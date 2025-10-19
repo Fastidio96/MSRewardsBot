@@ -6,6 +6,12 @@ namespace MSRewardsBot.Common.DataEntities.Accounting
     [Table("account_cookie")]
     public class AccountCookie : BaseEntity
     {
+        [Column("ms_account_id")]
+        private int MSAccountId { get; set; }
+
+        [ForeignKey(nameof(MSAccountId))]
+        public MSAccount MSAccount { get; set; }
+
         [Column("name")]
         public string Name { get; set; }
 

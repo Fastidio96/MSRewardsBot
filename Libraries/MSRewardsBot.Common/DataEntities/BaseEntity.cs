@@ -5,8 +5,8 @@ namespace MSRewardsBot.Common.DataEntities
 {
     public abstract class BaseEntity
     {
-        [Column("id")]
         [Key]
-        public long DbId { get; set; }
+        [Column("id")]
+        public int DbId { get; set; }
     }
 }

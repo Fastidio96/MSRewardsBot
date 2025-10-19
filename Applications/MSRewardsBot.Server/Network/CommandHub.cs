@@ -2,6 +2,7 @@
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.SignalR;
 using Microsoft.Extensions.Logging;
+using MSRewardsBot.Common.DataEntities.Accounting;
 using MSRewardsBot.Common.DataEntities.Interfaces;
 using MSRewardsBot.Server.DataEntities;
 
@@ -48,6 +49,16 @@ namespace MSRewardsBot.Server.Network
             _logger.Log(LogLevel.Information, m);
             _hubProxy.SetConnectionId(_connectionId);
             return _hubProxy.SendTestMessage(m);
+        }
+
+        public Task<Guid> Login(User user)
+        {
+            return ((IBotAPI)_hubProxy).Login(user);
+        }
+
+        public Task<Guid> Register(User user)
+        {
+            return ((IBotAPI)_hubProxy).Register(user);
         }
     }
 }
