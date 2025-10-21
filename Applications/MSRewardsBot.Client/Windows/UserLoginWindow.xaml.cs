@@ -36,18 +36,19 @@ namespace MSRewardsBot.Client.Windows
                 Password = txtPassword.Text
             };
 
-            Guid token;
+            bool isOk;
             if (btnToggle.IsChecked == true)
             {
-                token = await _viewModel.Register(user);
+                isOk = await _viewModel.Register(user);
             }
             else
             {
-                token = await _viewModel.Login(user);
+                isOk = await _viewModel.Login(user);
             }
 
-            if (token == Guid.Empty)
+            if (!isOk)
             {
+                MessageBox.Show("Invalid username/password", "Error", MessageBoxButton.OK, MessageBoxImage.Warning);
                 return;
             }
 

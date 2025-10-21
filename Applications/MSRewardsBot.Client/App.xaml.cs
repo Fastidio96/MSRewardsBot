@@ -25,12 +25,12 @@ namespace MSRewardsBot.Client
             _splashScreenWindow.Show();
         }
 
-        private async void App_Startup(object sender, StartupEventArgs e)
+        private void App_Startup(object sender, StartupEventArgs e)
         {
             this.Startup -= App_Startup;
 
             _viewModel = new ViewModel();
-            await _viewModel.Init();
+            _viewModel.Init();
 
             _mainWindow = new MainWindow(_viewModel, _splashScreenWindow);
             App.Current.MainWindow = _mainWindow;

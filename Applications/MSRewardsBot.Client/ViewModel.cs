@@ -8,21 +8,24 @@ namespace MSRewardsBot.Client
 {
     public class ViewModel
     {
-        private Guid _token;
-
         private ConnectionService _connection;
+        private FileManager _fileManager;
+
+        private AppData _appData;
         private AppInfo _appInfo;
 
         public ViewModel()
         {
             _connection = new ConnectionService();
+            _fileManager = new FileManager();
         }
 
-        public Task Init()
+        public async void Init()
         {
             Microsoft.Playwright.Program.Main(["install"]);
 
-            return _connection.ConnectAsync();
+            await _connection.ConnectAsync();
+            _fileManager.LoadData(out _appData);
         }
 
         public void SetInstanceAppInfo(AppInfo appInfo)
@@ -32,18 +35,35 @@ namespace MSRewardsBot.Client
 
         public void SetAuthToken(Guid token)
         {
-            _token = token;
+            _appData.AuthToken = token;
+            _fileManager.SaveData(_appData);
         }
 
 
-        public Task<Guid> Login(User user)
+        public async Task<bool> Login(User user)
         {
-            return _connection.Login(user);
+            Guid token = await _connection.Login(user);
+            SetAuthToken(token);
+
+            if (token == Guid.Empty)
+            {
+                return false;
+            }
+
+            return true;
         }
 
-        public Task<Guid> Register(User user)
+        public async Task<bool> Register(User user)
         {
-            return _connection.Register(user);
+            Guid token = await _connection.Register(user);
+            SetAuthToken(token);
+
+            if (token == Guid.Empty)
+            {
+                return false;
+            }
+
+            return true;
         }
     }
 }
