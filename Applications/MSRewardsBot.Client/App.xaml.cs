@@ -25,19 +25,26 @@ namespace MSRewardsBot.Client
             _splashScreenWindow.Show();
         }
 
-        private void App_Startup(object sender, StartupEventArgs e)
+        private async void App_Startup(object sender, StartupEventArgs e)
         {
             this.Startup -= App_Startup;
 
             _viewModel = new ViewModel();
-            _viewModel.Init();
+            await _viewModel.Init();
 
             _mainWindow = new MainWindow(_viewModel, _splashScreenWindow);
             App.Current.MainWindow = _mainWindow;
 
-            _userLoginWindow = new UserLoginWindow(_viewModel, _splashScreenWindow);
-            _userLoginWindow.Closed += UserLoginWindow_Closed;
-            _userLoginWindow.Show();
+            if (!_viewModel.IsLogged)
+            {
+                _userLoginWindow = new UserLoginWindow(_viewModel, _splashScreenWindow);
+                _userLoginWindow.Closed += UserLoginWindow_Closed;
+                _userLoginWindow.Show();
+
+                return;
+            }
+
+            _mainWindow.Show();
         }
 
         private void UserLoginWindow_Closed(object? sender, System.EventArgs e)

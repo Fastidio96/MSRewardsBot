@@ -8,6 +8,11 @@ namespace MSRewardsBot.Client
 {
     public class ViewModel
     {
+        public bool IsLogged => 
+            _appData != null &&
+            _appData.AuthToken.HasValue && 
+            _appData.AuthToken.Value != Guid.Empty;
+
         private ConnectionService _connection;
         private FileManager _fileManager;
 
@@ -20,7 +25,7 @@ namespace MSRewardsBot.Client
             _fileManager = new FileManager();
         }
 
-        public async void Init()
+        public async Task Init()
         {
             Microsoft.Playwright.Program.Main(["install"]);
 
