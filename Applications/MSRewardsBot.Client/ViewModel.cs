@@ -8,9 +8,9 @@ namespace MSRewardsBot.Client
 {
     public class ViewModel
     {
-        public bool IsLogged => 
+        public bool IsLogged =>
             _appData != null &&
-            _appData.AuthToken.HasValue && 
+            _appData.AuthToken.HasValue &&
             _appData.AuthToken.Value != Guid.Empty;
 
         private ConnectionService _connection;
@@ -19,9 +19,11 @@ namespace MSRewardsBot.Client
         private AppData _appData;
         private AppInfo _appInfo;
 
-        public ViewModel()
+        public ViewModel(AppInfo appInfo)
         {
-            _connection = new ConnectionService();
+            _appInfo = appInfo;
+
+            _connection = new ConnectionService(_appInfo);
             _fileManager = new FileManager();
         }
 
@@ -31,11 +33,8 @@ namespace MSRewardsBot.Client
 
             await _connection.ConnectAsync();
             _fileManager.LoadData(out _appData);
-        }
 
-        public void SetInstanceAppInfo(AppInfo appInfo)
-        {
-            _appInfo = appInfo;
+            _appInfo.IsUserLogged = IsLogged;
         }
 
         public void SetAuthToken(Guid token)
@@ -55,6 +54,7 @@ namespace MSRewardsBot.Client
                 return false;
             }
 
+            _appInfo.IsUserLogged = true;
             return true;
         }
 
@@ -68,6 +68,7 @@ namespace MSRewardsBot.Client
                 return false;
             }
 
+            _appInfo.IsUserLogged = true;
             return true;
         }
     }

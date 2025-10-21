@@ -11,14 +11,15 @@ namespace MSRewardsBot.Client
     {
         private readonly SplashScreenWindow _splashScreenWindow;
         private readonly ViewModel _vm;
-        private AppInfo _appInfo;
 
-        public MainWindow(ViewModel vm, SplashScreenWindow splash)
+        public MainWindow(ViewModel vm, SplashScreenWindow splash, AppInfo info)
         {
             InitializeComponent();
 
             _vm = vm;
             _splashScreenWindow = splash;
+
+            this.DataContext = info;
 
             this.Loaded += MainWindow_Loaded;
         }
@@ -27,9 +28,6 @@ namespace MSRewardsBot.Client
         {
             this.Loaded -= MainWindow_Loaded;
             _splashScreenWindow.Hide();
-
-            _appInfo = new AppInfo();
-            _vm.SetInstanceAppInfo(_appInfo);
         }
     }
 }

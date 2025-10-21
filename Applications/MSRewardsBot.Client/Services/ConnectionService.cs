@@ -2,6 +2,7 @@
 using System.Diagnostics;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.SignalR.Client;
+using MSRewardsBot.Client.DataEntities;
 using MSRewardsBot.Common.DataEntities.Accounting;
 using MSRewardsBot.Common.DataEntities.Interfaces;
 
@@ -10,6 +11,12 @@ namespace MSRewardsBot.Client.Services
     public class ConnectionService
     {
         private HubConnection _connection { get; set; }
+        private AppInfo _appInfo;
+
+        public ConnectionService(AppInfo info)
+        {
+            _appInfo = info;
+        }
 
         public async Task ConnectAsync()
         {
@@ -18,8 +25,19 @@ namespace MSRewardsBot.Client.Services
                 .WithAutomaticReconnect()
                 .Build();
 
+            _connection.Closed += Connection_Closed;
+
             await _connection.StartAsync();
+            _appInfo.ConnectedToServer = true;
+
             _connection.On<string>(nameof(IBotAPI.SendTestMessage), SendTestMessage);
+        }
+
+        private Task Connection_Closed(Exception? arg)
+        {
+            _appInfo.ConnectedToServer = false;
+
+            return Task.CompletedTask;
         }
 
         public async Task SendTestMessage(string m)

@@ -3,23 +3,44 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-        xmlns:local="clr-namespace:MSRewardsBot.Client"
+        xmlns:local="clr-namespace:MSRewardsBot.Client" 
         mc:Ignorable="d"
         Title="MS Rewards Bot" 
         Height="450" Width="800"
         WindowStartupLocation="CenterScreen" ResizeMode="CanMinimize">
     <Grid>
         <Grid.RowDefinitions>
-            <RowDefinition Height="60px"/>
             <RowDefinition Height="*"/>
             <RowDefinition Height="*"/>
+            <RowDefinition Height="60"/>
         </Grid.RowDefinitions>
         <Grid.ColumnDefinitions>
             <ColumnDefinition Width="*"/>
             <ColumnDefinition Width="*"/>
-            <ColumnDefinition Width="*"/>
         </Grid.ColumnDefinitions>
 
-        
+        <Grid Grid.Row="2" Grid.Column="0">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="*"/>
+                <RowDefinition Height="*"/>
+            </Grid.RowDefinitions>
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="2*"/>
+            </Grid.ColumnDefinitions>
+
+            <TextBlock 
+                Grid.Row="0" Grid.Column="0" 
+                Text="Connected to server" />
+            <TextBlock 
+                Grid.Row="0" Grid.Column="1" 
+                Text="{Binding ConnectedToServer}" />
+            <TextBlock 
+                Grid.Row="1" Grid.Column="0" 
+                Text="User logged" />
+            <TextBlock 
+                Grid.Row="1" Grid.Column="1" 
+                Text="{Binding IsUserLogged}" />
+        </Grid>
     </Grid>
 </Window>

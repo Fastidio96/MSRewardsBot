@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Threading.Tasks;
 using System.Windows;
+using MSRewardsBot.Client.DataEntities;
 using MSRewardsBot.Client.Windows;
 
 namespace MSRewardsBot.Client
@@ -14,6 +15,8 @@ namespace MSRewardsBot.Client
         private MainWindow _mainWindow;
         private UserLoginWindow _userLoginWindow;
         private ViewModel _viewModel;
+
+        private AppInfo _appInfo;
 
         public App()
         {
@@ -29,10 +32,12 @@ namespace MSRewardsBot.Client
         {
             this.Startup -= App_Startup;
 
-            _viewModel = new ViewModel();
+            _appInfo = new AppInfo();
+
+            _viewModel = new ViewModel(_appInfo);
             await _viewModel.Init();
 
-            _mainWindow = new MainWindow(_viewModel, _splashScreenWindow);
+            _mainWindow = new MainWindow(_viewModel, _splashScreenWindow, _appInfo);
             App.Current.MainWindow = _mainWindow;
 
             if (!_viewModel.IsLogged)
