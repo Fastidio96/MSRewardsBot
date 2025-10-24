@@ -31,6 +31,7 @@ namespace MSRewardsBot.Client.Services
             _appInfo.ConnectedToServer = true;
 
             _connection.On<string>(nameof(IBotAPI.SendTestMessage), SendTestMessage);
+            _connection.On<Guid>(nameof(IBotAPI.GetUserInfo), GetUserInfo);
         }
 
         private Task Connection_Closed(Exception? arg)
@@ -54,6 +55,11 @@ namespace MSRewardsBot.Client.Services
         public Task<Guid> Register(User user)
         {
             return _connection.InvokeAsync<Guid>(nameof(IBotAPI.Register), user);
+        }
+
+        public Task<User> GetUserInfo(Guid token)
+        {
+            return _connection.InvokeAsync<User>(nameof(IBotAPI.GetUserInfo), token);
         }
     }
 }

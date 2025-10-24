@@ -1,5 +1,6 @@
 ﻿using System;
 using System.IO;
+using System.Text;
 using System.Xml.Serialization;
 using MSRewardsBot.Client.DataEntities;
 
@@ -16,10 +17,11 @@ namespace MSRewardsBot.Client.Services
 
             try
             {
-                using (FileStream fs = File.Open(_filePath, FileMode.OpenOrCreate))
+                using (FileStream fs = File.Open(_filePath, FileMode.Create))
+                using (StreamWriter sw = new StreamWriter(fs, Encoding.UTF8))
                 {
                     XmlSerializer xml = new XmlSerializer(typeof(AppData));
-                    xml.Serialize(fs, data);
+                    xml.Serialize(sw, data);
                 }
 
                 return true;
@@ -38,16 +40,16 @@ namespace MSRewardsBot.Client.Services
 
             try
             {
-                using (FileStream fs = File.Open(_filePath, FileMode.OpenOrCreate))
+                using (FileStream fs = File.Open(_filePath, FileMode.Create))
+                using (StreamReader sr = new StreamReader(fs, Encoding.UTF8))
                 {
                     if (fs.Length == 0)
                     {
-                        fs.Close();
-                        return SaveData(data);
+                        return true;
                     }
 
                     XmlSerializer xml = new XmlSerializer(typeof(AppData));
-                    object obj = xml.Deserialize(fs);
+                    object obj = xml.Deserialize(sr);
 
                     if (obj is AppData)
                     {
@@ -60,8 +62,21 @@ namespace MSRewardsBot.Client.Services
             }
             catch
             {
+                ClearData();
                 return false;
             }
+        }
+
+        private void ClearData()
+        {
+            CheckDataFolder();
+
+            if (File.Exists(_filePath))
+            {
+                File.Delete(_filePath);
+            }
+
+            SaveData(new AppData());
         }
 
         private void CheckDataFolder()

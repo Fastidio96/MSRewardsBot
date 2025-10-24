@@ -44,5 +44,10 @@ namespace MSRewardsBot.Server.Network
         {
             return Task.FromResult(_business.Register(user));
         }
+
+        public Task<User> GetUserInfo(Guid token)
+        {
+            return Task.FromResult(_business.GetUserInfo(token));
+        }
     }
 }

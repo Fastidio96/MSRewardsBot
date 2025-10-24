@@ -1,4 +1,6 @@
 ﻿using System;
+using System.ComponentModel;
+using System.Linq;
 using System.Threading.Tasks;
 using MSRewardsBot.Client.DataEntities;
 using MSRewardsBot.Client.Services;
@@ -13,6 +15,8 @@ namespace MSRewardsBot.Client
             _appData.AuthToken.HasValue &&
             _appData.AuthToken.Value != Guid.Empty;
 
+        private Guid _token => _appData.AuthToken.Value;
+
         private ConnectionService _connection;
         private FileManager _fileManager;
 
@@ -22,9 +26,18 @@ namespace MSRewardsBot.Client
         public ViewModel(AppInfo appInfo)
         {
             _appInfo = appInfo;
+            _appInfo.PropertyChanged += AppInfo_PropertyChanged;
 
             _connection = new ConnectionService(_appInfo);
             _fileManager = new FileManager();
+        }
+
+        private async void AppInfo_PropertyChanged(object? sender, PropertyChangedEventArgs e)
+        {
+            if (e.PropertyName == nameof(AppInfo.IsUserLogged) && IsLogged)
+            {
+                await GetUserInfo();
+            }
         }
 
         public async Task Init()
@@ -69,7 +82,36 @@ namespace MSRewardsBot.Client
             }
 
             _appInfo.IsUserLogged = true;
+
             return true;
+        }
+
+        public async Task<User> GetUserInfo()
+        {
+            User user = await _connection.GetUserInfo(_token);
+            if (user == null)
+            {
+                Logout();
+                return null;
+            }
+
+            _appInfo.Username = user.Username;
+
+            _appInfo.Accounts.Clear();
+            foreach (MSAccount acc in user.MSAccounts)
+            {
+                _appInfo.Accounts.Add(acc);
+            }
+
+            return user;
+        }
+
+        private void Logout()
+        {
+            _appData = new AppData();
+            _fileManager.SaveData(_appData);
+
+            //Environment.Exit(0);
         }
     }
 }

@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Linq;
+using Microsoft.EntityFrameworkCore;
 using MSRewardsBot.Common.DataEntities.Accounting;
 
 namespace MSRewardsBot.Server.DB
@@ -19,17 +20,23 @@ namespace MSRewardsBot.Server.DB
 
         public User GetUser(string username)
         {
-            return _db.Users.FirstOrDefault(u => u.Username == username);
+            return _db.Users
+                .Include(u => u.AuthToken)
+                .FirstOrDefault(u => u.Username == username);
         }
 
         public User GetUser(Guid authToken)
         {
-            return _db.Users.FirstOrDefault(u => u.AuthToken.Token == authToken);
+            return _db.Users
+                .Include(u => u.AuthToken)
+                .FirstOrDefault(u => u.AuthToken.Token == authToken);
         }
 
         public Guid GetUserAuthToken(string username)
         {
-            User user = _db.Users.FirstOrDefault(u => u.Username == username);
+            User user = _db.Users
+                .Include(u => u.AuthToken)
+                .FirstOrDefault(u => u.Username == username);
             if (user == null)
             {
                 return Guid.Empty;

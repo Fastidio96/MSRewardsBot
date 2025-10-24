@@ -53,12 +53,17 @@ namespace MSRewardsBot.Server.Network
 
         public Task<Guid> Login(User user)
         {
-            return ((IBotAPI)_hubProxy).Login(user);
+            return _hubProxy.Login(user);
         }
 
         public Task<Guid> Register(User user)
         {
-            return ((IBotAPI)_hubProxy).Register(user);
+            return _hubProxy.Register(user);
+        }
+
+        public Task<User> GetUserInfo(Guid token)
+        {
+            return _hubProxy.GetUserInfo(token);
         }
     }
 }

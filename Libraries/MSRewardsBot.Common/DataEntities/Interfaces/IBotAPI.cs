@@ -10,5 +10,7 @@ namespace MSRewardsBot.Common.DataEntities.Interfaces
 
         public Task<Guid> Login(User user);
         public Task<Guid> Register(User user);
+
+        public Task<User> GetUserInfo(Guid token);
     }
 }

@@ -68,6 +68,36 @@ namespace MSRewardsBot.Server.Core
         }
 
 
+        private bool IsUserLogged(Guid token, out User user)
+        {
+            user = null;
+
+            if (token == Guid.Empty)
+            {
+                return false;
+            }
+
+            user = _data.GetUser(token);
+            if (user == null)
+            {
+                return false;
+            }
+
+            return true;
+        }
+
+        public User GetUserInfo(Guid token)
+        {
+            if (!IsUserLogged(token, out User user))
+            {
+                return null;
+            }
+
+            return user;
+        }
+
+
+
         public void Dispose()
         {
             _data?.Dispose();

@@ -1,11 +1,25 @@
-﻿using System.ComponentModel;
+﻿using System.Collections.ObjectModel;
+using System.Collections.Specialized;
+using System.ComponentModel;
 using System.Runtime.CompilerServices;
+using MSRewardsBot.Common.DataEntities.Accounting;
 
 namespace MSRewardsBot.Client.DataEntities
 {
     public class AppInfo : INotifyPropertyChanged
     {
         public event PropertyChangedEventHandler? PropertyChanged;
+
+        public AppInfo()
+        {
+            Accounts = new ObservableCollection<MSAccount>();
+            Accounts.CollectionChanged += Accounts_CollectionChanged;
+        }
+
+        private void Accounts_CollectionChanged(object? sender, NotifyCollectionChangedEventArgs e)
+        {
+            NotifyPropertyChanged(nameof(Accounts));
+        }
 
         public bool ConnectedToServer
         {
@@ -35,7 +49,21 @@ namespace MSRewardsBot.Client.DataEntities
         }
         private bool _isUserLogged;
 
-        
+        public string Username
+        {
+            get => _username;
+            set
+            {
+                if (_username != value)
+                {
+                    _username = value;
+                    NotifyPropertyChanged();
+                }
+            }
+        }
+        private string _username;
+
+        public ObservableCollection<MSAccount> Accounts { get; set; }
 
 
         private void NotifyPropertyChanged([CallerMemberName]string propName = "")
