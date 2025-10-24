@@ -40,7 +40,7 @@ namespace MSRewardsBot.Client.Services
 
             try
             {
-                using (FileStream fs = File.Open(_filePath, FileMode.Create))
+                using (FileStream fs = File.Open(_filePath, FileMode.OpenOrCreate))
                 using (StreamReader sr = new StreamReader(fs, Encoding.UTF8))
                 {
                     if (fs.Length == 0)

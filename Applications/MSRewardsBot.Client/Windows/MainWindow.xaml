@@ -12,35 +12,37 @@
         <Grid.RowDefinitions>
             <RowDefinition Height="*"/>
             <RowDefinition Height="*"/>
-            <RowDefinition Height="60"/>
+            <RowDefinition Height="20"/>
         </Grid.RowDefinitions>
         <Grid.ColumnDefinitions>
             <ColumnDefinition Width="*"/>
             <ColumnDefinition Width="*"/>
         </Grid.ColumnDefinitions>
 
+        <StackPanel Grid.Row="0" Grid.Column="0">
+            <TextBlock>
+                <Run Text="Connected as" />
+                <Run Text="{Binding Username}" />
+            </TextBlock>
+        </StackPanel>
+
         <Grid Grid.Row="2" Grid.Column="0">
             <Grid.RowDefinitions>
-                <RowDefinition Height="*"/>
                 <RowDefinition Height="*"/>
             </Grid.RowDefinitions>
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="*"/>
-                <ColumnDefinition Width="2*"/>
+                <ColumnDefinition Width="*"/>
             </Grid.ColumnDefinitions>
 
-            <TextBlock 
-                Grid.Row="0" Grid.Column="0" 
-                Text="Connected to server" />
-            <TextBlock 
-                Grid.Row="0" Grid.Column="1" 
-                Text="{Binding ConnectedToServer}" />
-            <TextBlock 
-                Grid.Row="1" Grid.Column="0" 
-                Text="User logged" />
-            <TextBlock 
-                Grid.Row="1" Grid.Column="1" 
-                Text="{Binding IsUserLogged}" />
+            <TextBlock Grid.Row="0" Grid.Column="0" Grid.ColumnSpan="2">
+                <Run Text="Connected to server" />
+                <Run Text="{Binding ConnectedToServer}" />
+            </TextBlock>
+            <TextBlock Grid.Row="0" Grid.Column="1">
+                <Run Text="User logged" />
+                <Run Text="{Binding IsUserLogged}" />
+            </TextBlock>
         </Grid>
     </Grid>
 </Window>
