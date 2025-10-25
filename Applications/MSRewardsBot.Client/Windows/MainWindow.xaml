@@ -16,16 +16,17 @@
         </Grid.RowDefinitions>
         <Grid.ColumnDefinitions>
             <ColumnDefinition Width="*"/>
-            <ColumnDefinition Width="*"/>
         </Grid.ColumnDefinitions>
 
-        <StackPanel Grid.Row="0" Grid.Column="0">
-            <TextBlock>
-                <Run Text="Connected as" />
-                <Run Text="{Binding Username}" />
-            </TextBlock>
+        <StackPanel Grid.Row="0" Grid.Column="0" Orientation="Vertical">
+            <ComboBox Grid.Row="0" Grid.Column="1"
+                  Name="cmbAcc" 
+                  ItemsSource="{Binding Accounts}" />
+            <Button Name="btnAddAcc" Content="+ Add MS account" Click="BtnAddAcc_Click"/>
         </StackPanel>
 
+        
+        
         <Grid Grid.Row="2" Grid.Column="0">
             <Grid.RowDefinitions>
                 <RowDefinition Height="*"/>
@@ -33,15 +34,25 @@
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="*"/>
                 <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="*"/>
             </Grid.ColumnDefinitions>
 
-            <TextBlock Grid.Row="0" Grid.Column="0" Grid.ColumnSpan="2">
+            <TextBlock Grid.Row="0" Grid.Column="0">
                 <Run Text="Connected to server" />
                 <Run Text="{Binding ConnectedToServer}" />
             </TextBlock>
             <TextBlock Grid.Row="0" Grid.Column="1">
                 <Run Text="User logged" />
                 <Run Text="{Binding IsUserLogged}" />
+            </TextBlock>
+            <TextBlock Grid.Row="0" Grid.Column="2">
+                 <Run Text="Connected as" />
+                 <Run Text="{Binding Username}" />
+            </TextBlock>
+            <TextBlock Grid.Row="0" Grid.Column="3">
+                 <Run Text="Version" />
+                 <Run Text="{Binding Version}" />
             </TextBlock>
         </Grid>
     </Grid>

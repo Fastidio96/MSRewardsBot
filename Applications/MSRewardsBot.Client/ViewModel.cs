@@ -4,6 +4,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using MSRewardsBot.Client.DataEntities;
 using MSRewardsBot.Client.Services;
+using MSRewardsBot.Client.Windows;
 using MSRewardsBot.Common.DataEntities.Accounting;
 
 namespace MSRewardsBot.Client
@@ -42,8 +43,6 @@ namespace MSRewardsBot.Client
 
         public async Task Init()
         {
-            Microsoft.Playwright.Program.Main(["install"]);
-
             await _connection.ConnectAsync();
             _fileManager.LoadData(out _appData);
 
@@ -83,7 +82,7 @@ namespace MSRewardsBot.Client
 
             _appInfo.IsUserLogged = true;
 
-            return true;
+            return _appInfo.IsUserLogged;
         }
 
         public async Task<User> GetUserInfo()
@@ -112,6 +111,13 @@ namespace MSRewardsBot.Client
             _fileManager.SaveData(_appData);
 
             //Environment.Exit(0);
+        }
+
+        public void AddMSAccount()
+        {
+            MSLoginWindow login = new MSLoginWindow(this);
+            login.Owner = App.Current.MainWindow;
+            login.Show();
         }
     }
 }

@@ -1,11 +1,16 @@
-﻿using System.Collections.ObjectModel;
+﻿using System;
+using System.Collections.ObjectModel;
 using System.Collections.Specialized;
 using System.ComponentModel;
+using System.Reflection;
 using System.Runtime.CompilerServices;
 using MSRewardsBot.Common.DataEntities.Accounting;
 
 namespace MSRewardsBot.Client.DataEntities
 {
+    /// <summary>
+    /// Stored into RAM
+    /// </summary>
     public class AppInfo : INotifyPropertyChanged
     {
         public event PropertyChangedEventHandler? PropertyChanged;
@@ -14,6 +19,8 @@ namespace MSRewardsBot.Client.DataEntities
         {
             Accounts = new ObservableCollection<MSAccount>();
             Accounts.CollectionChanged += Accounts_CollectionChanged;
+
+            Version = Assembly.GetExecutingAssembly().GetName().Version;
         }
 
         private void Accounts_CollectionChanged(object? sender, NotifyCollectionChangedEventArgs e)
@@ -65,8 +72,9 @@ namespace MSRewardsBot.Client.DataEntities
 
         public ObservableCollection<MSAccount> Accounts { get; set; }
 
+        public Version Version { get; set; }
 
-        private void NotifyPropertyChanged([CallerMemberName]string propName = "")
+        private void NotifyPropertyChanged([CallerMemberName] string propName = "")
         {
             if (PropertyChanged != null)
             {
