@@ -23,13 +23,14 @@ namespace MSRewardsBot.Server.DB
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             modelBuilder.Entity<User>();
-                //.Property<int?>("AuthTokenId")
-                //.IsRequired(false);
             modelBuilder.Entity<UserAuthToken>()
                 .HasOne(t => t.User)
                 .WithOne(u => u.AuthToken)
                 .HasForeignKey<UserAuthToken>(t => t.UserId);
-            modelBuilder.Entity<MSAccount>();
+            modelBuilder.Entity<MSAccount>()
+                .HasOne(m => m.User)
+                .WithMany(u => u.MSAccounts)
+                .HasForeignKey(m => m.UserId);
             modelBuilder.Entity<AccountCookie>();
 
             base.OnModelCreating(modelBuilder);

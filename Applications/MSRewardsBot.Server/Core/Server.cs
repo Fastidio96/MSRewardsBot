@@ -51,7 +51,6 @@ namespace MSRewardsBot.Server.Core
                         {
                             //Send command dashboard update to the client
                             _commandHub.SetConnectionId(client.ConnectionId);
-                            _commandHub.SendTestMessage("test");
                             client.LastDashboardUpdate = now;
                         }
 

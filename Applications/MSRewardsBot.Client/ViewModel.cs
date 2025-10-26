@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.ComponentModel;
-using System.Linq;
 using System.Threading.Tasks;
 using MSRewardsBot.Client.DataEntities;
 using MSRewardsBot.Client.Services;
@@ -17,7 +16,7 @@ namespace MSRewardsBot.Client
             _appData.AuthToken.HasValue &&
             _appData.AuthToken.Value != Guid.Empty;
 
-        private Guid _token => _appData.AuthToken.Value;
+        private Guid _token => !_appData.AuthToken.HasValue ? Guid.Empty : _appData.AuthToken.Value;
 
         private ConnectionService _connection;
         private FileManager _fileManager;

@@ -29,12 +29,6 @@ namespace MSRewardsBot.Server.Network
         }
 
 
-        public Task SendTestMessage(string m)
-        {
-            _logger.LogInformation("Sent command {CommandName} to {ConnectionId}", nameof(SendTestMessage), _connectionId);
-            return _commandHub.Clients.Client(_connectionId).SendAsync(nameof(IBotAPI.SendTestMessage), m);
-        }
-
         public Task<Guid> Login(User user)
         {
             return Task.FromResult(_business.Login(user));

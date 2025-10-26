@@ -129,7 +129,6 @@ namespace MSRewardsBot.Client.Windows
                     catch (Exception ex)
                     {
                         Debug.WriteLine(ex.Message);
-                        //Todo: log exception
                     }
                 }
 

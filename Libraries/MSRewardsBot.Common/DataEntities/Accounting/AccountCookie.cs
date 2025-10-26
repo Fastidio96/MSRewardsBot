@@ -1,11 +1,13 @@
 ﻿using System;
 using System.ComponentModel.DataAnnotations.Schema;
+using System.Text.Json.Serialization;
 
 namespace MSRewardsBot.Common.DataEntities.Accounting
 {
     [Table("account_cookie")]
     public class AccountCookie : BaseEntity
     {
+        [JsonIgnore]
         [Column("ms_account_id")]
         public int MSAccountId { get; set; }
 
@@ -33,6 +35,7 @@ namespace MSRewardsBot.Common.DataEntities.Accounting
         [Column("same_site")]
         public string SameSite { get; set; }
 
+        [JsonIgnore]
         public MSAccount MSAccount { get; set; }
     }
 }

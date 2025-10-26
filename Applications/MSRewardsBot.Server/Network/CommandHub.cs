@@ -44,30 +44,27 @@ namespace MSRewardsBot.Server.Network
             return base.OnDisconnectedAsync(exception);
         }
 
-        public Task SendTestMessage(string m)
-        {
-            _logger.Log(LogLevel.Information, m);
-            _hubProxy.SetConnectionId(_connectionId);
-            return _hubProxy.SendTestMessage(m);
-        }
-
         public Task<Guid> Login(User user)
         {
+            _logger.LogInformation("Sent command {CommandName} to {ConnectionId}", nameof(Login), _connectionId);
             return _hubProxy.Login(user);
         }
 
         public Task<Guid> Register(User user)
         {
+            _logger.LogInformation("Sent command {CommandName} to {ConnectionId}", nameof(Register), _connectionId);
             return _hubProxy.Register(user);
         }
 
         public Task<User> GetUserInfo(Guid token)
         {
+            _logger.LogInformation("Sent command {CommandName} to {ConnectionId}", nameof(GetUserInfo), _connectionId);
             return _hubProxy.GetUserInfo(token);
         }
 
         public Task<bool> InsertMSAccount(Guid token, MSAccount account)
         {
+            _logger.LogInformation("Sent command {CommandName} to {ConnectionId}", nameof(InsertMSAccount), _connectionId);
             return _hubProxy.InsertMSAccount(token, account);
         }
     }

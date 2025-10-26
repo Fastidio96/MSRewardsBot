@@ -30,7 +30,6 @@ namespace MSRewardsBot.Client.Services
             await _connection.StartAsync();
             _appInfo.ConnectedToServer = true;
 
-            _connection.On<string>(nameof(IBotAPI.SendTestMessage), SendTestMessage);
             _connection.On<Guid>(nameof(IBotAPI.GetUserInfo), GetUserInfo);
         }
 
@@ -39,12 +38,6 @@ namespace MSRewardsBot.Client.Services
             _appInfo.ConnectedToServer = false;
 
             return Task.CompletedTask;
-        }
-
-        public async Task SendTestMessage(string m)
-        {
-            Debug.WriteLine($"Command received: {m}");
-            //await _connection.InvokeAsync(nameof(IBotAPI.SendTestMessage), "THIS IS A TEST MESSAGE");
         }
 
         public Task<Guid> Login(User user)
