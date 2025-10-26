@@ -65,5 +65,10 @@ namespace MSRewardsBot.Server.Network
         {
             return _hubProxy.GetUserInfo(token);
         }
+
+        public Task<bool> InsertMSAccount(Guid token, MSAccount account)
+        {
+            return _hubProxy.InsertMSAccount(token, account);
+        }
     }
 }

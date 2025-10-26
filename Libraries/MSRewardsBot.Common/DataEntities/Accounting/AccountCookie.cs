@@ -7,10 +7,7 @@ namespace MSRewardsBot.Common.DataEntities.Accounting
     public class AccountCookie : BaseEntity
     {
         [Column("ms_account_id")]
-        private int MSAccountId { get; set; }
-
-        [ForeignKey(nameof(MSAccountId))]
-        public MSAccount MSAccount { get; set; }
+        public int MSAccountId { get; set; }
 
         [Column("name")]
         public string Name { get; set; }
@@ -35,5 +32,7 @@ namespace MSRewardsBot.Common.DataEntities.Accounting
 
         [Column("same_site")]
         public string SameSite { get; set; }
+
+        public MSAccount MSAccount { get; set; }
     }
 }

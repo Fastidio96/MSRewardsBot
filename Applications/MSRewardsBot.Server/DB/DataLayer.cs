@@ -71,16 +71,16 @@ namespace MSRewardsBot.Server.DB
             return token;
         }
 
-        public void CreateUser(string username, string password)
+        public bool CreateUser(string username, string password)
         {
             _db.Users.Add(new User()
             {
                 Username = username,
                 Password = password,
-                
+
             });
 
-            _db.SaveChanges();
+            return _db.SaveChanges() > 0;
         }
 
         public bool IsUsernameAlreadyExists(string username)
@@ -88,13 +88,20 @@ namespace MSRewardsBot.Server.DB
             return _db.Users.Count(u => u.Username == username) > 0;
         }
 
-        public void UpdateUser(User user)
+        public bool UpdateUser(User user)
         {
             _db.Users.Update(user);
-            _db.SaveChanges();
+            return _db.SaveChanges() > 0;
         }
 
         #endregion
+
+        public bool InsertMSAccount(MSAccount msAccount)
+        {
+            _db.Accounts.Add(msAccount);
+            return _db.SaveChanges() > 0;
+        }
+
 
         public void Dispose()
         {

@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Windows;
 using Microsoft.Web.WebView2.Core;
 using MSRewardsBot.Client.DataEntities;
+using MSRewardsBot.Common.DataEntities.Accounting;
 
 namespace MSRewardsBot.Client.Windows
 {
@@ -12,6 +13,7 @@ namespace MSRewardsBot.Client.Windows
     public partial class MSLoginWindow : Window
     {
         private ViewModel _vm;
+        private Operation _op;
 
         public MSLoginWindow(ViewModel vm)
         {
@@ -25,7 +27,8 @@ namespace MSRewardsBot.Client.Windows
 
         private void WebViewWorker_InitCompleted(object? sender, EventArgs e)
         {
-            webViewWorker.Start(new Operation(null, Costants.URL_LOGIN));
+            _op = new Operation(null, Costants.URL_LOGIN);
+            webViewWorker.Start(_op);
             webViewWorker.WebView.NavigationCompleted += WebView_NavigationCompleted;
         }
 
@@ -33,41 +36,53 @@ namespace MSRewardsBot.Client.Windows
         {
             if (e.IsSuccess && (webViewWorker.WebView.Source.Host == Costants.URL_HOST_LOGGED))
             {
-                this.Closing -= LoginWindow_Closing;
                 GatherCookies();
-            }
-            else
-            {
-                this.Visibility = Visibility.Visible;
             }
         }
 
         private void LoginWindow_Closing(object? sender, System.ComponentModel.CancelEventArgs e)
         {
-            e.Cancel = true; //Need to gather cookies before exiting
-            GatherCookies();
+            this.Closing -= LoginWindow_Closing;
+
+            if (_op != null && _op.IsCompleted)
+            {
+                e.Cancel = true; //Need to gather cookies before exiting
+                GatherCookies();
+            }
         }
 
         private async void GatherCookies()
         {
             List<CoreWebView2Cookie> webviewCoookies = await this.webViewWorker.WebView.CoreWebView2.CookieManager.GetCookiesAsync(Costants.URL_LOGIN);
-
             if (webviewCoookies == null || webviewCoookies.Count == 0)
             {
                 return;
             }
 
+            List<AccountCookie> cookies = new List<AccountCookie>();
             foreach (CoreWebView2Cookie c in webviewCoookies)
             {
-                //_vm.AppData.CurrentUser.Cookies.Add(c.ToSystemNetCookie());
+                cookies.Add(new AccountCookie()
+                {
+                    Domain = c.Domain,
+                    Expires = c.Expires,
+                    HttpOnly = c.IsHttpOnly,
+                    Name = c.Name,
+                    Value = c.Value,
+                    Path = c.Path,
+                    SameSite = c.SameSite.ToString(),
+                    Secure = c.IsSecure
+                });
+            }
+
+            if(!await _vm.InsertMSAccount(cookies))
+            {
+                Utils.ShowError("Unable to save ms account!");
             }
 
             this.Closing -= LoginWindow_Closing;
             this.Close();
             webViewWorker.Dispose();
-
-            //_vm.AppData.CurrentUser.LastDBChange = DateTime.UtcNow; // Trigger save
-            //_vm.AppData.CurrentUser.Status = UserStatus.Logged;
         }
     }
 }

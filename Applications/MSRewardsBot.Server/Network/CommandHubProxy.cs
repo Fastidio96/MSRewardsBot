@@ -49,5 +49,10 @@ namespace MSRewardsBot.Server.Network
         {
             return Task.FromResult(_business.GetUserInfo(token));
         }
+
+        public Task<bool> InsertMSAccount(Guid token, MSAccount account)
+        {
+            return Task.FromResult(_business.InsertMSAccount(token, account));
+        }
     }
 }

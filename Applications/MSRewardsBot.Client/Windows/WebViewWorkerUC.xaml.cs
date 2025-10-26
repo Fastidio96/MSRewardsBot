@@ -91,7 +91,7 @@ namespace MSRewardsBot.Client.Windows
                         {
                             if (!_queue.TryDequeue(out _))
                             {
-                                //todo: log
+                                Debug.WriteLine("Cannot dequeue the current op!");
                             }
                             _currentOp = null;
                         }
@@ -174,7 +174,7 @@ namespace MSRewardsBot.Client.Windows
                     }
                 });
 
-                t.Name = "Webview_NavigationCompleted";
+                t.Name = nameof(Webview_NavigationCompleted);
                 t.Start();
             }
         }
@@ -214,13 +214,34 @@ namespace MSRewardsBot.Client.Windows
 
                 Dispatcher.InvokeAsync(delegate ()
                 {
+                    webview.CoreWebView2?.Stop();
                     webview.Dispose();
                     webview = null;
                 });
+
+                KillProcessWebView();
             });
 
             t.Name = "WebviewWorkerUC Dispose";
             t.Start();
+        }
+
+        private bool KillProcessWebView()
+        {
+            try
+            {
+                Process[] ps = Process.GetProcessesByName("msedgewebview2");
+                foreach (Process p in ps)
+                {
+                    p.Kill();
+                }
+
+                return true;
+            }
+            catch
+            {
+                return false;
+            }
         }
 
     }

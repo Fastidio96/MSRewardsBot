@@ -61,5 +61,10 @@ namespace MSRewardsBot.Client.Services
         {
             return _connection.InvokeAsync<User>(nameof(IBotAPI.GetUserInfo), token);
         }
+
+        public Task<bool> InsertMSAccount(Guid token, MSAccount account)
+        {
+            return _connection.InvokeAsync<bool>(nameof(IBotAPI.InsertMSAccount), token, account);
+        }
     }
 }

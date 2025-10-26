@@ -54,7 +54,10 @@ namespace MSRewardsBot.Server.Core
 
             user.Password = GenerateHashFromPassword(user.Password);
 
-            _data.CreateUser(user.Username, user.Password);
+            if(!_data.CreateUser(user.Username, user.Password))
+            {
+                return Guid.Empty;
+            }
 
             return _data.GetUserAuthToken(user.Username);
         }
@@ -96,7 +99,18 @@ namespace MSRewardsBot.Server.Core
             return user;
         }
 
+        public bool InsertMSAccount(Guid token, MSAccount account)
+        {
+            if (!IsUserLogged(token, out User user))
+            {
+                return false;
+            }
 
+            account.UserId = user.DbId;
+            account.User = user;
+
+            return _data.InsertMSAccount(account);
+        } 
 
         public void Dispose()
         {

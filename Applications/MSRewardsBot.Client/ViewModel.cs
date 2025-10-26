@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.ComponentModel;
 using System.Linq;
 using System.Threading.Tasks;
@@ -23,6 +24,8 @@ namespace MSRewardsBot.Client
 
         private AppData _appData;
         private AppInfo _appInfo;
+
+        private MSLoginWindow _MSLoginWindow;
 
         public ViewModel(AppInfo appInfo)
         {
@@ -115,9 +118,24 @@ namespace MSRewardsBot.Client
 
         public void AddMSAccount()
         {
-            MSLoginWindow login = new MSLoginWindow(this);
-            login.Owner = App.Current.MainWindow;
-            login.Show();
+            if (_MSLoginWindow != null && _MSLoginWindow.IsVisible)
+            {
+                return;
+            }
+
+            _MSLoginWindow = new MSLoginWindow(this);
+            _MSLoginWindow.Owner = App.Current.MainWindow;
+            _MSLoginWindow.Show();
+        }
+
+        public Task<bool> InsertMSAccount(List<AccountCookie> cookies)
+        {
+            MSAccount acc = new MSAccount()
+            {
+                Cookies = cookies
+            };
+
+            return _connection.InsertMSAccount(_token, acc);
         }
     }
 }
