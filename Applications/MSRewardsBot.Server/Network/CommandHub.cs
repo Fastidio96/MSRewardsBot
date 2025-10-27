@@ -38,7 +38,7 @@ namespace MSRewardsBot.Server.Network
 
         public override Task OnDisconnectedAsync(Exception? exception)
         {
-            _logger.LogInformation("Client disconnected: {ConnectionId}", Context.ConnectionId);
+            _logger.Log(LogLevel.Error, "Client disconnected: {ConnectionId}", Context.ConnectionId);
             _connectionManager.RemoveConnection(_connectionId);
 
             return base.OnDisconnectedAsync(exception);
@@ -46,13 +46,13 @@ namespace MSRewardsBot.Server.Network
 
         public Task<Guid> Login(User user)
         {
-            _logger.LogInformation("Sent command {CommandName} to {ConnectionId}", nameof(Login), _connectionId);
+            _logger.LogInformation("Received command {CommandName} from {ConnectionId}", nameof(Login), _connectionId);
             return _hubProxy.Login(user);
         }
 
         public Task<Guid> Register(User user)
         {
-            _logger.LogInformation("Sent command {CommandName} to {ConnectionId}", nameof(Register), _connectionId);
+            _logger.LogInformation("Received command {CommandName} from {ConnectionId}", nameof(Register), _connectionId);
             return _hubProxy.Register(user);
         }
 
@@ -64,7 +64,7 @@ namespace MSRewardsBot.Server.Network
 
         public Task<bool> InsertMSAccount(Guid token, MSAccount account)
         {
-            _logger.LogInformation("Sent command {CommandName} to {ConnectionId}", nameof(InsertMSAccount), _connectionId);
+            _logger.LogInformation("Received command {CommandName} from {ConnectionId}", nameof(InsertMSAccount), _connectionId);
             return _hubProxy.InsertMSAccount(token, account);
         }
     }

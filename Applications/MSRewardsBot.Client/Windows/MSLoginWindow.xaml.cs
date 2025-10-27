@@ -13,40 +13,34 @@ namespace MSRewardsBot.Client.Windows
     public partial class MSLoginWindow : Window
     {
         private ViewModel _vm;
-        private Operation _op;
 
         public MSLoginWindow(ViewModel vm)
         {
             InitializeComponent();
 
             _vm = vm;
-
-            this.Closing += LoginWindow_Closing;
             webViewWorker.InitCompleted += WebViewWorker_InitCompleted;
+            this.Closed += MSLoginWindow_Closed;
+        }
+
+        private void MSLoginWindow_Closed(object? sender, EventArgs e)
+        {
+            webViewWorker?.Dispose();
         }
 
         private void WebViewWorker_InitCompleted(object? sender, EventArgs e)
         {
-            _op = new Operation(null, Costants.URL_LOGIN);
-            webViewWorker.Start(_op);
+            webViewWorker.InitCompleted -= WebViewWorker_InitCompleted;
+
             webViewWorker.WebView.NavigationCompleted += WebView_NavigationCompleted;
+            webViewWorker.WebView.CoreWebView2.Navigate(Costants.URL_LOGIN);
         }
 
         private void WebView_NavigationCompleted(object? sender, CoreWebView2NavigationCompletedEventArgs e)
         {
             if (e.IsSuccess && (webViewWorker.WebView.Source.Host == Costants.URL_HOST_LOGGED))
             {
-                GatherCookies();
-            }
-        }
-
-        private void LoginWindow_Closing(object? sender, System.ComponentModel.CancelEventArgs e)
-        {
-            this.Closing -= LoginWindow_Closing;
-
-            if (_op != null && _op.IsCompleted)
-            {
-                e.Cancel = true; //Need to gather cookies before exiting
+                webViewWorker.WebView.NavigationCompleted -= WebView_NavigationCompleted;
                 GatherCookies();
             }
         }
@@ -80,9 +74,8 @@ namespace MSRewardsBot.Client.Windows
                 Utils.ShowError("Unable to save ms account!");
             }
 
-            this.Closing -= LoginWindow_Closing;
             this.Close();
-            webViewWorker.Dispose();
+            webViewWorker?.Dispose();
         }
     }
 }

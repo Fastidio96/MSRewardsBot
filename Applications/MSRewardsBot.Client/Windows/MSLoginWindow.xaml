@@ -5,7 +5,7 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:worker="clr-namespace:MSRewardsBot.Client.Windows"
         mc:Ignorable="d"
-        Title="Login" Height="500" Width="700" 
+        Title="Login" Height="450" Width="650" 
         WindowStartupLocation="CenterOwner">
     <Grid>
         <worker:WebViewWorkerUC x:Name="webViewWorker"/>

@@ -1,26 +1,26 @@
 ﻿using System;
 using System.Threading.Tasks;
-using Microsoft.AspNetCore.SignalR;
 using Microsoft.Extensions.Logging;
 using MSRewardsBot.Common.DataEntities.Accounting;
 using MSRewardsBot.Common.DataEntities.Interfaces;
 using MSRewardsBot.Server.Core;
+using MSRewardsBot.Server.DataEntities;
 
 namespace MSRewardsBot.Server.Network
 {
     public class CommandHubProxy : IBotAPI
     {
-        private readonly IHubContext<CommandHub> _commandHub;
         private readonly ILogger<CommandHubProxy> _logger;
         private readonly BusinessLayer _business;
+        private readonly IConnectionManager _connectionManager;
 
         private string _connectionId;
 
-        public CommandHubProxy(ILogger<CommandHubProxy> logger, IHubContext<CommandHub> commandHub, BusinessLayer bl)
+        public CommandHubProxy(ILogger<CommandHubProxy> logger, BusinessLayer bl, IConnectionManager connection)
         {
-            _commandHub = commandHub;
             _logger = logger;
             _business = bl;
+            _connectionManager = connection;
         }
 
         public void SetConnectionId(string connectionId)
@@ -31,12 +31,30 @@ namespace MSRewardsBot.Server.Network
 
         public Task<Guid> Login(User user)
         {
-            return Task.FromResult(_business.Login(user));
+            Guid token = _business.Login(user);
+            if (token != Guid.Empty)
+            {
+                ClientInfo info = _connectionManager.GetConnection(_connectionId);
+                info.Username = user.Username;
+
+                _connectionManager.UpdateConnection(_connectionId, info);
+            }
+
+            return Task.FromResult(token);
         }
 
         public Task<Guid> Register(User user)
         {
-            return Task.FromResult(_business.Register(user));
+            Guid token = _business.Register(user);
+            if (token != Guid.Empty)
+            {
+                ClientInfo info = _connectionManager.GetConnection(_connectionId);
+                info.Username = user.Username;
+
+                _connectionManager.UpdateConnection(_connectionId, info);
+            }
+
+            return Task.FromResult(token);
         }
 
         public Task<User> GetUserInfo(Guid token)

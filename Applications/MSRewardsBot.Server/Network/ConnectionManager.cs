@@ -21,11 +21,21 @@ namespace MSRewardsBot.Server.Network
             }
         }
 
+        public ClientInfo GetConnection(string connectionId)
+        {
+            lock (_connections)
+            {
+                return _connections.FirstOrDefault(c => c.ConnectionId == connectionId);
+            }
+        }
+
         public void UpdateConnection(string connectionId, ClientInfo updatedClientInfo)
         {
             lock (_connections)
             {
                 _connections.RemoveWhere(c => c.ConnectionId == connectionId);
+                updatedClientInfo.LastUpdatedInfo = DateTime.Now;
+
                 _connections.Add(updatedClientInfo);
             }
         }
