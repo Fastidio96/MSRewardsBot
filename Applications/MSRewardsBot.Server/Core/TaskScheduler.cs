@@ -1,8 +1,9 @@
 ﻿using System;
-using System.Collections.Concurrent;
 using System.Threading;
-using MSRewardsBot.Server.DataEntities;
 using MSRewardsBot.Common.Utilities;
+using MSRewardsBot.Server.Automation;
+using MSRewardsBot.Server.DataEntities;
+using MSRewardsBot.Server.DataEntities.Commands;
 
 namespace MSRewardsBot.Server.Core
 {
@@ -10,11 +11,15 @@ namespace MSRewardsBot.Server.Core
     {
         public ConcurrentPriorityQueue<Job, JobPriority> Queue { get; private set; }
         private Thread _threadScheduler;
+
+        private readonly BrowserManager _browser;
+
         private bool _isDisposing = false;
 
-        public TaskScheduler()
+        public TaskScheduler(BrowserManager browser)
         {
             Queue = new ConcurrentPriorityQueue<Job, JobPriority>();
+            _browser = browser;
 
             Init();
         }
@@ -23,11 +28,11 @@ namespace MSRewardsBot.Server.Core
         {
             _threadScheduler = new Thread(Loop);
             _threadScheduler.IsBackground = false;
-            _threadScheduler.Name = "Thread TaskScheduler";
+            _threadScheduler.Name = nameof(TaskScheduler);
             _threadScheduler.Start();
         }
 
-        private void Loop()
+        private async void Loop()
         {
             while (_isDisposing)
             {
@@ -37,8 +42,26 @@ namespace MSRewardsBot.Server.Core
                     continue;
                 }
 
+                bool? isPass = null;
+
+                if (job.Command is DashboardUpdateCommand command)
+                {
+                    isPass = await _browser.DashboardUpdate(command.Account);
+                }
 
 
+
+                if (isPass.HasValue)
+                {
+                    if (isPass.Value)
+                    {
+                        job.Command.OnSuccess?.Invoke();
+                    }
+                    else
+                    {
+                        job.Command.OnFail?.Invoke();
+                    }
+                }
 
                 Thread.Sleep(100);
             }

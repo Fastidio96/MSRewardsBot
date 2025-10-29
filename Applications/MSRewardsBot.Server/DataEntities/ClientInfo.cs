@@ -1,4 +1,5 @@
 ﻿using System;
+using MSRewardsBot.Common.DataEntities.Accounting;
 
 namespace MSRewardsBot.Server.DataEntities
 {
@@ -9,9 +10,8 @@ namespace MSRewardsBot.Server.DataEntities
         /// </summary>
         public DateTime LastUpdatedInfo { get; set; }
         public string ConnectionId { get; set; }
-        public string Username { get; set; }
-        public Version CurrentVersion { get; set; }
-        public DateTime LastDashboardUpdate { get; set; }
+        public User User { get; set; }
+        public Version ClientVersion { get; set; }
 
     }
 }

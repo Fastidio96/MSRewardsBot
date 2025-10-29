@@ -110,6 +110,12 @@ namespace MSRewardsBot.Server.Core
 
             return user;
         }
+        
+
+        internal User GetUser(string username)
+        {
+            return _data.GetUser(username);
+        }
 
         public bool InsertMSAccount(Guid token, MSAccount account)
         {

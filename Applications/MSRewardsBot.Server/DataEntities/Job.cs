@@ -1,5 +1,5 @@
 ﻿using System;
-using MSRewardsBot.Common.DataEntities.Commands;
+using MSRewardsBot.Server.DataEntities.Commands;
 
 namespace MSRewardsBot.Server.DataEntities
 {
@@ -7,21 +7,15 @@ namespace MSRewardsBot.Server.DataEntities
     {
         public DateTime SubmittedAt { get; set; }
         public JobStatus Status { get; set; }
-        public JobPriority Priority { get; set; }
-
         public string ConnectionId { get; set; }
         public CommandBase Command { get; set; }
 
-        public Job()
+        public Job(string connectionId, CommandBase command)
         {
             SubmittedAt = DateTime.Now;
             Status = JobStatus.Pending;
-            Priority = JobPriority.Medium;
-        }
-
-        public Job(string connectionId) : this()
-        {
             ConnectionId = connectionId;
+            Command = command;
         }
     }
 

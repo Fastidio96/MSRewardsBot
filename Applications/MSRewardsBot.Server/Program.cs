@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.ResponseCompression;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
+using MSRewardsBot.Server.Automation;
 using MSRewardsBot.Server.Core;
 using MSRewardsBot.Server.Network;
 
@@ -23,6 +24,7 @@ namespace MSRewardsBot.Server
             builder.Services.AddSingleton<Core.Server>();
             builder.Services.AddSingleton<CommandHubProxy>();
             builder.Services.AddSingleton<BusinessLayer>();
+            builder.Services.AddSingleton<BrowserManager>();
             builder.Services.AddSignalR();
 
             builder.Services.AddResponseCompression(opts =>
@@ -46,6 +48,7 @@ namespace MSRewardsBot.Server
             });
 
             Core.Server server = app.Services.GetRequiredService<Core.Server>();
+            BrowserManager browser = app.Services.GetRequiredService<BrowserManager>();
             app.MapHub<CommandHub>("/cmdhub");
 
             // Configure the HTTP request pipeline.
@@ -56,6 +59,12 @@ namespace MSRewardsBot.Server
 
             server.Start();
             app.Logger.LogInformation(">> MS Rewards bot server started <<");
+
+            app.Lifetime.ApplicationStopping.Register(() =>
+            {
+                server.Dispose();
+                browser.Dispose();
+            });
 
             app.Run();
         }

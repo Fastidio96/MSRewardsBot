@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.SignalR;
 using Microsoft.Extensions.Logging;
 using MSRewardsBot.Common.DataEntities.Accounting;
 using MSRewardsBot.Common.DataEntities.Interfaces;
+using MSRewardsBot.Server.Core;
 using MSRewardsBot.Server.DataEntities;
 
 namespace MSRewardsBot.Server.Network
@@ -17,12 +18,14 @@ namespace MSRewardsBot.Server.Network
         private readonly ILogger<CommandHub> _logger;
         private readonly IConnectionManager _connectionManager;
         private readonly CommandHubProxy _hubProxy;
+        private readonly BusinessLayer _business;
 
-        public CommandHub(ILogger<CommandHub> logger, IConnectionManager connectionManager, CommandHubProxy proxy)
+        public CommandHub(ILogger<CommandHub> logger, IConnectionManager connectionManager, CommandHubProxy proxy, BusinessLayer bl)
         {
             _logger = logger;
             _connectionManager = connectionManager;
             _hubProxy = proxy;
+            _business = bl;
         }
 
         public override Task OnConnectedAsync()
@@ -44,21 +47,31 @@ namespace MSRewardsBot.Server.Network
             return base.OnDisconnectedAsync(exception);
         }
 
-        public Task<Guid> Login(User user)
+        public async Task<Guid> Login(User user)
         {
             _logger.LogInformation("Received command {CommandName} from {ConnectionId}", nameof(Login), _connectionId);
-            return _hubProxy.Login(user);
+
+            Guid token = await _hubProxy.Login(user);
+            UpdateConnectionInfo(token);
+
+            return token;
         }
 
-        public Task<Guid> Register(User user)
+        public async Task<Guid> Register(User user)
         {
             _logger.LogInformation("Received command {CommandName} from {ConnectionId}", nameof(Register), _connectionId);
-            return _hubProxy.Register(user);
+
+            Guid token = await _hubProxy.Register(user);
+            UpdateConnectionInfo(token);
+
+            return token;
         }
 
         public Task<User> GetUserInfo(Guid token)
         {
             _logger.LogInformation("Sent command {CommandName} to {ConnectionId}", nameof(GetUserInfo), _connectionId);
+
+            UpdateConnectionInfo(token);
             return _hubProxy.GetUserInfo(token);
         }
 
@@ -66,6 +79,24 @@ namespace MSRewardsBot.Server.Network
         {
             _logger.LogInformation("Received command {CommandName} from {ConnectionId}", nameof(InsertMSAccount), _connectionId);
             return _hubProxy.InsertMSAccount(token, account);
+        }
+
+        private void UpdateConnectionInfo(Guid token)
+        {
+            if (token != Guid.Empty)
+            {
+                ClientInfo info = _connectionManager.GetConnection(_connectionId);
+
+                User user = _business.GetUserInfo(token);
+                if (user == null)
+                {
+                    return;
+                }
+
+                info.User = user;
+
+                _connectionManager.UpdateConnection(_connectionId, info);
+            }
         }
     }
 }
