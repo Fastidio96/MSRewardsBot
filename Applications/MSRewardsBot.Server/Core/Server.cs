@@ -84,10 +84,10 @@ namespace MSRewardsBot.Server.Core
                                         }
                                     });
                                 _taskScheduler.Queue.Enqueue(job, JobPriority.Medium);
+
+                                acc.LastDashboardUpdate = now;
                             }
                         }
-
-                        //_commandHub.SetConnectionId(client.ConnectionId);
                     }
 
                     Thread.Sleep(1000);

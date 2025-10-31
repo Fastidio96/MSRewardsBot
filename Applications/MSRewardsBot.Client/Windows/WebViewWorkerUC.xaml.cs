@@ -43,7 +43,7 @@ namespace MSRewardsBot.Client.Windows
                 webview.CoreWebView2?.Stop();
                 webview.Dispose();
                 webview = null;
-            });
+            }).Wait();
 
             KillWebViewProcess();
         }

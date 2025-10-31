@@ -2,6 +2,7 @@
 using System.Linq;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.ResponseCompression;
+using Microsoft.AspNetCore.SignalR;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using MSRewardsBot.Server.Automation;
@@ -25,7 +26,11 @@ namespace MSRewardsBot.Server
             builder.Services.AddSingleton<CommandHubProxy>();
             builder.Services.AddSingleton<BusinessLayer>();
             builder.Services.AddSingleton<BrowserManager>();
-            builder.Services.AddSignalR();
+            builder.Services.AddSignalR()
+                .AddHubOptions<CommandHub>(options =>
+                {
+                    options.AddFilter<GlobalHubMiddleware>();
+                });
 
             builder.Services.AddResponseCompression(opts =>
             {
@@ -58,7 +63,7 @@ namespace MSRewardsBot.Server
             app.UseAuthorization();
 
             server.Start();
-            app.Logger.LogInformation(">> MS Rewards bot server started <<");
+            app.Logger.LogInformation("MS Rewards bot server started");
 
             app.Lifetime.ApplicationStopping.Register(() =>
             {

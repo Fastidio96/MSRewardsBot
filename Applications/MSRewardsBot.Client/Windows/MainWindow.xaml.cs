@@ -31,6 +31,8 @@ namespace MSRewardsBot.Client
         private void Accounts_CollectionChanged(object? sender, System.Collections.Specialized.NotifyCollectionChangedEventArgs e)
         {
             cmbAcc.IsEnabled = _appInfo.Accounts.Count > 0;
+
+            
         }
 
         private void MainWindow_Loaded(object sender, RoutedEventArgs e)

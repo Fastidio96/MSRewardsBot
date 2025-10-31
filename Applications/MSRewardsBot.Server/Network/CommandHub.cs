@@ -1,11 +1,9 @@
 ﻿using System;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.SignalR;
-using Microsoft.Extensions.Logging;
 using MSRewardsBot.Common.DataEntities.Accounting;
 using MSRewardsBot.Common.DataEntities.Interfaces;
-using MSRewardsBot.Server.Core;
-using MSRewardsBot.Server.DataEntities;
+using MSRewardsBot.Server.DataEntities.Attributes;
 
 namespace MSRewardsBot.Server.Network
 {
@@ -14,119 +12,40 @@ namespace MSRewardsBot.Server.Network
     /// </summary>
     public class CommandHub : Hub, IBotAPI
     {
-        private string _connectionId => Context.ConnectionId;
-        private readonly ILogger<CommandHub> _logger;
-        private readonly IConnectionManager _connectionManager;
         private readonly CommandHubProxy _hubProxy;
-        private readonly BusinessLayer _business;
 
-        public CommandHub(ILogger<CommandHub> logger, IConnectionManager connectionManager, CommandHubProxy proxy, BusinessLayer bl)
+        public CommandHub(CommandHubProxy proxy)
         {
-            _logger = logger;
-            _connectionManager = connectionManager;
             _hubProxy = proxy;
-            _business = bl;
         }
 
-        public override Task OnConnectedAsync()
+        
+        public Task<Guid> Login(User user)
         {
-            _logger.LogInformation("Client connected: {ConnectionId}", Context.ConnectionId);
-            _connectionManager.AddConnection(new ClientInfo()
-            {
-                ConnectionId = _connectionId
-            });
-
-            return base.OnConnectedAsync();
+            return _hubProxy.Login(user);
         }
 
-        public override Task OnDisconnectedAsync(Exception? exception)
+        public Task<Guid> Register(User user)
         {
-            _logger.Log(LogLevel.Information, "Client disconnected: {ConnectionId}", Context.ConnectionId);
-            _connectionManager.RemoveConnection(_connectionId);
-
-            return base.OnDisconnectedAsync(exception);
+            return _hubProxy.Register(user);
         }
 
-        public async Task<Guid> Login(User user)
+        [LoggedOn]
+        public Task<bool> Logout(Guid token)
         {
-            _logger.LogInformation("Received command {CommandName} from {ConnectionId}", nameof(Login), _connectionId);
-
-            Guid token = await _hubProxy.Login(user);
-            UpdateConnectionInfo(token);
-
-            return token;
+            return _hubProxy.Logout(token);
         }
 
-        public async Task<Guid> Register(User user)
-        {
-            _logger.LogInformation("Received command {CommandName} from {ConnectionId}", nameof(Register), _connectionId);
-
-            Guid token = await _hubProxy.Register(user);
-            UpdateConnectionInfo(token);
-
-            return token;
-        }
-
-        public async Task<bool> Logout(Guid token)
-        {
-            _logger.LogInformation("Sent command {CommandName} to {ConnectionId}", nameof(Logout), _connectionId);
-
-            RemoveConnectionByToken(token);
-            bool res = await _hubProxy.Logout(token);
-
-            return res;
-        }
-
+        [LoggedOn]
         public Task<User> GetUserInfo(Guid token)
         {
-            _logger.LogInformation("Sent command {CommandName} to {ConnectionId}", nameof(GetUserInfo), _connectionId);
-
-            UpdateConnectionInfo(token);
             return _hubProxy.GetUserInfo(token);
         }
 
+        [LoggedOn]
         public Task<bool> InsertMSAccount(Guid token, MSAccount account)
         {
-            _logger.LogInformation("Received command {CommandName} from {ConnectionId}", nameof(InsertMSAccount), _connectionId);
             return _hubProxy.InsertMSAccount(token, account);
-        }
-
-
-
-        private void UpdateConnectionInfo(Guid token)
-        {
-            if (token != Guid.Empty)
-            {
-                ClientInfo info = _connectionManager.GetConnection(_connectionId);
-
-                User user = _business.GetUserInfo(token);
-                if (user == null)
-                {
-                    return;
-                }
-
-                info.User = user;
-
-                _connectionManager.UpdateConnection(_connectionId, info);
-            }
-        }
-
-        private void RemoveConnectionByToken(Guid token)
-        {
-            if (token != Guid.Empty)
-            {
-                ClientInfo info = _connectionManager.GetConnection(_connectionId);
-
-                User user = _business.GetUserInfo(token);
-                if (user == null)
-                {
-                    return;
-                }
-
-                info.User = null;
-
-                _connectionManager.UpdateConnection(_connectionId, info);
-            }
         }
     }
 }
