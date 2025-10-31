@@ -34,5 +34,10 @@ namespace MSRewardsBot.Server.Network
         {
             return Task.FromResult(_business.InsertMSAccount(token, account));
         }
+
+        public Task<bool> Logout(Guid token)
+        {
+            return Task.FromResult(_business.Logout(token));
+        }
     }
 }

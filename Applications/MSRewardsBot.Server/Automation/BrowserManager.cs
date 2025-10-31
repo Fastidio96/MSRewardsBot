@@ -21,10 +21,10 @@ namespace MSRewardsBot.Server.Automation
         {
             _logger = logger;
 
-            Init();
+            //Install();
         }
 
-        private void Init()
+        private void Install()
         {
             _logger.Log(LogLevel.Information, "Checking dependencies..");
             Microsoft.Playwright.Program.Main(["install"]);

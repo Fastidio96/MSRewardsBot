@@ -37,9 +37,16 @@ namespace MSRewardsBot.Client
 
         private async void AppInfo_PropertyChanged(object? sender, PropertyChangedEventArgs e)
         {
-            if (e.PropertyName == nameof(AppInfo.IsUserLogged) && IsLogged)
+            if (e.PropertyName == nameof(AppInfo.IsUserLogged))
             {
-                await GetUserInfo();
+                if (IsLogged)
+                {
+                    await GetUserInfo();
+                }
+                else
+                {
+                    Logout();
+                }
             }
         }
 
@@ -112,7 +119,8 @@ namespace MSRewardsBot.Client
             _appData = new AppData();
             _fileManager.SaveData(_appData);
 
-            //Environment.Exit(0);
+            _connection.Logout(_token);
+            Environment.Exit(0);
         }
 
         public void AddMSAccount()

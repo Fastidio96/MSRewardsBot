@@ -41,7 +41,7 @@ namespace MSRewardsBot.Server.Network
 
         public override Task OnDisconnectedAsync(Exception? exception)
         {
-            _logger.Log(LogLevel.Error, "Client disconnected: {ConnectionId}", Context.ConnectionId);
+            _logger.Log(LogLevel.Information, "Client disconnected: {ConnectionId}", Context.ConnectionId);
             _connectionManager.RemoveConnection(_connectionId);
 
             return base.OnDisconnectedAsync(exception);
@@ -67,6 +67,16 @@ namespace MSRewardsBot.Server.Network
             return token;
         }
 
+        public async Task<bool> Logout(Guid token)
+        {
+            _logger.LogInformation("Sent command {CommandName} to {ConnectionId}", nameof(Logout), _connectionId);
+
+            RemoveConnectionByToken(token);
+            bool res = await _hubProxy.Logout(token);
+
+            return res;
+        }
+
         public Task<User> GetUserInfo(Guid token)
         {
             _logger.LogInformation("Sent command {CommandName} to {ConnectionId}", nameof(GetUserInfo), _connectionId);
@@ -81,6 +91,8 @@ namespace MSRewardsBot.Server.Network
             return _hubProxy.InsertMSAccount(token, account);
         }
 
+
+
         private void UpdateConnectionInfo(Guid token)
         {
             if (token != Guid.Empty)
@@ -94,6 +106,24 @@ namespace MSRewardsBot.Server.Network
                 }
 
                 info.User = user;
+
+                _connectionManager.UpdateConnection(_connectionId, info);
+            }
+        }
+
+        private void RemoveConnectionByToken(Guid token)
+        {
+            if (token != Guid.Empty)
+            {
+                ClientInfo info = _connectionManager.GetConnection(_connectionId);
+
+                User user = _business.GetUserInfo(token);
+                if (user == null)
+                {
+                    return;
+                }
+
+                info.User = null;
 
                 _connectionManager.UpdateConnection(_connectionId, info);
             }

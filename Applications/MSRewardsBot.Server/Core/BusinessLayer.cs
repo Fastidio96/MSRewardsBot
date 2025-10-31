@@ -110,7 +110,7 @@ namespace MSRewardsBot.Server.Core
 
             return user;
         }
-        
+
 
         internal User GetUser(string username)
         {
@@ -128,6 +128,11 @@ namespace MSRewardsBot.Server.Core
             account.User = user;
 
             return _data.InsertMSAccount(account);
+        }
+
+        public bool Logout(Guid token)
+        {
+            return _data.InvalidateUserAuthToken(token);
         }
 
         public void Dispose()
