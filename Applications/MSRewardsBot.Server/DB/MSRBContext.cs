@@ -31,6 +31,10 @@ namespace MSRewardsBot.Server.DB
                 .HasOne(m => m.User)
                 .WithMany(u => u.MSAccounts)
                 .HasForeignKey(m => m.UserId);
+            modelBuilder.Entity<MSAccount>()
+                .HasMany(m => m.Cookies)
+                .WithOne(c => c.MSAccount)
+                .HasForeignKey(c => c.MSAccountId);
             modelBuilder.Entity<AccountCookie>();
 
             base.OnModelCreating(modelBuilder);

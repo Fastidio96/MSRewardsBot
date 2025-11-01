@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Threading.Tasks;
+using System.Windows;
 using MSRewardsBot.Client.DataEntities;
 using MSRewardsBot.Client.Services;
 using MSRewardsBot.Client.Windows;
@@ -120,7 +121,11 @@ namespace MSRewardsBot.Client
             _fileManager.SaveData(_appData);
 
             _connection.Logout(_token);
-            Environment.Exit(0);
+
+            if(Utils.ShowMessage("The application is closing.", "Info", MessageBoxImage.Information) == MessageBoxResult.OK)
+            {
+                Environment.Exit(0);
+            }
         }
 
         public void AddMSAccount()

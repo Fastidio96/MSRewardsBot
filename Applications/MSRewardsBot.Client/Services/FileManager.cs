@@ -90,7 +90,7 @@ namespace MSRewardsBot.Client.Services
             }
             catch
             {
-                Utils.ShowError($"Cannot open or create the data folder: {_filePath}");
+                Utils.ShowMessage($"Cannot open or create the data folder: {_filePath}");
             }
         }
     }

@@ -37,37 +37,45 @@ namespace MSRewardsBot.Server.Network
                 object result = await next(context); // call the actual hub method
 
                 MethodInfo? methodInfo = context.HubMethod;
-                if (methodInfo != null)
+                if (methodInfo == null)
                 {
-                    bool hasRestrictedAttribute = methodInfo.GetCustomAttribute<RequiredPrivilegeAttribute>() != null;
-                    if (hasRestrictedAttribute)
-                    {
-                    }
+                    throw new Exception("Method info is null!");
+                }
 
-                    bool hasLoggedOnAttr = methodInfo.GetCustomAttribute<LoggedOnAttribute>() != null;
-                    if (hasLoggedOnAttr)
+                bool hasLoggedOnAttr = methodInfo.GetCustomAttribute<LoggedOnAttribute>() != null;
+                if (hasLoggedOnAttr)
+                {
+                    ParameterInfo[] pars = methodInfo.GetParameters();
+                    foreach (ParameterInfo pInfo in pars)
                     {
-                        ParameterInfo[] pars = methodInfo.GetParameters();
-                        foreach(ParameterInfo pInfo in pars)
+                        if (pInfo.ParameterType == typeof(Guid) && pInfo.Name == "token")
                         {
-                            if(pInfo.ParameterType == typeof(Guid) && pInfo.Name == "token")
+                            string val = context.HubMethodArguments[pInfo.Position]?.ToString();
+                            if (Guid.TryParse(val, out Guid token))
                             {
-                                string val = context.HubMethodArguments[pInfo.Position]?.ToString();
-                                if(Guid.TryParse(val, out Guid token))
+                                if (methodInfo.Name == nameof(IBotAPI.Logout))
                                 {
-                                    if(methodInfo.Name == nameof(IBotAPI.Logout))
-                                    {
-                                        RemoveConnectionByToken(token, connectionId);
-                                    }
-                                    else
-                                    {
-                                        UpdateConnectionInfo(token, connectionId);
-                                    }
+                                    RemoveConnectionByToken(token, connectionId);
+                                }
+                                else
+                                {
+                                    UpdateConnectionInfo(token, connectionId);
+
                                 }
                             }
                         }
-
                     }
+                }
+
+                bool hasRestrictedAttribute = methodInfo.GetCustomAttribute<RequiredPrivilegeAttribute>() != null;
+                if (hasRestrictedAttribute)
+                {
+                    if (!hasLoggedOnAttr)
+                    {
+                        throw new Exception($"The method {context.HubMethodName} has the restricted attribute but doesn't require the log in!");
+                    }
+
+
                 }
 
                 // After successful call

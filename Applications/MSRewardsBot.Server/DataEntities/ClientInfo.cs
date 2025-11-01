@@ -9,6 +9,8 @@ namespace MSRewardsBot.Server.DataEntities
         /// Do not set! It's set automatically
         /// </summary>
         public DateTime LastUpdatedInfo { get; set; }
+        public DateTime LastServerCheck {  get; set; }
+
         public string ConnectionId { get; set; }
         public User User { get; set; }
         public Version ClientVersion { get; set; }

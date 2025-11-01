@@ -51,9 +51,6 @@ namespace MSRewardsBot.Server.Core
 
         private void Loop()
         {
-            _connectionManager.ClientConnected += ConnectionManager_ClientConnected;
-            _connectionManager.ClientDisconnected += ConnectionManager_ClientDisconnected;
-
             _browser.Start();
 
             using (_taskScheduler = new TaskScheduler(_browser))
@@ -64,28 +61,32 @@ namespace MSRewardsBot.Server.Core
                     {
                         DateTime now = DateTime.Now;
 
-                        if (client.User == null)
+                        if (DateTimeUtilities.HasElapsed(now, client.LastServerCheck, new TimeSpan(0, 5, 0)))
                         {
-                            Thread.Sleep(1000);
-                            continue;
-                        }
-
-                        foreach (MSAccount acc in client.User.MSAccounts)
-                        {
-                            if (DateTimeUtilities.HasElapsed(now, acc.LastDashboardUpdate, new TimeSpan(12, 0, 0)))
+                            if (client.User == null)
                             {
-                                Job job = new Job(client.ConnectionId,
-                                    new DashboardUpdateCommand()
-                                    {
-                                        Account = acc,
-                                        OnSuccess = delegate ()
-                                        {
-                                            acc.LastDashboardUpdate = now;
-                                        }
-                                    });
-                                _taskScheduler.Queue.Enqueue(job, JobPriority.Medium);
+                                Thread.Sleep(1000);
+                                continue;
+                            }
 
-                                acc.LastDashboardUpdate = now;
+                            client.LastServerCheck = now;
+
+                            foreach (MSAccount acc in client.User.MSAccounts)
+                            {
+                                if (DateTimeUtilities.HasElapsed(now, acc.LastDashboardUpdate, new TimeSpan(12, 0, 0)))
+                                {
+                                    Job job = new Job(client.ConnectionId,
+                                        new DashboardUpdateCommand()
+                                        {
+                                            Account = acc,
+                                            OnSuccess = delegate ()
+                                            {
+                                                acc.LastDashboardUpdate = now;
+                                            }
+                                        });
+
+                                    _taskScheduler.Queue.Enqueue(job, JobPriority.Medium);
+                                }
                             }
                         }
                     }
@@ -93,17 +94,6 @@ namespace MSRewardsBot.Server.Core
                     Thread.Sleep(1000);
                 }
             }
-        }
-
-        private void ConnectionManager_ClientConnected(object? sender, ClientArgs e)
-        {
-            //Job job = new Job(e.ConnectionId);
-            //_taskScheduler.Queue.Enqueue(job, job.Priority);
-        }
-
-        private void ConnectionManager_ClientDisconnected(object? sender, ClientArgs e)
-        {
-            //_taskScheduler.Queue.Enqueue(new Job<LoginRequest>(e.ConnectionId));
         }
 
         public void Dispose()
@@ -119,9 +109,6 @@ namespace MSRewardsBot.Server.Core
 
                 _mainThread = null;
             }
-
-            _connectionManager.ClientConnected -= ConnectionManager_ClientConnected;
-            _connectionManager.ClientDisconnected -= ConnectionManager_ClientDisconnected;
         }
     }
 }

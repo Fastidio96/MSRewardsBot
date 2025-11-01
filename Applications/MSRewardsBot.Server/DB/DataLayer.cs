@@ -1,6 +1,4 @@
 ﻿using System;
-using System.Linq;
-using Microsoft.EntityFrameworkCore;
 using MSRewardsBot.Common.DataEntities.Accounting;
 
 namespace MSRewardsBot.Server.DB

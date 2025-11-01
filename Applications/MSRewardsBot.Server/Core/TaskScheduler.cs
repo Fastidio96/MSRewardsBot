@@ -34,7 +34,7 @@ namespace MSRewardsBot.Server.Core
 
         private async void Loop()
         {
-            while (_isDisposing)
+            while (!_isDisposing)
             {
                 if (!Queue.TryDequeue(out Job job, out JobPriority priority))
                 {

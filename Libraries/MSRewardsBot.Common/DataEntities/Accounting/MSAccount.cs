@@ -11,6 +11,7 @@ namespace MSRewardsBot.Common.DataEntities.Accounting
         public MSAccount()
         {
             LastDashboardUpdate = DateTime.MinValue;
+            Cookies = new List<AccountCookie>();
         }
 
         [JsonIgnore]

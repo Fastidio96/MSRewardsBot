@@ -71,7 +71,7 @@ namespace MSRewardsBot.Client.Windows
 
             if(!await _vm.InsertMSAccount(cookies))
             {
-                Utils.ShowError("Unable to save ms account!");
+                Utils.ShowMessage("Unable to save ms account!");
             }
 
             this.Close();

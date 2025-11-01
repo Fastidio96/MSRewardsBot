@@ -4,9 +4,14 @@ namespace MSRewardsBot.Client
 {
     public class Utils
     {
-        public static MessageBoxResult ShowError(string message, MessageBoxImage image = MessageBoxImage.Error)
+        public static MessageBoxResult ShowMessage(string message, MessageBoxImage image = MessageBoxImage.Error)
         {
-            return MessageBox.Show(message, "Error", MessageBoxButton.OK, image);
+            return ShowMessage(message, "Error", image);
+        }
+
+        public static MessageBoxResult ShowMessage(string message, string title, MessageBoxImage image = MessageBoxImage.Error)
+        {
+            return MessageBox.Show(message, title, MessageBoxButton.OK, image);
         }
     }
 }

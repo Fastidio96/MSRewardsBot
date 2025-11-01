@@ -12,6 +12,7 @@ namespace MSRewardsBot.Server.DB
             return _db.Users
                 .Include(u => u.AuthToken)
                 .Include(m => m.MSAccounts)
+                    .ThenInclude(c => c.Cookies)
                 .FirstOrDefault(u => u.Username == username);
         }
 
@@ -20,6 +21,7 @@ namespace MSRewardsBot.Server.DB
             return _db.Users
                 .Include(u => u.AuthToken)
                 .Include(m => m.MSAccounts)
+                    .ThenInclude(c => c.Cookies)
                 .FirstOrDefault(u => u.AuthToken.Token == authToken);
         }
 

@@ -20,8 +20,6 @@ namespace MSRewardsBot.Server.Automation
         public BrowserManager(ILogger<BrowserManager> logger)
         {
             _logger = logger;
-
-            //Install();
         }
 
         private void Install()
@@ -32,6 +30,8 @@ namespace MSRewardsBot.Server.Automation
 
         public async void Start()
         {
+            Install();
+
             _playwright = await Playwright.CreateAsync();
             _browser = await _playwright.Chromium.LaunchAsync
             (
@@ -47,6 +47,11 @@ namespace MSRewardsBot.Server.Automation
 
         public async Task<bool> DashboardUpdate(MSAccount account)
         {
+            if (account.Cookies == null || account.Cookies.Count == 0)
+            {
+                return false;
+            }
+
             List<Cookie> cookies = ConvertToPWCookies(account.Cookies);
             await _context.AddCookiesAsync(cookies);
 
@@ -72,7 +77,7 @@ namespace MSRewardsBot.Server.Automation
                     Name = c.Name
                 };
 
-                if (c.Expires.HasValue)
+                if (c.Expires.HasValue && (c.Expires > DateTime.UtcNow))
                 {
                     cookie.Expires = (float)((DateTimeOffset)c.Expires.Value).ToUnixTimeSeconds();
                 }
