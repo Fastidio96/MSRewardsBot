@@ -1,5 +1,5 @@
 ﻿using System;
-using System.Threading.Tasks;
+using System.Diagnostics;
 using System.Windows;
 using MSRewardsBot.Client.DataEntities;
 using MSRewardsBot.Client.Windows;
@@ -20,12 +20,22 @@ namespace MSRewardsBot.Client
 
         public App()
         {
+            CheckForInstanceRunning();
+
             this.DispatcherUnhandledException += App_DispatcherUnhandledException;
             this.Startup += App_Startup;
             this.Exit += App_Exit;
 
             _splashScreenWindow = new SplashScreenWindow();
             _splashScreenWindow.Show();
+        }
+
+        private void CheckForInstanceRunning()
+        {
+            if(Process.GetProcessesByName(Process.GetCurrentProcess().ProcessName).Length > 1)
+            {
+                Environment.Exit(-2);
+            }
         }
 
         private async void App_Startup(object sender, StartupEventArgs e)
@@ -52,7 +62,7 @@ namespace MSRewardsBot.Client
             _mainWindow.Show();
         }
 
-        private void UserLoginWindow_Closed(object? sender, System.EventArgs e)
+        private void UserLoginWindow_Closed(object? sender, EventArgs e)
         {
             _userLoginWindow.Closed -= UserLoginWindow_Closed;
             _mainWindow.Show();

@@ -12,11 +12,7 @@ namespace MSRewardsBot.Client
 {
     public class ViewModel
     {
-        public bool IsLogged =>
-            _appData != null &&
-            _appData.AuthToken.HasValue &&
-            _appData.AuthToken.Value != Guid.Empty;
-
+        public bool IsLogged => _appInfo.IsUserLogged;
         private Guid _token => !_appData.AuthToken.HasValue ? Guid.Empty : _appData.AuthToken.Value;
 
         private ConnectionService _connection;
@@ -30,33 +26,27 @@ namespace MSRewardsBot.Client
         public ViewModel(AppInfo appInfo)
         {
             _appInfo = appInfo;
-            _appInfo.PropertyChanged += AppInfo_PropertyChanged;
 
             _connection = new ConnectionService(_appInfo);
             _fileManager = new FileManager();
         }
 
-        private async void AppInfo_PropertyChanged(object? sender, PropertyChangedEventArgs e)
-        {
-            if (e.PropertyName == nameof(AppInfo.IsUserLogged))
-            {
-                if (IsLogged)
-                {
-                    await GetUserInfo();
-                }
-                else
-                {
-                    Logout();
-                }
-            }
-        }
 
         public async Task Init()
         {
             await _connection.ConnectAsync();
             _fileManager.LoadData(out _appData);
 
-            _appInfo.IsUserLogged = IsLogged;
+            _appInfo.IsUserLogged = await _connection.LoginWithToken(_token);
+
+            if (_appInfo.IsUserLogged)
+            {
+                await GetUserInfo();
+            }
+            else
+            {
+                Logout();
+            }
         }
 
         public void SetAuthToken(Guid token)
@@ -122,7 +112,7 @@ namespace MSRewardsBot.Client
 
             _connection.Logout(_token);
 
-            if(Utils.ShowMessage("The application is closing.", "Info", MessageBoxImage.Information) == MessageBoxResult.OK)
+            if (Utils.ShowMessage("The application is closing.", "Info", MessageBoxImage.Information) == MessageBoxResult.OK)
             {
                 Environment.Exit(0);
             }

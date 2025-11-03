@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations.Schema;
 using System.Text.Json.Serialization;
+using MSRewardsBot.Common.DataEntities.Stats;
 
 namespace MSRewardsBot.Common.DataEntities.Accounting
 {
@@ -10,8 +11,8 @@ namespace MSRewardsBot.Common.DataEntities.Accounting
     {
         public MSAccount()
         {
-            LastDashboardUpdate = DateTime.MinValue;
             Cookies = new List<AccountCookie>();
+            Stats = new MSAccountStats();
         }
 
         [JsonIgnore]
@@ -21,11 +22,11 @@ namespace MSRewardsBot.Common.DataEntities.Accounting
         [Column("email")]
         public string? Email { get; set; }
 
-        [Column("last_dashboard_update")]
-        public DateTime LastDashboardUpdate { get; set; }
-
         [JsonIgnore]
         public User User { get; set; }
         public List<AccountCookie> Cookies { get; set; }
+
+        [NotMapped]
+        public MSAccountStats Stats { get; set; }
     }
 }

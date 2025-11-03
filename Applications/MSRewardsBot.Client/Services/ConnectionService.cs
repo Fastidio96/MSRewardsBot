@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.SignalR.Client;
 using MSRewardsBot.Client.DataEntities;
@@ -35,6 +36,14 @@ namespace MSRewardsBot.Client.Services
                 _appInfo.IsUserLogged = false;
                 return true;
             });
+            _connection.On("SendMSAccountsInfo", delegate (List<MSAccount> acc)
+            {
+                _appInfo.Accounts.Clear();
+                foreach (MSAccount account in acc)
+                {
+                    _appInfo.Accounts.Add(account);
+                }
+            });
         }
 
         private Task Connection_Closed(Exception? arg)
@@ -42,6 +51,11 @@ namespace MSRewardsBot.Client.Services
             _appInfo.ConnectedToServer = false;
 
             return Task.CompletedTask;
+        }
+
+        public Task<bool> LoginWithToken(Guid token)
+        {
+            return _connection.InvokeAsync<bool>(nameof(IBotAPI.LoginWithToken), token);
         }
 
         public Task<Guid> Login(User user)

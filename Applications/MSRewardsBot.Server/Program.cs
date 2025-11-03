@@ -29,7 +29,7 @@ namespace MSRewardsBot.Server
             builder.Services.AddSignalR()
                 .AddHubOptions<CommandHub>(options =>
                 {
-                    options.AddFilter<GlobalHubMiddleware>();
+                    options.AddFilter<HubMonitorMiddleware>();
                 });
 
             builder.Services.AddResponseCompression(opts =>

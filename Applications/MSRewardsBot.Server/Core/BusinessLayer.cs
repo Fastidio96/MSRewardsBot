@@ -4,6 +4,7 @@ using System.Text;
 using Microsoft.Extensions.Logging;
 using MSRewardsBot.Common.DataEntities.Accounting;
 using MSRewardsBot.Server.DB;
+using MSRewardsBot.Server.Network;
 
 namespace MSRewardsBot.Server.Core
 {
@@ -20,24 +21,29 @@ namespace MSRewardsBot.Server.Core
             _data = new DataLayer();
         }
 
+        public bool Login(Guid token)
+        {
+            return IsUserLogged(token, out _);
+        }
+
         public Guid Login(User input)
         {
             if (input == null || string.IsNullOrEmpty(input.Username) || string.IsNullOrEmpty(input.Password))
             {
-                _logger.Log(LogLevel.Warning, "Login failed. Username/password is empty. {Username}|{Password}", input.Username, input.Password);
+                _logger.Log(LogLevel.Warning, "LoginWithToken failed. Username/password is empty. {Username}|{Password}", input.Username, input.Password);
                 return Guid.Empty;
             }
 
             User dbUser = _data.GetUser(input.Username);
             if (dbUser == null)
             {
-                _logger.Log(LogLevel.Warning, "Login failed. User {Username} does not exist.", input.Username);
+                _logger.Log(LogLevel.Warning, "LoginWithToken failed. User {Username} does not exist.", input.Username);
                 return Guid.Empty;
             }
 
             if (dbUser.Password != GenerateHashFromPassword(input.Password))
             {
-                _logger.Log(LogLevel.Warning, "Login failed. The password do not match for user {User}", input.Username);
+                _logger.Log(LogLevel.Warning, "LoginWithToken failed. The password do not match for user {User}", input.Username);
                 return Guid.Empty;
             }
 
@@ -128,6 +134,11 @@ namespace MSRewardsBot.Server.Core
             account.User = user;
 
             return _data.InsertMSAccount(account);
+        }
+
+        internal bool UpdateMSAccount(MSAccount account)
+        {
+            return _data.UpdateMSAccount(account);
         }
 
         public bool Logout(Guid token)

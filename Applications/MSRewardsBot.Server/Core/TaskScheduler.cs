@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Threading;
+using MSRewardsBot.Common.DataEntities.Accounting;
 using MSRewardsBot.Common.Utilities;
 using MSRewardsBot.Server.Automation;
 using MSRewardsBot.Server.DataEntities;
@@ -13,13 +14,16 @@ namespace MSRewardsBot.Server.Core
         private Thread _threadScheduler;
 
         private readonly BrowserManager _browser;
+        private readonly BusinessLayer _business;
 
         private bool _isDisposing = false;
 
-        public TaskScheduler(BrowserManager browser)
+        public TaskScheduler(BrowserManager browser, BusinessLayer bl)
         {
             Queue = new ConcurrentPriorityQueue<Job, JobPriority>();
+
             _browser = browser;
+            _business = bl;
 
             Init();
         }
@@ -46,7 +50,16 @@ namespace MSRewardsBot.Server.Core
 
                 if (job.Command is DashboardUpdateCommand command)
                 {
-                    isPass = await _browser.DashboardUpdate(command.Account);
+                    MSAccount acc = await _browser.DashboardUpdate(command.Account);
+                    isPass = acc != null;
+
+                    if (isPass == true)
+                    {
+                        if (!_business.UpdateMSAccount(acc))
+                        {
+                            isPass = false;
+                        }
+                    }
                 }
 
 

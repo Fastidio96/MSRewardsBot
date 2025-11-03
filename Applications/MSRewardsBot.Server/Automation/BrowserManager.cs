@@ -4,6 +4,7 @@ using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
 using Microsoft.Playwright;
 using MSRewardsBot.Common.DataEntities.Accounting;
+using MSRewardsBot.Common.DataEntities.Stats;
 
 namespace MSRewardsBot.Server.Automation
 {
@@ -14,8 +15,6 @@ namespace MSRewardsBot.Server.Automation
         private IBrowser _browser;
         private IBrowserContext _context;
         private IPage _page;
-
-        private const string URL_DASHBOARD = "";
 
         public BrowserManager(ILogger<BrowserManager> logger)
         {
@@ -45,21 +44,60 @@ namespace MSRewardsBot.Server.Automation
             _context = await _browser.NewContextAsync();
         }
 
-        public async Task<bool> DashboardUpdate(MSAccount account)
+        private async Task<bool> PrepareLoggedSession(MSAccount account)
         {
             if (account.Cookies == null || account.Cookies.Count == 0)
             {
                 return false;
             }
 
-            List<Cookie> cookies = ConvertToPWCookies(account.Cookies);
-            await _context.AddCookiesAsync(cookies);
+            try
+            {
+                List<Cookie> cookies = ConvertToPWCookies(account.Cookies);
+                await _context.AddCookiesAsync(cookies);
 
-            _page = await _context.NewPageAsync();
-            await _page.GotoAsync(URL_DASHBOARD);
+                _page = await _context.NewPageAsync();
+                await _page.GotoAsync(BrowserConstants.URL_DASHBOARD);
+                await _page.WaitForURLAsync(BrowserConstants.URL_DASHBOARD);
 
+                return true;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError("Error on {MethodName}: {Message}", nameof(PrepareLoggedSession), ex.Message);
+                return false;
+            }
+        }
 
-            return false;
+        public async Task<MSAccount> DashboardUpdate(MSAccount account)
+        {
+            if (!await PrepareLoggedSession(account))
+            {
+                return null;
+            }
+
+            if (string.IsNullOrEmpty(account.Email))
+            {
+                account.Email = await _page.EvaluateAsync<string>(BrowserConstants.SELECTOR_EMAIL);
+            }
+
+            string pcPoints = await _page.EvaluateAsync<string>(BrowserConstants.SELECTOR_BREAKDOWN_PC_POINTS);
+            pcPoints = pcPoints.Trim();
+            string[] sub = pcPoints.Split('/');
+
+            if (sub.Length == 2)
+            {
+                if (int.TryParse(sub[0], out int currentPts))
+                {
+                    account.Stats.CurrentPointsPCSearches = currentPts;
+                }
+                if (int.TryParse(sub[1], out int maxPts))
+                {
+                    account.Stats.MaxPointsPCSearches = maxPts;
+                }
+            }
+
+            return account;
         }
 
         private List<Cookie> ConvertToPWCookies(IEnumerable<AccountCookie> cookies)

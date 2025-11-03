@@ -3,6 +3,7 @@ using System.Threading.Tasks;
 using Microsoft.AspNetCore.SignalR;
 using MSRewardsBot.Common.DataEntities.Accounting;
 using MSRewardsBot.Common.DataEntities.Interfaces;
+using MSRewardsBot.Server.DataEntities;
 using MSRewardsBot.Server.DataEntities.Attributes;
 
 namespace MSRewardsBot.Server.Network
@@ -19,7 +20,12 @@ namespace MSRewardsBot.Server.Network
             _hubProxy = proxy;
         }
 
-        
+
+        public Task<bool> LoginWithToken(Guid token)
+        {
+            return _hubProxy.LoginWithToken(token);
+        }
+
         public Task<Guid> Login(User user)
         {
             return _hubProxy.Login(user);

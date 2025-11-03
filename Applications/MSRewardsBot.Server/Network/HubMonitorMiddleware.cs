@@ -11,15 +11,17 @@ using MSRewardsBot.Server.DataEntities.Attributes;
 
 namespace MSRewardsBot.Server.Network
 {
-    public class GlobalHubMiddleware : IHubFilter
+    public class HubMonitorMiddleware : IHubFilter
     {
         private readonly ILogger _logger;
         private readonly IConnectionManager _connection;
+        private readonly CommandHubProxy _commandHub;
         private readonly BusinessLayer _business;
 
-        public GlobalHubMiddleware(ILogger<GlobalHubMiddleware> logger, IConnectionManager connection, BusinessLayer bl)
+        public HubMonitorMiddleware(ILogger<HubMonitorMiddleware> logger, CommandHubProxy commandHub, IConnectionManager connection, BusinessLayer bl)
         {
             _logger = logger;
+            _commandHub = commandHub;
             _connection = connection;
             _business = bl;
         }
@@ -106,13 +108,23 @@ namespace MSRewardsBot.Server.Network
 
         public Task OnDisconnectedAsync(HubLifetimeContext context, Exception? exception, Func<HubLifetimeContext, Task> next)
         {
-            _logger.Log(LogLevel.Information, "Client disconnected: {ConnectionId}", context.Context.ConnectionId);
+            string connectionid = context.Context.ConnectionId;
+            _logger.Log(LogLevel.Information, "Client disconnected: {ConnectionId}", connectionid);
             if (exception != null)
             {
                 _logger.Log(LogLevel.Error, "Error: {Error}", exception.Message);
             }
 
-            _connection.RemoveConnection(context.Context.ConnectionId);
+            ClientInfo info = _connection.GetConnection(connectionid);
+            if (info.User != null)
+            {
+                foreach (MSAccount acc in info.User.MSAccounts)
+                {
+                    acc.Stats.PropertyChanged -= Stats_PropertyChanged;
+                }
+            }
+
+            _connection.RemoveConnection(connectionid);
 
             return next(context);
         }
@@ -132,6 +144,19 @@ namespace MSRewardsBot.Server.Network
                 info.User = user;
 
                 _connection.UpdateConnection(connectionId, info);
+
+                foreach (MSAccount acc in info.User.MSAccounts)
+                {
+                    acc.Stats.PropertyChanged += Stats_PropertyChanged;
+                }
+            }
+        }
+
+        private async void Stats_PropertyChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)
+        {
+            if (sender is ClientInfo info)
+            {
+                await _commandHub.SendMSAccountsInfo(info);
             }
         }
 

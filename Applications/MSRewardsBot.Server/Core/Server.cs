@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Threading;
-using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
 using MSRewardsBot.Common.DataEntities.Accounting;
 using MSRewardsBot.Common.Utilities;
@@ -46,14 +45,14 @@ namespace MSRewardsBot.Server.Core
             _mainThread.Name = "Core loop";
             _mainThread.Start();
 
-            _logger.Log(LogLevel.Information, "Main thread started.");
+            _logger.Log(LogLevel.Information, "Main thread started");
         }
 
         private void Loop()
         {
             _browser.Start();
 
-            using (_taskScheduler = new TaskScheduler(_browser))
+            using (_taskScheduler = new TaskScheduler(_browser, _business))
             {
                 while (!_isDisposing)
                 {
@@ -73,7 +72,7 @@ namespace MSRewardsBot.Server.Core
 
                             foreach (MSAccount acc in client.User.MSAccounts)
                             {
-                                if (DateTimeUtilities.HasElapsed(now, acc.LastDashboardUpdate, new TimeSpan(12, 0, 0)))
+                                if (DateTimeUtilities.HasElapsed(now, acc.Stats.LastDashboardUpdate, new TimeSpan(12, 0, 0)))
                                 {
                                     Job job = new Job(client.ConnectionId,
                                         new DashboardUpdateCommand()
@@ -81,7 +80,7 @@ namespace MSRewardsBot.Server.Core
                                             Account = acc,
                                             OnSuccess = delegate ()
                                             {
-                                                acc.LastDashboardUpdate = now;
+                                                acc.Stats.LastDashboardUpdate = now;
                                             }
                                         });
 

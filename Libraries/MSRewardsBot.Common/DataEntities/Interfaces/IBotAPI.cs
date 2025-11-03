@@ -6,6 +6,7 @@ namespace MSRewardsBot.Common.DataEntities.Interfaces
 {
     public interface IBotAPI
     {
+        public Task<bool> LoginWithToken(Guid token);
         public Task<Guid> Login(User user);
         public Task<Guid> Register(User user);
         public Task<bool> Logout(Guid token);
