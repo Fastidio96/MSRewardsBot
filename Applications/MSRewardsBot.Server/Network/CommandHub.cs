@@ -3,7 +3,6 @@ using System.Threading.Tasks;
 using Microsoft.AspNetCore.SignalR;
 using MSRewardsBot.Common.DataEntities.Accounting;
 using MSRewardsBot.Common.DataEntities.Interfaces;
-using MSRewardsBot.Server.DataEntities;
 using MSRewardsBot.Server.DataEntities.Attributes;
 
 namespace MSRewardsBot.Server.Network

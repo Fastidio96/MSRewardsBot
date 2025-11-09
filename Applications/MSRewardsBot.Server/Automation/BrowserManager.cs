@@ -34,12 +34,12 @@ namespace MSRewardsBot.Server.Automation
             _playwright = await Playwright.CreateAsync();
             _browser = await _playwright.Chromium.LaunchAsync
             (
-#if DEBUG
-                new BrowserTypeLaunchOptions()
-                {
-                    Headless = false
-                }
-#endif
+//#if DEBUG
+//                new BrowserTypeLaunchOptions()
+//                {
+//                    Headless = false
+//                }
+//#endif
             );
             _context = await _browser.NewContextAsync();
         }

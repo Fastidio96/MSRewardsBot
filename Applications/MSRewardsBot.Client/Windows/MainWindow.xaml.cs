@@ -1,8 +1,7 @@
 ﻿using System.Windows;
 using MSRewardsBot.Client.DataEntities;
-using MSRewardsBot.Client.Windows;
 
-namespace MSRewardsBot.Client
+namespace MSRewardsBot.Client.Windows
 {
     /// <summary>
     /// Interaction logic for MainWindow.xaml
@@ -31,14 +30,21 @@ namespace MSRewardsBot.Client
         private void Accounts_CollectionChanged(object? sender, System.Collections.Specialized.NotifyCollectionChangedEventArgs e)
         {
             cmbAcc.IsEnabled = _appInfo.Accounts.Count > 0;
-
-            
+            if (cmbAcc.IsEnabled && cmbAcc.SelectedItem == null)
+            {
+                cmbAcc.SelectedIndex = 0;
+            }
         }
 
         private void MainWindow_Loaded(object sender, RoutedEventArgs e)
         {
             this.Loaded -= MainWindow_Loaded;
             _splashScreenWindow.Hide();
+
+            if (cmbAcc.IsEnabled && cmbAcc.SelectedItem == null)
+            {
+                cmbAcc.SelectedIndex = 0;
+            }
         }
 
         private void BtnAddAcc_Click(object sender, RoutedEventArgs e)

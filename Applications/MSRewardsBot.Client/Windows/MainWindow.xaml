@@ -1,32 +1,53 @@
-﻿<Window x:Class="MSRewardsBot.Client.MainWindow"
+﻿<Window x:Class="MSRewardsBot.Client.Windows.MainWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-        xmlns:local="clr-namespace:MSRewardsBot.Client" 
+        xmlns:window="clr-namespace:MSRewardsBot.Client.Windows"
         mc:Ignorable="d"
         Title="MS Rewards Bot" 
         Height="450" Width="800"
         WindowStartupLocation="CenterScreen" ResizeMode="CanMinimize">
+
     <Grid>
         <Grid.RowDefinitions>
+            <RowDefinition Height="35px"/>
             <RowDefinition Height="*"/>
-            <RowDefinition Height="*"/>
-            <RowDefinition Height="20"/>
+            <RowDefinition Height="20px"/>
         </Grid.RowDefinitions>
         <Grid.ColumnDefinitions>
             <ColumnDefinition Width="*"/>
         </Grid.ColumnDefinitions>
 
-        <StackPanel Grid.Row="0" Grid.Column="0" Orientation="Vertical">
-            <ComboBox Grid.Row="0" Grid.Column="1"
-                  Name="cmbAcc" 
-                  ItemsSource="{Binding Accounts}" />
-            <Button Name="btnAddAcc" Content="+ Add MS account" Click="BtnAddAcc_Click"/>
-        </StackPanel>
+        <!-- Header - Selector -->
+        <Grid Grid.Row="0" Grid.Column="0">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="*"/>
+            </Grid.RowDefinitions>
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="4*" />
+                <ColumnDefinition Width="*" />
+            </Grid.ColumnDefinitions>
 
+            <ComboBox Grid.Row="0" Grid.Column="1"
+                Name="cmbAcc" 
+                ItemsSource="{Binding Accounts}">
+                <ComboBox.ItemTemplate>
+                    <DataTemplate>
+                        <StackPanel Orientation="Horizontal">
+                            <TextBlock Text="{Binding Email}" />
+                        </StackPanel>
+                    </DataTemplate>
+                </ComboBox.ItemTemplate>
+            </ComboBox>
+            <Button Grid.Row="0" Grid.Column="1" Name="btnAddAcc" Content="+ Add MS account" Click="BtnAddAcc_Click" />
+
+        </Grid>
+
+        <!-- Main content -->
         
         
+        <!-- Footer -->
         <Grid Grid.Row="2" Grid.Column="0">
             <Grid.RowDefinitions>
                 <RowDefinition Height="*"/>
