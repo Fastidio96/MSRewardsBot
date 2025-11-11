@@ -112,28 +112,76 @@ namespace MSRewardsBot.Server.Automation
                 return null;
             }
 
-            if (string.IsNullOrEmpty(account.Email))
+            try
             {
-                account.Email = await _page.EvaluateAsync<string>(BrowserConstants.SELECTOR_EMAIL);
-                _logger.LogInformation("New account email found. {Email}", account.Email);
+                if (string.IsNullOrEmpty(account.Email))
+                {
+                    account.Email = await _page.EvaluateAsync<string>(BrowserConstants.SELECTOR_EMAIL);
+                    _logger.LogInformation("New account email found. {Email}", account.Email);
+                }
+            }
+            catch (Exception e)
+            {
+                _logger.LogError("Error: {e}", e.Message);
             }
 
-            string pcPoints = await _page.EvaluateAsync<string>(BrowserConstants.SELECTOR_BREAKDOWN_PC_POINTS);
-            pcPoints = pcPoints.Trim();
-            string[] sub = pcPoints.Split('/');
-
-            if (sub.Length == 2)
+            try
             {
-                if (int.TryParse(sub[0], out int currentPts))
+                string pcPoints = await _page.EvaluateAsync<string>(BrowserConstants.SELECTOR_BREAKDOWN_PC_POINTS);
+                pcPoints = pcPoints.Trim();
+                string[] sub = pcPoints.Split('/');
+
+                if (sub.Length == 2)
                 {
-                    _logger.LogDebug("Found value for {stat}: {val}", nameof(MSAccountStats.CurrentPointsPCSearches), currentPts);
-                    account.Stats.CurrentPointsPCSearches = currentPts;
+                    if (int.TryParse(sub[0], out int currentPts))
+                    {
+                        _logger.LogDebug("Found value for {stat}: {val}", nameof(MSAccountStats.CurrentPointsPCSearches), currentPts);
+                        account.Stats.CurrentPointsPCSearches = currentPts;
+                    }
+                    if (int.TryParse(sub[1], out int maxPts))
+                    {
+                        _logger.LogDebug("Found value for {stat}: {val}", nameof(MSAccountStats.MaxPointsPCSearches), maxPts);
+                        account.Stats.MaxPointsPCSearches = maxPts;
+                    }
                 }
-                if (int.TryParse(sub[1], out int maxPts))
+            }
+            catch (Exception e)
+            {
+                _logger.LogError("Error: {e}", e.Message);
+            }
+
+            try
+            {
+                string accLevel = await _page.EvaluateAsync<string>(BrowserConstants.SELECTOR_ACCOUNT_LEVEL);
+                accLevel = accLevel.Trim();
+                string nLev = accLevel.Substring(accLevel.Length - 1, 1);
+                if (int.TryParse(nLev, out int accountLevel))
                 {
-                    _logger.LogDebug("Found value for {stat}: {val}", nameof(MSAccountStats.MaxPointsPCSearches), maxPts);
-                    account.Stats.MaxPointsPCSearches = maxPts;
+                    _logger.LogDebug("Found value for {stat}: {val}", nameof(MSAccountStats.CurrentAccountLevel), accountLevel);
+                    account.Stats.CurrentAccountLevel = accountLevel;
                 }
+            }
+            catch (Exception e)
+            {
+                _logger.LogError("Error: {e}", e.Message);
+            }
+
+            try
+            {
+                string accLevelRatioPts = await _page.EvaluateAsync<string>(BrowserConstants.SELECTOR_ACCOUNT_LEVEL_POINTS);
+                accLevelRatioPts = accLevelRatioPts.Trim();
+                string[] split = accLevelRatioPts.Split('/');
+                string nLevPts = split[0].Trim();
+
+                if (int.TryParse(nLevPts, out int accountPtsLevel))
+                {
+                    _logger.LogDebug("Found value for {stat}: {val}", nameof(MSAccountStats.CurrentAccountLevelPoints), accountPtsLevel);
+                    account.Stats.CurrentAccountLevelPoints = accountPtsLevel;
+                }
+            }
+            catch (Exception e)
+            {
+                _logger.LogError("Error: {e}", e.Message);
             }
 
             await CloseLoggedSession();
