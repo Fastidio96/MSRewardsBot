@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Security.Cryptography;
 using System.Text;
 using Microsoft.Extensions.Logging;
@@ -117,6 +118,10 @@ namespace MSRewardsBot.Server.Core
             return user;
         }
 
+        internal List<MSAccount> GetAllMSAccounts()
+        {
+            return _data.GetAllMSAccounts();
+        }
 
         internal User GetUser(string username)
         {

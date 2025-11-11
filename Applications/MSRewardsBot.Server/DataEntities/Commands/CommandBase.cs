@@ -4,7 +4,7 @@ namespace MSRewardsBot.Server.DataEntities.Commands
 {
     public abstract class CommandBase
     {
-        public Action? OnSuccess { get; set; }
-        public Action? OnFail { get; set; }
+        public virtual Action? OnSuccess { get; set; }
+        public virtual Action? OnFail { get; set; }
     }
 }

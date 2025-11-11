@@ -55,8 +55,10 @@ namespace MSRewardsBot.Server.Core
 
                     if (isPass == true)
                     {
+                        acc.Stats.LastDashboardUpdate = DateTime.Now;
                         if (!_business.UpdateMSAccount(acc))
                         {
+                            acc.Stats.LastDashboardUpdate = DateTime.MinValue;
                             isPass = false;
                         }
                     }

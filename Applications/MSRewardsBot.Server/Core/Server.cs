@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Threading;
 using Microsoft.Extensions.Logging;
 using MSRewardsBot.Common.DataEntities.Accounting;
@@ -19,6 +20,7 @@ namespace MSRewardsBot.Server.Core
         private readonly BusinessLayer _business;
 
         private Thread _mainThread;
+        private Thread _clientsThread;
         private bool _isDisposing = false;
 
         private TaskScheduler _taskScheduler;
@@ -41,59 +43,83 @@ namespace MSRewardsBot.Server.Core
 
         public void Start()
         {
-            _mainThread = new Thread(Loop);
-            _mainThread.Name = "Core loop";
-            _mainThread.Start();
+            _browser.Start();
+            _taskScheduler = new TaskScheduler(_browser, _business);
 
-            _logger.Log(LogLevel.Information, "Main thread started");
+            _clientsThread = new Thread(ClientLoop);
+            _clientsThread.Name = nameof(ClientLoop);
+
+            _mainThread = new Thread(CoreLoop);
+            _mainThread.Name = nameof(CoreLoop);
+
+            //_clientsThread.Start();
+            _mainThread.Start();
         }
 
-        private void Loop()
+        private void ClientLoop()
         {
-            _browser.Start();
+            _logger.LogInformation("Clients loop thread started");
 
-            using (_taskScheduler = new TaskScheduler(_browser, _business))
+            while (!_isDisposing)
             {
-                while (!_isDisposing)
+                foreach (ClientInfo client in _connectionManager.GetClients())
                 {
-                    foreach (ClientInfo client in _connectionManager.GetClients())
+                    DateTime now = DateTime.Now;
+
+                    if (DateTimeUtilities.HasElapsed(now, client.LastServerCheck, new TimeSpan(0, 5, 0)))
                     {
-                        DateTime now = DateTime.Now;
-
-                        if (DateTimeUtilities.HasElapsed(now, client.LastServerCheck, new TimeSpan(0, 5, 0)))
+                        if (client.User == null)
                         {
-                            if (client.User == null)
-                            {
-                                Thread.Sleep(1000);
-                                continue;
-                            }
-
-                            client.LastServerCheck = now;
-
-                            foreach (MSAccount acc in client.User.MSAccounts)
-                            {
-                                if (DateTimeUtilities.HasElapsed(now, acc.Stats.LastDashboardUpdate, new TimeSpan(12, 0, 0)))
-                                {
-                                    Job job = new Job(client.ConnectionId,
-                                        new DashboardUpdateCommand()
-                                        {
-                                            Account = acc,
-                                            OnSuccess = delegate ()
-                                            {
-                                                acc.Stats.LastDashboardUpdate = now;
-                                            }
-                                        });
-
-                                    _taskScheduler.Queue.Enqueue(job, JobPriority.Medium);
-                                }
-                            }
+                            Thread.Sleep(1000);
+                            continue;
                         }
-                    }
 
-                    Thread.Sleep(1000);
+                        client.LastServerCheck = now;
+                    }
                 }
+
+                Thread.Sleep(1000);
             }
         }
+
+        private void CoreLoop()
+        {
+            _logger.LogInformation("Core loop thread started");
+
+            while (!_isDisposing)
+            {
+                List<MSAccount> accounts = _business.GetAllMSAccounts();
+
+                foreach (MSAccount acc in accounts)
+                {
+                    if(acc.Cookies.Count == 0)
+                    {
+                        _logger.LogWarning("No cookies found for account {Email} | {Username}. Skipping..", acc.Email, acc.User.Username);
+                        continue;
+                    }
+
+                    DateTime now = DateTime.Now;
+                    if (DateTimeUtilities.HasElapsed(now, acc.Stats.LastServerCheck, new TimeSpan(1, 0, 0)))
+                    {
+                        acc.Stats.LastServerCheck = now; //Fix for not queueing the same job while we wait for the job's completion
+                        if (DateTimeUtilities.HasElapsed(now, acc.Stats.LastDashboardUpdate, new TimeSpan(0, 5, 0)))
+                        {
+                            Job job = new Job(
+                                new DashboardUpdateCommand()
+                                {
+                                    Account = acc
+                                });
+
+                            _taskScheduler.Queue.Enqueue(job, JobPriority.Medium);
+                        }
+                    }
+                }
+
+                Thread.Sleep(1000);
+            }
+        }
+
+
 
         public void Dispose()
         {
@@ -107,6 +133,17 @@ namespace MSRewardsBot.Server.Core
                 }
 
                 _mainThread = null;
+            }
+
+            if (_taskScheduler != null)
+            {
+                _taskScheduler.Dispose();
+                _taskScheduler = null;
+            }
+
+            if(_browser != null)
+            {
+                _browser.Dispose();
             }
         }
     }

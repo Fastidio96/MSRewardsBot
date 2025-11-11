@@ -23,8 +23,9 @@ namespace MSRewardsBot.Server.Automation
 
         private void Install()
         {
-            _logger.Log(LogLevel.Information, "Checking dependencies..");
+            _logger.Log(LogLevel.Information, "Checking and installing browser dependencies..");
             Microsoft.Playwright.Program.Main(["install"]);
+            _logger.Log(LogLevel.Information, "Dependencies installed successfully");
         }
 
         public async void Start()
@@ -34,20 +35,24 @@ namespace MSRewardsBot.Server.Automation
             _playwright = await Playwright.CreateAsync();
             _browser = await _playwright.Chromium.LaunchAsync
             (
-//#if DEBUG
-//                new BrowserTypeLaunchOptions()
-//                {
-//                    Headless = false
-//                }
-//#endif
+#if DEBUG
+                new BrowserTypeLaunchOptions()
+                {
+                    Headless = false
+                }
+#endif
             );
             _context = await _browser.NewContextAsync();
+            _page = await _context.NewPageAsync();
+
+            _logger.Log(LogLevel.Information, "BrowserManager init completed");
         }
 
-        private async Task<bool> PrepareLoggedSession(MSAccount account)
+        private async Task<bool> StartLoggedSession(MSAccount account)
         {
             if (account.Cookies == null || account.Cookies.Count == 0)
             {
+                _logger.LogError("Cannot proceed. No cookies for account {Account} | {User} found.", account.Email, account.User.Username);
                 return false;
             }
 
@@ -55,23 +60,54 @@ namespace MSRewardsBot.Server.Automation
             {
                 List<Cookie> cookies = ConvertToPWCookies(account.Cookies);
                 await _context.AddCookiesAsync(cookies);
-
-                _page = await _context.NewPageAsync();
-                await _page.GotoAsync(BrowserConstants.URL_DASHBOARD);
-                await _page.WaitForURLAsync(BrowserConstants.URL_DASHBOARD);
+                _logger.LogDebug("{count} cookies loaded", cookies.Count);
 
                 return true;
             }
             catch (Exception ex)
             {
-                _logger.LogError("Error on {MethodName}: {Message}", nameof(PrepareLoggedSession), ex.Message);
+                _logger.LogError("Error on {MethodName}: {Message}", nameof(StartLoggedSession), ex.Message);
+                return false;
+            }
+        }
+
+        private Task CloseLoggedSession()
+        {
+            _logger.LogDebug("Clearing cookies from the page context");
+            return _context.ClearCookiesAsync();
+        }
+
+        private async Task<bool> NavigateToURL(string url)
+        {
+            try
+            {
+                await _page.GotoAsync(url);
+                await _page.WaitForURLAsync(url, new PageWaitForURLOptions()
+                {
+                    WaitUntil = WaitUntilState.Load,
+                    Timeout = 15000
+                });
+
+                _logger.LogDebug("Navigated to {url}", url);
+                return true;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError("Error on {MethodName}: {Message}", nameof(NavigateToURL), ex.Message);
                 return false;
             }
         }
 
         public async Task<MSAccount> DashboardUpdate(MSAccount account)
         {
-            if (!await PrepareLoggedSession(account))
+            _logger.LogDebug("Dashboard update started for {Account} | {User}", account.Email, account.User.Username);
+
+            if (!await StartLoggedSession(account))
+            {
+                return null;
+            }
+
+            if (!await NavigateToURL(BrowserConstants.URL_DASHBOARD_PTS_BREAKDOWN))
             {
                 return null;
             }
@@ -79,6 +115,7 @@ namespace MSRewardsBot.Server.Automation
             if (string.IsNullOrEmpty(account.Email))
             {
                 account.Email = await _page.EvaluateAsync<string>(BrowserConstants.SELECTOR_EMAIL);
+                _logger.LogInformation("New account email found. {Email}", account.Email);
             }
 
             string pcPoints = await _page.EvaluateAsync<string>(BrowserConstants.SELECTOR_BREAKDOWN_PC_POINTS);
@@ -89,13 +126,17 @@ namespace MSRewardsBot.Server.Automation
             {
                 if (int.TryParse(sub[0], out int currentPts))
                 {
+                    _logger.LogDebug("Found value for {stat}: {val}", nameof(MSAccountStats.CurrentPointsPCSearches), currentPts);
                     account.Stats.CurrentPointsPCSearches = currentPts;
                 }
                 if (int.TryParse(sub[1], out int maxPts))
                 {
+                    _logger.LogDebug("Found value for {stat}: {val}", nameof(MSAccountStats.MaxPointsPCSearches), maxPts);
                     account.Stats.MaxPointsPCSearches = maxPts;
                 }
             }
+
+            await CloseLoggedSession();
 
             return account;
         }

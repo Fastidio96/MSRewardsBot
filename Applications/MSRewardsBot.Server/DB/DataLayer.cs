@@ -1,5 +1,7 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Linq;
+using Microsoft.EntityFrameworkCore;
 using MSRewardsBot.Common.DataEntities.Accounting;
 
 namespace MSRewardsBot.Server.DB
@@ -15,6 +17,13 @@ namespace MSRewardsBot.Server.DB
             _db.Database.EnsureCreated();
         }
 
+        public List<MSAccount> GetAllMSAccounts()
+        {
+            return _db.Accounts
+                .Include(m => m.User)
+                .Include(m => m.Cookies)
+                .ToList();
+        }
 
         public bool InsertMSAccount(MSAccount msAccount)
         {

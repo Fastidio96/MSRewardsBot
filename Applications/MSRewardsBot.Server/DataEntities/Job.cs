@@ -1,5 +1,6 @@
 ﻿using System;
 using MSRewardsBot.Server.DataEntities.Commands;
+using static Microsoft.EntityFrameworkCore.DbLoggerCategory.Database;
 
 namespace MSRewardsBot.Server.DataEntities
 {
@@ -10,12 +11,16 @@ namespace MSRewardsBot.Server.DataEntities
         public string ConnectionId { get; set; }
         public CommandBase Command { get; set; }
 
-        public Job(string connectionId, CommandBase command)
+        public Job(CommandBase command)
         {
             SubmittedAt = DateTime.Now;
             Status = JobStatus.Pending;
-            ConnectionId = connectionId;
             Command = command;
+        }
+
+        public Job(string connectionId, CommandBase command) : this(command)
+        {
+            ConnectionId = connectionId;
         }
     }
 

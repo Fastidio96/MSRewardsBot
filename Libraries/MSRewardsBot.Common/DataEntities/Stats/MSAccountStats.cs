@@ -1,6 +1,7 @@
 ﻿using System;
 using System.ComponentModel;
 using System.Runtime.CompilerServices;
+using System.Text.Json.Serialization;
 
 namespace MSRewardsBot.Common.DataEntities.Stats
 {
@@ -41,6 +42,34 @@ namespace MSRewardsBot.Common.DataEntities.Stats
         }
         private int _maxPointsPCSearches;
 
+        public int CurrentAccountLevel
+        {
+            get => _currentAccountLevel;
+            set
+            {
+                if (_currentAccountLevel != value)
+                {
+                    _currentAccountLevel = value;
+                    NotifyPropertyChanged();
+                }
+            }
+        }
+        private int _currentAccountLevel;
+
+        public int CurrentAccountLevelPoints
+        {
+            get => _currentAccountLevelPoints;
+            set
+            {
+                if (_currentAccountLevelPoints != value)
+                {
+                    _currentAccountLevelPoints = value;
+                    NotifyPropertyChanged();
+                }
+            }
+        }
+        private int _currentAccountLevelPoints;
+
         public DateTime LastDashboardUpdate
         {
             get => _lastDashboardUpdate;
@@ -55,6 +84,10 @@ namespace MSRewardsBot.Common.DataEntities.Stats
             }
         }
         private DateTime _lastDashboardUpdate;
+
+        [JsonIgnore]
+        public DateTime LastServerCheck { get; set; }
+
 
         private void NotifyPropertyChanged([CallerMemberName] string propertyName = null)
         {
