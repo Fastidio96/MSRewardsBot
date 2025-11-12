@@ -45,7 +45,7 @@ namespace MSRewardsBot.Client.Services
                 {
                     if (fs.Length == 0)
                     {
-                        return true;
+                        return false;
                     }
 
                     XmlSerializer xml = new XmlSerializer(typeof(AppData));

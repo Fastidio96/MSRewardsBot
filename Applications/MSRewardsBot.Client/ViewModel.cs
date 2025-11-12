@@ -35,7 +35,11 @@ namespace MSRewardsBot.Client
         public async Task Init()
         {
             await _connection.ConnectAsync();
-            _fileManager.LoadData(out _appData);
+            if(!_fileManager.LoadData(out _appData))
+            {
+                _appInfo.IsUserLogged = false;
+                return;
+            }
 
             _appInfo.IsUserLogged = await _connection.LoginWithToken(_token);
 

@@ -29,7 +29,7 @@
                 <ColumnDefinition Width="*" />
             </Grid.ColumnDefinitions>
 
-            <ComboBox Grid.Row="0" Grid.Column="1"
+            <ComboBox Grid.Row="0" Grid.Column="0"
                 Name="cmbAcc" 
                 ItemsSource="{Binding Accounts}">
                 <ComboBox.ItemTemplate>

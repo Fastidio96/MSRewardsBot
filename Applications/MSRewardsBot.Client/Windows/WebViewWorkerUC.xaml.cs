@@ -32,14 +32,17 @@ namespace MSRewardsBot.Client.Windows
 
         public void Dispose()
         {
-            webview.NavigationCompleted -= Webview_DetectInit_NavigationCompleted;
-
-            Dispatcher.InvokeAsync(delegate ()
+            if(webview != null)
             {
-                webview.CoreWebView2?.Stop();
-                webview.Dispose();
-                webview = null;
-            }).Wait();
+                webview.NavigationCompleted -= Webview_DetectInit_NavigationCompleted;
+
+                Dispatcher.InvokeAsync(delegate ()
+                {
+                    webview.CoreWebView2?.Stop();
+                    webview.Dispose();
+                    webview = null;
+                }).Wait();
+            }
 
             KillWebViewProcess();
         }
