@@ -16,6 +16,9 @@ namespace MSRewardsBot.Server.DB
         {
             string dbPath = Path.Combine(GetFolderDB(), "data.db");
             optionsBuilder.UseSqlite($"Data Source={dbPath}");
+#if DEBUG
+            optionsBuilder.EnableSensitiveDataLogging();
+#endif
 
             base.OnConfiguring(optionsBuilder);
         }

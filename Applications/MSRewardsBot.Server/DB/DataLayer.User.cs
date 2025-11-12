@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Linq;
 using Microsoft.EntityFrameworkCore;
 using MSRewardsBot.Common.DataEntities.Accounting;
@@ -10,97 +9,128 @@ namespace MSRewardsBot.Server.DB
     {
         public User GetUser(string username)
         {
-            return _db.Users
-                .Include(u => u.AuthToken)
-                .Include(m => m.MSAccounts)
-                    .ThenInclude(c => c.Cookies)
-                .FirstOrDefault(u => u.Username == username);
+            using (MSRBContext context = new MSRBContext())
+            {
+                return context.Users
+                    .AsNoTracking()
+                    .Include(u => u.AuthToken)
+                    .Include(m => m.MSAccounts)
+                        .ThenInclude(c => c.Cookies)
+                    .FirstOrDefault(u => u.Username == username);
+            }
         }
 
         public User GetUser(Guid authToken)
         {
-            return _db.Users
-                .Include(u => u.AuthToken)
-                .Include(m => m.MSAccounts)
-                    .ThenInclude(c => c.Cookies)
-                .FirstOrDefault(u => u.AuthToken.Token == authToken);
+            using (MSRBContext context = new MSRBContext())
+            {
+                return context.Users
+                    .AsNoTracking()
+                    .Include(u => u.AuthToken)
+                    .Include(m => m.MSAccounts)
+                        .ThenInclude(c => c.Cookies)
+                    .FirstOrDefault(u => u.AuthToken.Token == authToken);
+            }
         }
 
         public bool InvalidateUserAuthToken(Guid token)
         {
-            UserAuthToken auth = _db.UserAuthTokens
-                 .FirstOrDefault(t => t.Token == token);
-            if (auth == null)
+            using (MSRBContext context = new MSRBContext())
             {
-                return true;
+                UserAuthToken auth = context.UserAuthTokens
+                    .AsNoTracking()
+                    .FirstOrDefault(t => t.Token == token);
+                if (auth == null)
+                {
+                    return true;
+                }
+
+                auth.Token = Guid.Empty;
+                context.UserAuthTokens.Update(auth);
+
+                return context.SaveChanges() > 0;
             }
-
-            auth.Token = Guid.Empty;
-            _db.UserAuthTokens.Update(auth);
-
-            return _db.SaveChanges() > 0;
         }
 
         public Guid GetUserAuthToken(string username)
         {
-            User user = _db.Users
-                .Include(u => u.AuthToken)
-                .FirstOrDefault(u => u.Username == username);
-            if (user == null)
+            using (MSRBContext context = new MSRBContext())
             {
-                return Guid.Empty;
-            }
+                User user = context.Users
+                    .AsNoTracking()
+                    .Include(u => u.AuthToken)
+                    .FirstOrDefault(u => u.Username == username);
+                if (user == null)
+                {
+                    return Guid.Empty;
+                }
 
-            return CreateUserAuthToken(user).Token;
+                return CreateUserAuthToken(user).Token;
+            }
         }
 
         private UserAuthToken CreateUserAuthToken(User user)
         {
-            UserAuthToken token = _db.UserAuthTokens.FirstOrDefault(t => t.User.Username == user.Username);
-            if (token == null)
+            using (MSRBContext context = new MSRBContext())
             {
-                token = _db.UserAuthTokens.Add(new UserAuthToken()
+                UserAuthToken token = context.UserAuthTokens
+                    .AsNoTracking()
+                    .FirstOrDefault(t => t.User.Username == user.Username);
+                if (token == null)
                 {
-                    CreatedAt = DateTime.Now,
-                    LastTimeUsed = DateTime.Now,
-                    Token = Guid.NewGuid(),
-                    User = user
-                }).Entity;
+                    token = context.UserAuthTokens.Add(new UserAuthToken()
+                    {
+                        CreatedAt = DateTime.Now,
+                        LastTimeUsed = DateTime.Now,
+                        Token = Guid.NewGuid(),
+                        User = user
+                    }).Entity;
 
-                _db.SaveChanges();
+                    context.SaveChanges();
+                }
+                else
+                {
+                    token.LastTimeUsed = DateTime.Now;
+
+                    context.UserAuthTokens.Update(token);
+                    context.SaveChanges();
+                }
+
+                return token;
             }
-            else
-            {
-                token.LastTimeUsed = DateTime.Now;
-
-                _db.UserAuthTokens.Update(token);
-                _db.SaveChanges();
-            }
-
-            return token;
         }
 
         public bool CreateUser(string username, string password)
         {
-            _db.Users.Add(new User()
+            using (MSRBContext context = new MSRBContext())
             {
-                Username = username,
-                Password = password,
+                context.Users.Add(new User()
+                {
+                    Username = username,
+                    Password = password
+                });
 
-            });
-
-            return _db.SaveChanges() > 0;
+                return context.SaveChanges() > 0;
+            }
         }
 
         public bool IsUsernameAlreadyExists(string username)
         {
-            return _db.Users.Count(u => u.Username == username) > 0;
+            using (MSRBContext context = new MSRBContext())
+            {
+                return context.Users
+                    .AsNoTracking()
+                    .Count(u => u.Username == username) > 0;
+            }
         }
 
         public bool UpdateUser(User user)
         {
-            _db.Users.Update(user);
-            return _db.SaveChanges() > 0;
+            using (MSRBContext context = new MSRBContext())
+            {
+                context.Users.Update(user);
+                return context.SaveChanges() > 0;
+            }
         }
     }
 }

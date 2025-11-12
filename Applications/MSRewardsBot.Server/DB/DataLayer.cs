@@ -19,28 +19,38 @@ namespace MSRewardsBot.Server.DB
 
         public List<MSAccount> GetAllMSAccounts()
         {
-            return _db.Accounts
-                .Include(m => m.User)
-                .Include(m => m.Cookies)
-                .ToList();
+            using (MSRBContext context = new MSRBContext())
+            {
+                return context.Accounts
+                    .AsNoTracking()
+                    .Include(m => m.User)
+                    .Include(m => m.Cookies)
+                    .ToList();
+            }
         }
 
         public bool InsertMSAccount(MSAccount msAccount)
         {
-            _db.Accounts.Add(msAccount);
-            return _db.SaveChanges() > 0;
+            using (MSRBContext context = new MSRBContext())
+            {
+                context.Accounts.Add(msAccount);
+                return context.SaveChanges() > 0;
+            }
         }
 
         public bool UpdateMSAccount(MSAccount account)
         {
-            MSAccount acc = _db.Accounts.FirstOrDefault(a => a.DbId == account.DbId);
-            if (acc == null)
+            using (MSRBContext context = new MSRBContext())
             {
-                return false;
-            }
+                MSAccount acc = context.Accounts.AsNoTracking().FirstOrDefault(a => a.DbId == account.DbId);
+                if (acc == null)
+                {
+                    return false;
+                }
 
-            _db.Accounts.Update(account);
-            return _db.SaveChanges() > 0;
+                context.Accounts.Update(account);
+                return context.SaveChanges() > 0;
+            }
         }
 
 
