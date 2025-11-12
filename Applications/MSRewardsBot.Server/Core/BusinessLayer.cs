@@ -5,7 +5,6 @@ using System.Text;
 using Microsoft.Extensions.Logging;
 using MSRewardsBot.Common.DataEntities.Accounting;
 using MSRewardsBot.Server.DB;
-using MSRewardsBot.Server.Network;
 
 namespace MSRewardsBot.Server.Core
 {

@@ -4,6 +4,7 @@
     {
         public const string URL_DASHBOARD = "https://rewards.bing.com/";
         public const string URL_DASHBOARD_PTS_BREAKDOWN = "https://rewards.bing.com/status/pointsbreakdown";
+        public const string URL_SEARCHES = "https://www.bing.com/search?q=";
 
         #region URL_DASHBOARD_PTS_BREAKDOWN
         public const string SELECTOR_EMAIL = @"document.querySelector(""#mectrl_currentAccount_secondary"").innerHTML.trim()";

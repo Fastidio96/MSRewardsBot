@@ -36,10 +36,10 @@ namespace MSRewardsBot.Server.Automation
             _browser = await _playwright.Chromium.LaunchAsync
             (
 #if DEBUG
-                new BrowserTypeLaunchOptions()
-                {
-                    Headless = false
-                }
+            //new BrowserTypeLaunchOptions()
+            //{
+            //    Headless = false
+            //}
 #endif
             );
             _context = await _browser.NewContextAsync();
@@ -100,7 +100,7 @@ namespace MSRewardsBot.Server.Automation
 
         public async Task<MSAccount> DashboardUpdate(MSAccount account)
         {
-            _logger.LogDebug("Dashboard update started for {Account} | {User}", account.Email, account.User.Username);
+            _logger.LogInformation("Dashboard update started for {User} | {Account}", account.User.Username, account.Email);
 
             if (!await StartLoggedSession(account))
             {
@@ -187,6 +187,18 @@ namespace MSRewardsBot.Server.Automation
             await CloseLoggedSession();
 
             return account;
+        }
+
+        public async Task<bool> DoPCSearch(MSAccount account, string keyword)
+        {
+            _logger.LogDebug("PC searches started for {User} | {Account}", account.User.Username, account.Email);
+
+            if (!await StartLoggedSession(account))
+            {
+                return false;
+            }
+
+            return await NavigateToURL($"{BrowserConstants.URL_SEARCHES}{keyword}");
         }
 
         private List<Cookie> ConvertToPWCookies(IEnumerable<AccountCookie> cookies)
