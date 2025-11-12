@@ -42,6 +42,10 @@ namespace MSRewardsBot.Common.DataEntities.Stats
         }
         private int _maxPointsPCSearches;
 
+        private int _pointsPerSearch = 3;
+        public int PCSearchesToDo => (MaxPointsPCSearches - CurrentPointsPCSearches) / _pointsPerSearch;
+
+
         public int CurrentAccountLevel
         {
             get => _currentAccountLevel;
