@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Threading;
 using Microsoft.Extensions.Logging;
 using MSRewardsBot.Common.DataEntities.Accounting;
+using MSRewardsBot.Common.DataEntities.Stats;
 using MSRewardsBot.Common.Utilities;
 using MSRewardsBot.Server.Automation;
 using MSRewardsBot.Server.DataEntities;
@@ -82,14 +83,16 @@ namespace MSRewardsBot.Server.Core
             }
         }
 
+
         private void CoreLoop()
         {
             _logger.LogInformation("Core loop thread started");
 
+            Dictionary<int, MSAccountStats> cacheMSAccStats = new Dictionary<int, MSAccountStats>();
+
             while (!_isDisposing)
             {
                 List<MSAccount> accounts = _business.GetAllMSAccounts();
-
                 foreach (MSAccount acc in accounts)
                 {
                     if(acc.Cookies.Count == 0)
@@ -98,25 +101,40 @@ namespace MSRewardsBot.Server.Core
                         continue;
                     }
 
-                    DateTime now = DateTime.Now;
-                    if (DateTimeUtilities.HasElapsed(now, acc.Stats.LastServerCheck, new TimeSpan(1, 0, 0)))
+                    if(!cacheMSAccStats.TryGetValue(acc.DbId, out MSAccountStats cache))
                     {
-                        acc.Stats.LastServerCheck = now; //Fix for not queueing the same job while we wait for the job's completion
-                        if (DateTimeUtilities.HasElapsed(now, acc.Stats.LastDashboardUpdate, new TimeSpan(0, 5, 0)))
+                        cache = acc.Stats;
+                        cacheMSAccStats.Add(acc.DbId, cache);
+                    }
+
+                    DateTime now = DateTime.Now;
+                    if (DateTimeUtilities.HasElapsed(now, cache.LastServerCheck, new TimeSpan(1, 0, 0)))
+                    {
+                        cache.LastServerCheck = now; //Fix for not queueing the same job while we wait for the job's completion
+                        if (DateTimeUtilities.HasElapsed(now, cache.LastDashboardUpdate, new TimeSpan(0, 5, 0)))
                         {
                             Job job = new Job(
                                 new DashboardUpdateCommand()
                                 {
-                                    Account = acc
+                                    Account = acc,
+                                    OnFail = delegate ()
+                                    {
+                                        cache.LastServerCheck = DateTime.MinValue; // Retry again after failure
+                                    }
                                 });
 
-                            _taskScheduler.Queue.Enqueue(job, JobPriority.Medium);
+                            _taskScheduler.AddJob(now, job);
                         }
                     }
+
+                    
                 }
 
                 Thread.Sleep(1000);
             }
+
+            cacheMSAccStats.Clear();
+            cacheMSAccStats = null;
         }
 
 

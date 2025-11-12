@@ -1,12 +1,12 @@
 ﻿using System;
 using MSRewardsBot.Server.DataEntities.Commands;
-using static Microsoft.EntityFrameworkCore.DbLoggerCategory.Database;
 
 namespace MSRewardsBot.Server.DataEntities
 {
     public class Job
     {
         public DateTime SubmittedAt { get; set; }
+        public DateTime AvailableAfter { get; set; }
         public JobStatus Status { get; set; }
         public string ConnectionId { get; set; }
         public CommandBase Command { get; set; }
@@ -22,14 +22,6 @@ namespace MSRewardsBot.Server.DataEntities
         {
             ConnectionId = connectionId;
         }
-    }
-
-    public enum JobPriority : byte
-    {
-        Low = 0,
-        Medium = 1,
-        High = 2,
-        Urgent = 3
     }
 
     public enum JobStatus : byte
