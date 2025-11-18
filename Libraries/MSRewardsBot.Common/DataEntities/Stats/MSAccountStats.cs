@@ -13,6 +13,11 @@ namespace MSRewardsBot.Common.DataEntities.Stats
         {
             LastDashboardUpdate = DateTime.MinValue;
         }
+        
+        public void PCSearchCompleted()
+        {
+            CurrentPointsPCSearches += _pointsPerSearch;
+        }
 
         public int CurrentPointsPCSearches
         {
@@ -42,7 +47,7 @@ namespace MSRewardsBot.Common.DataEntities.Stats
         }
         private int _maxPointsPCSearches;
 
-        private int _pointsPerSearch = 3;
+        private readonly int _pointsPerSearch = 3;
         public int PCSearchesToDo => (MaxPointsPCSearches - CurrentPointsPCSearches) / _pointsPerSearch;
 
 
@@ -90,7 +95,11 @@ namespace MSRewardsBot.Common.DataEntities.Stats
         private DateTime _lastDashboardUpdate;
 
         [JsonIgnore]
-        public DateTime LastServerCheck { get; set; }
+        public DateTime LastDashboardCheck { get; set; }
+
+        [JsonIgnore]
+        public DateTime LastSearchesCheck { get; set; }
+
 
 
         private void NotifyPropertyChanged([CallerMemberName] string propertyName = null)
