@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.ResponseCompression;
 using Microsoft.AspNetCore.SignalR;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Logging.Console;
 using MSRewardsBot.Server.Automation;
 using MSRewardsBot.Server.Core;
 using MSRewardsBot.Server.Network;
@@ -16,8 +17,21 @@ namespace MSRewardsBot.Server
         public static void Main(string[] args)
         {
             WebApplicationBuilder builder = WebApplication.CreateBuilder(args);
-            builder.Logging.ClearProviders();
-            builder.Logging.AddConsole();
+            builder.Services.AddLogging(logbuilder =>
+            {
+                logbuilder.ClearProviders();
+                logbuilder.AddConsole(options =>
+                {
+                    options.FormatterName = nameof(CustomConsoleFormatter);
+                });
+
+                logbuilder.AddConsoleFormatter<CustomConsoleFormatter, CustomConsoleOptions>(cco =>
+                {
+                    cco.UseColors = true;
+                    cco.WriteOnFile = true;
+                    cco.GroupedCategories = true;
+                });
+            });
 
             // Add services to the container.
             builder.Services.AddAuthorization();
