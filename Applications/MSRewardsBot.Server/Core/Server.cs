@@ -20,6 +20,9 @@ namespace MSRewardsBot.Server.Core
         private readonly BrowserManager _browser;
         private readonly BusinessLayer _business;
 
+        private readonly IKeywordProvider _keywordProvider;
+        private readonly KeywordStore _keywordStore;
+
         private Thread _mainThread;
         private Thread _clientsThread;
         private bool _isDisposing = false;
@@ -40,11 +43,14 @@ namespace MSRewardsBot.Server.Core
             _commandHub = commandHubProxy;
             _browser = browser;
             _business = bl;
+
+            _keywordProvider = new KeywordProvider();
+            _keywordStore = new KeywordStore();
         }
 
         public void Start()
         {
-            _browser.Start();
+            _browser.Init();
             _taskScheduler = new TaskScheduler(_browser, _business);
 
             _clientsThread = new Thread(ClientLoop);
@@ -53,7 +59,7 @@ namespace MSRewardsBot.Server.Core
             _mainThread = new Thread(CoreLoop);
             _mainThread.Name = nameof(CoreLoop);
 
-            //_clientsThread.Start();
+            _clientsThread.Start();
             _mainThread.Start();
         }
 
@@ -84,50 +90,115 @@ namespace MSRewardsBot.Server.Core
         }
 
 
-        private void CoreLoop()
+        private async void CoreLoop()
         {
             _logger.LogInformation("Core loop thread started");
 
-            Dictionary<int, MSAccountStats> cacheMSAccStats = new Dictionary<int, MSAccountStats>();
+            Dictionary<int, MSAccountServerData> cacheMSAccStats = new Dictionary<int, MSAccountServerData>();
 
             while (!_isDisposing)
             {
+                if (DateTimeUtilities.HasElapsed(DateTime.Now, _keywordStore.LastRefresh, Settings.KeywordsListRefresh))
+                {
+                    await _keywordStore.RefreshList();
+                }
+
                 List<MSAccount> accounts = _business.GetAllMSAccounts();
                 foreach (MSAccount acc in accounts)
                 {
-                    if(acc.Cookies.Count == 0)
+                    if (acc.Cookies.Count == 0)
                     {
                         _logger.LogWarning("No cookies found for account {Email} | {Username}. Skipping..", acc.Email, acc.User.Username);
                         continue;
                     }
 
-                    if(!cacheMSAccStats.TryGetValue(acc.DbId, out MSAccountStats cache))
+                    if (!cacheMSAccStats.TryGetValue(acc.DbId, out MSAccountServerData cache))
                     {
-                        cache = acc.Stats;
+                        cache = new MSAccountServerData()
+                        {
+                            Account = acc,
+                            Stats = acc.Stats
+                        };
+
+                        if (!await _browser.CreateContext(cache))
+                        {
+                            _logger.LogError("Cannot create context for {Email} | {Username}!", acc.Email, acc.User.Username);
+                            continue;
+                        }
+
                         cacheMSAccStats.Add(acc.DbId, cache);
                     }
 
                     DateTime now = DateTime.Now;
-                    if (DateTimeUtilities.HasElapsed(now, cache.LastServerCheck, new TimeSpan(1, 0, 0)))
+                    if (DateTimeUtilities.HasElapsed(now, cache.Stats.LastDashboardCheck, Settings.DashboardCheck))
                     {
-                        cache.LastServerCheck = now; //Fix for not queueing the same job while we wait for the job's completion
-                        if (DateTimeUtilities.HasElapsed(now, cache.LastDashboardUpdate, new TimeSpan(0, 5, 0)))
+                        cache.Stats.LastDashboardCheck = now; //Fix for not queueing the same job while we wait for the job's completion
+                        if (DateTimeUtilities.HasElapsed(now, cache.Stats.LastDashboardUpdate, Settings.DashboardUpdate))
                         {
                             Job job = new Job(
                                 new DashboardUpdateCommand()
                                 {
-                                    Account = acc,
+                                    Data = cache,
+                                    OnSuccess = delegate ()
+                                    {
+                                        cache.Stats.LastSearchesCheck = DateTime.MinValue; // Triggers search check
+                                    },
                                     OnFail = delegate ()
                                     {
-                                        cache.LastServerCheck = DateTime.MinValue; // Retry again after failure
+                                        _logger.LogWarning("Job {name} failed", nameof(DashboardUpdateCommand));
+                                        cache.Stats.LastDashboardCheck = DateTime.MinValue; // Retry again after failure
                                     }
                                 });
 
                             _taskScheduler.AddJob(now, job);
+                            _logger.LogInformation("Added job {name} on {time}", nameof(DashboardUpdateCommand), now);
                         }
                     }
 
-                    
+                    if (DateTimeUtilities.HasElapsed(now, cache.Stats.LastSearchesCheck, Settings.SearchesCheck))
+                    {
+                        cache.Stats.LastSearchesCheck = now;
+                        if (cache.Stats.PCSearchesToDo > 0)
+                        {
+                            DateTime start = now;
+                            Random rnd = new Random();
+
+                            for (int i = 0; i < cache.Stats.PCSearchesToDo; i++)
+                            {
+                                if (i != 0)
+                                {
+                                    start = start.AddSeconds(rnd.Next(60, 180));
+                                }
+
+                                string keyword = _keywordProvider.GetKeyword();
+
+                                Job job = new Job(
+                                    new PCSearchCommand()
+                                    {
+                                        Data = cache,
+                                        Keyword = keyword,
+                                        OnSuccess = delegate ()
+                                        {
+                                            _logger.LogDebug("Job {name} succeded (with keyword {keyword}) for {user}",
+                                                nameof(PCSearchCommand), keyword, acc.Email);
+
+                                            cache.Stats.PCSearchCompleted();
+                                        },
+                                        OnFail = delegate ()
+                                        {
+                                            _logger.LogWarning("Job {name} failed", nameof(PCSearchCommand));
+                                            cache.Stats.LastDashboardCheck = DateTime.MinValue; // Reload stats
+                                        }
+                                    });
+
+                                _taskScheduler.AddJob(start, job);
+                                _logger.LogInformation("Added job {name} (with keyword {keyword}) on {time} for {user}",
+                                    nameof(PCSearchCommand), keyword, start, acc.Email);
+
+                                cache.Stats.LastSearchesCheck = start;
+                            }
+                        }
+                    }
                 }
 
                 Thread.Sleep(1000);
@@ -159,7 +230,7 @@ namespace MSRewardsBot.Server.Core
                 _taskScheduler = null;
             }
 
-            if(_browser != null)
+            if (_browser != null)
             {
                 _browser.Dispose();
             }

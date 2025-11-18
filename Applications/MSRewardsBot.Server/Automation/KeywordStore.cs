@@ -12,26 +12,31 @@ namespace MSRewardsBot.Server.Automation
     public class KeywordStore
     {
         private const string URL_BASE = "https://trends.google.com/trending/rss?geo=";
-        private readonly string[] _countries = new[] { "IT", "US", "GB", "DE", "FR", "ES" };
-        private int _countryIdx = 0;
+        private readonly string[] _countries = ["IT", "US", "GB", "DE", "FR", "ES"];
+
+        private string _filePath;
 
         public DateTime LastRefresh { get; private set; }
 
-        private string GetUrlList()
+        public KeywordStore()
         {
-            return URL_BASE + _countries[0];
+            _filePath = Utils.GetKeywordsFile();
         }
 
         public async Task<bool> RefreshList()
         {
-            string content = await DownloadList();
-            if (content == null)
+            List<Item> items = new List<Item>();
+            for (int idx = 0; idx < _countries.Length; idx++)
+            {
+                items.AddRange(await DownloadSingleList(_countries[idx]));
+            }
+
+            if (items.Count == 0)
             {
                 return false;
             }
 
-            List<Item> items = ParseList(content);
-            if(items == null || items.Count == 0)
+            if (!SaveItemsToFile(items))
             {
                 return false;
             }
@@ -40,12 +45,34 @@ namespace MSRewardsBot.Server.Automation
             return true;
         }
 
-        private async Task<string> DownloadList()
+        private async Task<List<Item>> DownloadSingleList(string country)
+        {
+            List<Item> res = new List<Item>();
+
+            string content = await DownloadList(country);
+            if (content == null)
+            {
+                return res;
+            }
+
+            return ParseList(content);
+        }
+
+        private async Task<string> DownloadList(string country)
         {
             string res = null;
-            using (HttpClient client = new HttpClient())
+            string url = URL_BASE + country.ToUpper();
+
+            try
             {
-                res = await client.GetStringAsync(GetUrlList());
+                using (HttpClient client = new HttpClient())
+                {
+                    res = await client.GetStringAsync(url);
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.Write(ex.Message);
             }
 
             return res;
@@ -61,7 +88,7 @@ namespace MSRewardsBot.Server.Automation
             RssFeed data = null;
             try
             {
-                using (StreamReader sr = new StreamReader(content, Encoding.UTF8))
+                using (StringReader sr = new StringReader(content))
                 {
                     XmlSerializer xml = new XmlSerializer(typeof(RssFeed));
                     object obj = xml.Deserialize(sr);
@@ -80,6 +107,27 @@ namespace MSRewardsBot.Server.Automation
             }
 
             return [.. data.Channel.Items];
+        }
+
+        private bool SaveItemsToFile(List<Item> items)
+        {
+            try
+            {
+                using (FileStream fs = File.Open(_filePath, FileMode.Create, FileAccess.Write, FileShare.ReadWrite))
+                using (StreamWriter sw = new StreamWriter(fs, Encoding.UTF8))
+                {
+                    foreach (Item item in items)
+                    {
+                        sw.WriteLine(item.Title);
+                    }
+                }
+
+                return true;
+            }
+            catch
+            {
+                return false;
+            }
         }
     }
 }

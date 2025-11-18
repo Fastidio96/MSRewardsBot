@@ -4,7 +4,7 @@ namespace MSRewardsBot.Server.Automation
 {
     public interface IKeywordProvider
     {
-        string GetRandom();
+        string GetKeyword();
         IReadOnlyList<string> GetAll();
     }
 }
