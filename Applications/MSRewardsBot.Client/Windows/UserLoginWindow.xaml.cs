@@ -38,6 +38,10 @@ namespace MSRewardsBot.Client.Windows
             {
                 App.Current.MainWindow.Show();
             }
+            else
+            {
+                _viewModel.Dispose();
+            }
         }
 
         private async void UserLoginWindow_KeyDown(object sender, System.Windows.Input.KeyEventArgs e)

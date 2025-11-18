@@ -8,10 +8,10 @@ namespace MSRewardsBot.Client.Services
 {
     public class FileManager
     {
-        private string _filePath => Path.Combine(_folderPath, "data.xml");
-        private string _folderPath => Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "MSRB");
+        private static string _filePath => Path.Combine(_folderPath, "data.xml");
+        private static string _folderPath => Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "MSRB");
 
-        public bool SaveData(AppData data)
+        public static bool SaveData(AppData data)
         {
             CheckDataFolder();
 
@@ -32,7 +32,7 @@ namespace MSRewardsBot.Client.Services
             }
         }
 
-        public bool LoadData(out AppData data)
+        public static bool LoadData(out AppData data)
         {
             data = new AppData();
 
@@ -67,7 +67,7 @@ namespace MSRewardsBot.Client.Services
             }
         }
 
-        private void ClearData()
+        private static void ClearData()
         {
             CheckDataFolder();
 
@@ -79,7 +79,7 @@ namespace MSRewardsBot.Client.Services
             SaveData(new AppData());
         }
 
-        private void CheckDataFolder()
+        private static void CheckDataFolder()
         {
             try
             {

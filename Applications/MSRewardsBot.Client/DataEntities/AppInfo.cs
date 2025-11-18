@@ -23,6 +23,12 @@ namespace MSRewardsBot.Client.DataEntities
             Version = Assembly.GetExecutingAssembly().GetName().Version;
         }
 
+        ~AppInfo()
+        {
+            Accounts.CollectionChanged -= Accounts_CollectionChanged;
+            Accounts.Clear();
+        }
+
         private void Accounts_CollectionChanged(object? sender, NotifyCollectionChangedEventArgs e)
         {
             NotifyPropertyChanged(nameof(Accounts));

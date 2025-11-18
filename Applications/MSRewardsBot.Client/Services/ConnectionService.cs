@@ -77,7 +77,7 @@ namespace MSRewardsBot.Client.Services
 
         public async Task DisconnectAsync()
         {
-            if (_connection.State != HubConnectionState.Connected)
+            if (_connection == null || _connection.State != HubConnectionState.Connected)
             {
                 return;
             }

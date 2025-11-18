@@ -40,21 +40,15 @@ namespace MSRewardsBot.Client
             _viewModel.Init();
         }
 
-        protected override void OnExit(ExitEventArgs e)
-        {
-            _viewModel.Dispose();
-
-            base.OnExit(e);
-        }
-
         private void App_DispatcherUnhandledException(object sender, System.Windows.Threading.DispatcherUnhandledExceptionEventArgs e)
         {
             e.Handled = true;
-            _splashScreenWindow?.Hide();
+            _viewModel.Dispose();
 
             MessageBoxResult res = MessageBox.Show(e.Exception.Message, "Unhandled exception occurred", MessageBoxButton.OK, MessageBoxImage.Error);
             if (res == MessageBoxResult.OK)
             {
+                this.DispatcherUnhandledException -= App_DispatcherUnhandledException;
                 Environment.Exit(-1);
             }
         }

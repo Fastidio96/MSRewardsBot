@@ -1,4 +1,5 @@
-﻿using System.Windows;
+﻿using System.Threading.Tasks;
+using System.Windows;
 using MSRewardsBot.Client.DataEntities;
 
 namespace MSRewardsBot.Client.Windows
@@ -36,10 +37,12 @@ namespace MSRewardsBot.Client.Windows
             }
         }
 
-        private void MainWindow_Loaded(object sender, RoutedEventArgs e)
+        private async void MainWindow_Loaded(object sender, RoutedEventArgs e)
         {
             this.Loaded -= MainWindow_Loaded;
             _splashScreenWindow.Hide();
+
+            await _vm.GetUserInfo();
 
             if (cmbAcc.IsEnabled && cmbAcc.SelectedItem == null)
             {
@@ -50,6 +53,11 @@ namespace MSRewardsBot.Client.Windows
         private void BtnAddAcc_Click(object sender, RoutedEventArgs e)
         {
             _vm.AddMSAccount();
+        }
+
+        private async void btnLogout_Click(object sender, RoutedEventArgs e)
+        {
+            await _vm.Logout();
         }
     }
 }

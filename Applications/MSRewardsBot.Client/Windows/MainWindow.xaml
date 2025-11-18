@@ -67,10 +67,13 @@
                 <Run Text="User logged" />
                 <Run Text="{Binding IsUserLogged}" />
             </TextBlock>
-            <TextBlock Grid.Row="0" Grid.Column="2">
+            <StackPanel Grid.Row="0" Grid.Column="2" Orientation="Horizontal">
+                <TextBlock>
                  <Run Text="Connected as" />
                  <Run Text="{Binding Username}" />
-            </TextBlock>
+                </TextBlock>
+                <Button x:Name="btnLogout" Content="Log out" Click="btnLogout_Click"/>
+            </StackPanel>
             <TextBlock Grid.Row="0" Grid.Column="3">
                  <Run Text="Version" />
                  <Run Text="{Binding Version}" />

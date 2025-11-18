@@ -1,6 +1,9 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
+using System.Reflection;
 using System.Threading.Tasks;
+using System.Windows;
 using MSRewardsBot.Client.DataEntities;
 using MSRewardsBot.Client.Services;
 using MSRewardsBot.Client.Windows;
@@ -14,14 +17,13 @@ namespace MSRewardsBot.Client
         private Guid _token => !_appData.AuthToken.HasValue ? Guid.Empty : _appData.AuthToken.Value;
 
         private ConnectionService _connection;
-        private FileManager _fileManager;
 
         private AppData _appData;
         private AppInfo _appInfo;
 
         private MainWindow _mainWindow;
         private SplashScreenWindow _splashScreenWindow;
-        private MSLoginWindow _MSLoginWindow;
+        private MSLoginWindow _msLoginWindow;
         private UserLoginWindow _userLoginWindow;
 
         public ViewModel(SplashScreenWindow splashScreenWindow)
@@ -31,13 +33,21 @@ namespace MSRewardsBot.Client
 
         public async void Init()
         {
-            _appInfo = new AppInfo();
+            if (_splashScreenWindow == null)
+            {
+                _splashScreenWindow = new SplashScreenWindow();
+            }
 
+            if (!_splashScreenWindow.IsVisible)
+            {
+                _splashScreenWindow.Show();
+            }
+
+            _appInfo = new AppInfo();
             _connection = new ConnectionService(_appInfo);
-            _fileManager = new FileManager();
 
             await _connection.ConnectAsync();
-            if (!_fileManager.LoadData(out _appData))
+            if (!FileManager.LoadData(out _appData))
             {
                 _appInfo.IsUserLogged = false;
                 return;
@@ -66,7 +76,7 @@ namespace MSRewardsBot.Client
         public void SetAuthToken(Guid token)
         {
             _appData.AuthToken = token;
-            _fileManager.SaveData(_appData);
+            FileManager.SaveData(_appData);
         }
 
         public async Task<bool> Login(User user)
@@ -94,7 +104,6 @@ namespace MSRewardsBot.Client
             }
 
             _appInfo.IsUserLogged = true;
-
             return _appInfo.IsUserLogged;
         }
 
@@ -103,7 +112,7 @@ namespace MSRewardsBot.Client
             User user = await _connection.GetUserInfo(_token);
             if (user == null)
             {
-                Logout();
+                await Logout();
                 return null;
             }
 
@@ -118,30 +127,37 @@ namespace MSRewardsBot.Client
             return user;
         }
 
-        private void Logout()
+        public async Task Logout()
         {
             if (_token != Guid.Empty)
             {
-                _connection.Logout(_token);
+                await _connection.Logout(_token);            
             }
 
-            _appData = new AppData();
-            _fileManager.SaveData(_appData);
-
+            FileManager.SaveData(new AppData());
             Dispose();
-            Init();
+
+            ProcessStartInfo psi = new ProcessStartInfo
+            {
+                Arguments = "/C choice /C Y /N /D Y /T 1 & START \"\" \"" + Environment.ProcessPath + "\"",
+                WindowStyle = ProcessWindowStyle.Hidden,
+                CreateNoWindow = true,
+                FileName = "cmd.exe"
+            };
+            Process.Start(psi);
+            Environment.Exit(0);
         }
 
         public void AddMSAccount()
         {
-            if (_MSLoginWindow != null && _MSLoginWindow.IsVisible)
+            if (_msLoginWindow != null && _msLoginWindow.IsVisible)
             {
                 return;
             }
 
-            _MSLoginWindow = new MSLoginWindow(this);
-            _MSLoginWindow.Owner = App.Current.MainWindow;
-            _MSLoginWindow.Show();
+            _msLoginWindow = new MSLoginWindow(this);
+            _msLoginWindow.Owner = App.Current.MainWindow;
+            _msLoginWindow.Show();
         }
 
         public Task<bool> InsertMSAccount(List<AccountCookie> cookies)
@@ -154,48 +170,15 @@ namespace MSRewardsBot.Client
             return _connection.InsertMSAccount(_token, acc);
         }
 
-        public void Dispose()
+        public async void Dispose()
         {
-            if (_userLoginWindow != null)
+            foreach (Window win in App.Current.Windows)
             {
-                if (_userLoginWindow.IsVisible)
-                {
-                    _userLoginWindow.Close();
-                }
-
-                _userLoginWindow = null;
+                win.Close();
             }
 
-            if (_MSLoginWindow != null)
-            {
-                if (_MSLoginWindow.IsVisible)
-                {
-                    _MSLoginWindow.Close();
-                }
-
-                _MSLoginWindow = null;
-            }
-
-            if (_mainWindow != null)
-            {
-                if (_mainWindow.IsVisible)
-                {
-                    _mainWindow.Close();
-                }
-
-                _mainWindow = null;
-                App.Current.MainWindow = null;
-            }
-
-            if (_connection != null)
-            {
-                _connection.DisconnectAsync().Wait();
-                _connection = null;
-            }
-
-            _fileManager = null;
-            _appData = null;
-            _appInfo = null;
+            await _connection?.DisconnectAsync();
+            Environment.Exit(0);
         }
     }
 }
