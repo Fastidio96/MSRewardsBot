@@ -14,8 +14,7 @@ namespace MSRewardsBot.Server.DB
 
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
         {
-            string dbPath = Path.Combine(GetFolderDB(), "data.db");
-            optionsBuilder.UseSqlite($"Data Source={dbPath}");
+            optionsBuilder.UseSqlite($"Data Source={Utils.GetDBFile()}");
 #if DEBUG
             optionsBuilder.EnableSensitiveDataLogging();
 #endif
@@ -41,18 +40,6 @@ namespace MSRewardsBot.Server.DB
             modelBuilder.Entity<AccountCookie>();
 
             base.OnModelCreating(modelBuilder);
-        }
-
-
-        private static string GetFolderDB()
-        {
-            string path = new Uri(AppDomain.CurrentDomain.BaseDirectory + "MSRB").LocalPath;
-            if (!Directory.Exists(path))
-            {
-                Directory.CreateDirectory(path);
-            }
-
-            return path;
         }
     }
 }

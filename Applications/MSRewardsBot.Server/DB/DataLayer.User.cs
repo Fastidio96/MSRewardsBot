@@ -54,9 +54,10 @@ namespace MSRewardsBot.Server.DB
 
         public Guid GetUserAuthToken(string username)
         {
+            User user;
             using (MSRBContext context = new MSRBContext())
             {
-                User user = context.Users
+                user = context.Users
                     .AsNoTracking()
                     .Include(u => u.AuthToken)
                     .FirstOrDefault(u => u.Username == username);
@@ -64,9 +65,9 @@ namespace MSRewardsBot.Server.DB
                 {
                     return Guid.Empty;
                 }
-
-                return CreateUserAuthToken(user).Token;
             }
+
+            return CreateUserAuthToken(user).Token;
         }
 
         private UserAuthToken CreateUserAuthToken(User user)
@@ -78,13 +79,15 @@ namespace MSRewardsBot.Server.DB
                     .FirstOrDefault(t => t.User.Username == user.Username);
                 if (token == null)
                 {
-                    token = context.UserAuthTokens.Add(new UserAuthToken()
+                    token = new UserAuthToken()
                     {
                         CreatedAt = DateTime.Now,
                         LastTimeUsed = DateTime.Now,
                         Token = Guid.NewGuid(),
-                        User = user
-                    }).Entity;
+                        UserId = user.DbId
+                    };
+
+                    context.UserAuthTokens.Add(token);
 
                     context.SaveChanges();
                 }
