@@ -45,8 +45,7 @@ namespace MSRewardsBot.Server.DB
                     return true;
                 }
 
-                auth.Token = Guid.Empty;
-                context.UserAuthTokens.Update(auth);
+                context.UserAuthTokens.Remove(auth);
 
                 return context.SaveChanges() > 0;
             }

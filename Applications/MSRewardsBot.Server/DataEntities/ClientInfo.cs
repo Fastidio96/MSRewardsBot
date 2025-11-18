@@ -13,6 +13,8 @@ namespace MSRewardsBot.Server.DataEntities
 
         public string ConnectionId { get; set; }
         public User User { get; set; }
+
+        public string IP {  get; set; }
         public Version ClientVersion { get; set; }
 
     }

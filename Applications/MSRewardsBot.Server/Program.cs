@@ -43,7 +43,12 @@ namespace MSRewardsBot.Server
             builder.Services.AddSignalR()
                 .AddHubOptions<CommandHub>(options =>
                 {
+#if DEBUG
+                    options.EnableDetailedErrors = true;
+#endif
                     options.AddFilter<HubMonitorMiddleware>();
+                    options.ClientTimeoutInterval = new TimeSpan(0, 0, 10);
+                    options.KeepAliveInterval = new TimeSpan(0, 0, 5);
                 });
 
             builder.Services.AddResponseCompression(opts =>

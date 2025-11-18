@@ -59,7 +59,7 @@ namespace MSRewardsBot.Server.Core
             _mainThread = new Thread(CoreLoop);
             _mainThread.Name = nameof(CoreLoop);
 
-            _clientsThread.Start();
+            //_clientsThread.Start();
             _mainThread.Start();
         }
 

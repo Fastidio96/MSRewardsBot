@@ -1,6 +1,8 @@
 ﻿using System;
+using System.Linq;
 using System.Reflection;
 using System.Threading.Tasks;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.SignalR;
 using Microsoft.Extensions.Logging;
 using MSRewardsBot.Common.DataEntities.Accounting;
@@ -31,7 +33,7 @@ namespace MSRewardsBot.Server.Network
             string connectionId = context.Context.ConnectionId;
 
             // Before call
-            _logger.Log(LogLevel.Information, "Incoming call on {MethodName} by {ConnectionId}",
+            _logger.Log(LogLevel.Debug, "Incoming call on {MethodName} by {ConnectionId}",
                 context.HubMethodName, connectionId);
 
             try
@@ -57,7 +59,7 @@ namespace MSRewardsBot.Server.Network
                             {
                                 if (methodInfo.Name == nameof(IBotAPI.Logout))
                                 {
-                                    RemoveConnectionByToken(token, connectionId);
+                                    RemoveUserFromConnection(token, connectionId);
                                 }
                                 else
                                 {
@@ -81,7 +83,7 @@ namespace MSRewardsBot.Server.Network
                 }
 
                 // After successful call
-                _logger.Log(LogLevel.None, "Completed call on {MethodName} by {ConnectionId}",
+                _logger.Log(LogLevel.Trace, "Completed call on {MethodName} by {ConnectionId}",
                     context.HubMethodName, context.Context.ConnectionId);
 
                 return result;
@@ -97,36 +99,40 @@ namespace MSRewardsBot.Server.Network
 
         public Task OnConnectedAsync(HubLifetimeContext context, Func<HubLifetimeContext, Task> next)
         {
-            _logger.LogInformation("Client connected: {ConnectionId}", context.Context.ConnectionId);
+            string ip = GetIp(context);
+            _logger.LogInformation("Client connected with ip [{ip}]: {ConnectionId}", ip, context.Context.ConnectionId);
             _connection.AddConnection(new ClientInfo()
             {
-                ConnectionId = context.Context.ConnectionId
+                ConnectionId = context.Context.ConnectionId,
+                IP = ip
             });
 
             return next(context);
         }
 
-        public Task OnDisconnectedAsync(HubLifetimeContext context, Exception? exception, Func<HubLifetimeContext, Task> next)
+        public Task OnDisconnectedAsync(HubLifetimeContext context, Exception? exception, Func<HubLifetimeContext, Exception?, Task> next)
         {
             string connectionid = context.Context.ConnectionId;
-            _logger.Log(LogLevel.Information, "Client disconnected: {ConnectionId}", connectionid);
             if (exception != null)
             {
-                _logger.Log(LogLevel.Error, "Error: {Error}", exception.Message);
+                _logger.Log(LogLevel.Error, "Client disconnected with an exception: {Error}", exception.Message);
             }
 
             ClientInfo info = _connection.GetConnection(connectionid);
-            if (info.User != null)
-            {
-                foreach (MSAccount acc in info.User.MSAccounts)
-                {
-                    acc.Stats.PropertyChanged -= Stats_PropertyChanged;
-                }
-            }
+            UnsubscribeMsAccounts(info);
 
             _connection.RemoveConnection(connectionid);
 
-            return next(context);
+            _logger.Log(LogLevel.Information, "Client disconnected with ip [{ip}]: {ConnectionId}", info.IP, connectionid);
+            return next(context, exception);
+        }
+
+        private string GetIp(HubLifetimeContext context)
+        {
+            HttpContext ctx = context.Context.GetHttpContext();
+            return
+                ctx?.Request.Headers["X-Forwarded-For"].FirstOrDefault()
+                ?? ctx?.Connection.RemoteIpAddress?.ToString();
         }
 
         private void UpdateConnectionInfo(Guid token, string connectionId)
@@ -160,7 +166,18 @@ namespace MSRewardsBot.Server.Network
             }
         }
 
-        private void RemoveConnectionByToken(Guid token, string connectionId)
+        private void UnsubscribeMsAccounts(ClientInfo info)
+        {
+            if (info.User != null)
+            {
+                foreach (MSAccount acc in info.User.MSAccounts)
+                {
+                    acc.Stats.PropertyChanged -= Stats_PropertyChanged;
+                }
+            }
+        }
+
+        private void RemoveUserFromConnection(Guid token, string connectionId)
         {
             if (token != Guid.Empty)
             {
@@ -172,6 +189,7 @@ namespace MSRewardsBot.Server.Network
                     return;
                 }
 
+                UnsubscribeMsAccounts(info);
                 info.User = null;
 
                 _connection.UpdateConnection(connectionId, info);
