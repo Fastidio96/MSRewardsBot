@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.SignalR.Client;
 using MSRewardsBot.Client.DataEntities;
@@ -13,6 +14,8 @@ namespace MSRewardsBot.Client.Services
         private HubConnection _connection { get; set; }
         private AppInfo _appInfo;
 
+        private List<IDisposable> _disposables = new List<IDisposable>();
+
         public ConnectionService(AppInfo info)
         {
             _appInfo = info;
@@ -20,6 +23,14 @@ namespace MSRewardsBot.Client.Services
 
         public async Task ConnectAsync()
         {
+            if (_connection != null)
+            {
+                if (_connection.State != HubConnectionState.Disconnected)
+                {
+                    return;
+                }
+            }
+
             _connection = new HubConnectionBuilder()
                 .WithUrl("http://localhost:10500/cmdhub")
                 .WithAutomaticReconnect()
@@ -27,23 +38,62 @@ namespace MSRewardsBot.Client.Services
 
             _connection.Closed += Connection_Closed;
 
-            await _connection.StartAsync();
+            await TryConnect();
             _appInfo.ConnectedToServer = true;
 
-            _connection.On<Guid>(nameof(IBotAPI.GetUserInfo), GetUserInfo);
-            _connection.On<bool>(nameof(IBotAPI.Logout), delegate ()
+            _disposables.Add(_connection.On<Guid>(nameof(IBotAPI.GetUserInfo), GetUserInfo));
+            _disposables.Add(_connection.On<bool>(nameof(IBotAPI.Logout), delegate ()
             {
                 _appInfo.IsUserLogged = false;
                 return true;
-            });
-            _connection.On("SendMSAccountsInfo", delegate (List<MSAccount> acc)
+            }));
+            _disposables.Add(_connection.On("SendMSAccountsInfo", delegate (List<MSAccount> acc)
             {
                 _appInfo.Accounts.Clear();
                 foreach (MSAccount account in acc)
                 {
                     _appInfo.Accounts.Add(account);
                 }
-            });
+            }));
+        }
+
+        private async Task TryConnect()
+        {
+            bool exit = false;
+            while (_connection != null && !exit)
+            {
+                try
+                {
+                    await _connection.StartAsync();
+                    exit = true;
+                }
+                catch (Exception ex) 
+                {
+                    Debug.WriteLine(ex.Message);
+                    await Task.Delay(2500);
+                }
+            }
+        }
+
+        public async Task DisconnectAsync()
+        {
+            if (_connection.State != HubConnectionState.Connected)
+            {
+                return;
+            }
+
+            await _connection.StopAsync();
+
+            foreach (IDisposable d in _disposables)
+            {
+                d.Dispose();
+            }
+
+            await _connection.DisposeAsync();
+
+            _connection.Closed -= Connection_Closed;
+
+            _connection = null;
         }
 
         private Task Connection_Closed(Exception? arg)

@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Diagnostics;
 using System.Windows;
-using MSRewardsBot.Client.DataEntities;
 using MSRewardsBot.Client.Windows;
 
 namespace MSRewardsBot.Client
@@ -12,11 +11,7 @@ namespace MSRewardsBot.Client
     public partial class App : Application
     {
         private SplashScreenWindow _splashScreenWindow;
-        private MainWindow _mainWindow;
-        private UserLoginWindow _userLoginWindow;
         private ViewModel _viewModel;
-
-        private AppInfo _appInfo;
 
         public App()
         {
@@ -24,7 +19,6 @@ namespace MSRewardsBot.Client
 
             this.DispatcherUnhandledException += App_DispatcherUnhandledException;
             this.Startup += App_Startup;
-            this.Exit += App_Exit;
 
             _splashScreenWindow = new SplashScreenWindow();
             _splashScreenWindow.Show();
@@ -32,45 +26,25 @@ namespace MSRewardsBot.Client
 
         private void CheckForInstanceRunning()
         {
-            if(Process.GetProcessesByName(Process.GetCurrentProcess().ProcessName).Length > 1)
+            if (Process.GetProcessesByName(Process.GetCurrentProcess().ProcessName).Length > 1)
             {
                 Environment.Exit(-2);
             }
         }
 
-        private async void App_Startup(object sender, StartupEventArgs e)
+        private void App_Startup(object sender, StartupEventArgs e)
         {
             this.Startup -= App_Startup;
 
-            _appInfo = new AppInfo();
-
-            _viewModel = new ViewModel(_appInfo);
-            await _viewModel.Init();
-
-            _mainWindow = new MainWindow(_viewModel, _splashScreenWindow, _appInfo);
-            App.Current.MainWindow = _mainWindow;
-
-            if (!_viewModel.IsLogged)
-            {
-                _userLoginWindow = new UserLoginWindow(_viewModel, _splashScreenWindow);
-                _userLoginWindow.Closed += UserLoginWindow_Closed;
-                _userLoginWindow.Show();
-
-                return;
-            }
-
-            _mainWindow.Show();
+            _viewModel = new ViewModel(_splashScreenWindow);
+            _viewModel.Init();
         }
 
-        private void UserLoginWindow_Closed(object? sender, EventArgs e)
+        protected override void OnExit(ExitEventArgs e)
         {
-            _userLoginWindow.Closed -= UserLoginWindow_Closed;
-            _mainWindow.Show();
-        }
+            _viewModel.Dispose();
 
-        private void App_Exit(object sender, ExitEventArgs e)
-        {
-            this.Exit -= App_Exit;
+            base.OnExit(e);
         }
 
         private void App_DispatcherUnhandledException(object sender, System.Windows.Threading.DispatcherUnhandledExceptionEventArgs e)

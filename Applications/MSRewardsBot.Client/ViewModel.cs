@@ -1,8 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.ComponentModel;
 using System.Threading.Tasks;
-using System.Windows;
 using MSRewardsBot.Client.DataEntities;
 using MSRewardsBot.Client.Services;
 using MSRewardsBot.Client.Windows;
@@ -10,7 +8,7 @@ using MSRewardsBot.Common.DataEntities.Accounting;
 
 namespace MSRewardsBot.Client
 {
-    public class ViewModel
+    public class ViewModel : IDisposable
     {
         public bool IsLogged => _appInfo.IsUserLogged;
         private Guid _token => !_appData.AuthToken.HasValue ? Guid.Empty : _appData.AuthToken.Value;
@@ -21,35 +19,47 @@ namespace MSRewardsBot.Client
         private AppData _appData;
         private AppInfo _appInfo;
 
+        private MainWindow _mainWindow;
+        private SplashScreenWindow _splashScreenWindow;
         private MSLoginWindow _MSLoginWindow;
+        private UserLoginWindow _userLoginWindow;
 
-        public ViewModel(AppInfo appInfo)
+        public ViewModel(SplashScreenWindow splashScreenWindow)
         {
-            _appInfo = appInfo;
+            _splashScreenWindow = splashScreenWindow;
+        }
+
+        public async void Init()
+        {
+            _appInfo = new AppInfo();
 
             _connection = new ConnectionService(_appInfo);
             _fileManager = new FileManager();
-        }
 
-
-        public async Task Init()
-        {
             await _connection.ConnectAsync();
-            if(!_fileManager.LoadData(out _appData))
+            if (!_fileManager.LoadData(out _appData))
             {
                 _appInfo.IsUserLogged = false;
                 return;
             }
+            else
+            {
+                _appInfo.IsUserLogged = _token != Guid.Empty &&
+                    await _connection.LoginWithToken(_token);
+            }
 
-            _appInfo.IsUserLogged = await _connection.LoginWithToken(_token);
+            _mainWindow = new MainWindow(this, _splashScreenWindow, _appInfo);
+            App.Current.MainWindow = _mainWindow;
 
             if (_appInfo.IsUserLogged)
             {
+                _mainWindow.Show();
                 await GetUserInfo();
             }
             else
             {
-                Logout();
+                _userLoginWindow = new UserLoginWindow(this, _splashScreenWindow);
+                _userLoginWindow.Show();
             }
         }
 
@@ -58,7 +68,6 @@ namespace MSRewardsBot.Client
             _appData.AuthToken = token;
             _fileManager.SaveData(_appData);
         }
-
 
         public async Task<bool> Login(User user)
         {
@@ -111,15 +120,16 @@ namespace MSRewardsBot.Client
 
         private void Logout()
         {
+            if (_token != Guid.Empty)
+            {
+                _connection.Logout(_token);
+            }
+
             _appData = new AppData();
             _fileManager.SaveData(_appData);
 
-            _connection.Logout(_token);
-
-            if (Utils.ShowMessage("The application is closing.", "Info", MessageBoxImage.Information) == MessageBoxResult.OK)
-            {
-                Environment.Exit(0);
-            }
+            Dispose();
+            Init();
         }
 
         public void AddMSAccount()
@@ -142,6 +152,50 @@ namespace MSRewardsBot.Client
             };
 
             return _connection.InsertMSAccount(_token, acc);
+        }
+
+        public void Dispose()
+        {
+            if (_userLoginWindow != null)
+            {
+                if (_userLoginWindow.IsVisible)
+                {
+                    _userLoginWindow.Close();
+                }
+
+                _userLoginWindow = null;
+            }
+
+            if (_MSLoginWindow != null)
+            {
+                if (_MSLoginWindow.IsVisible)
+                {
+                    _MSLoginWindow.Close();
+                }
+
+                _MSLoginWindow = null;
+            }
+
+            if (_mainWindow != null)
+            {
+                if (_mainWindow.IsVisible)
+                {
+                    _mainWindow.Close();
+                }
+
+                _mainWindow = null;
+                App.Current.MainWindow = null;
+            }
+
+            if (_connection != null)
+            {
+                _connection.DisconnectAsync().Wait();
+                _connection = null;
+            }
+
+            _fileManager = null;
+            _appData = null;
+            _appInfo = null;
         }
     }
 }

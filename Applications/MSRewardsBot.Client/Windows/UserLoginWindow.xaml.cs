@@ -21,6 +21,8 @@ namespace MSRewardsBot.Client.Windows
             _splashScreenWindow = splashScreenWindow;
 
             this.Loaded += UserLoginWindow_Loaded;
+            this.KeyDown += UserLoginWindow_KeyDown;
+            this.Closed += UserLoginWindow_Closed;
         }
 
         private void UserLoginWindow_Loaded(object sender, RoutedEventArgs e)
@@ -28,7 +30,30 @@ namespace MSRewardsBot.Client.Windows
             _splashScreenWindow.Hide();
         }
 
+        private void UserLoginWindow_Closed(object? sender, EventArgs e)
+        {
+            this.Closed -= UserLoginWindow_Closed;
+
+            if (_viewModel.IsLogged)
+            {
+                App.Current.MainWindow.Show();
+            }
+        }
+
+        private async void UserLoginWindow_KeyDown(object sender, System.Windows.Input.KeyEventArgs e)
+        {
+            if (e.Key == System.Windows.Input.Key.Enter)
+            {
+                await Submit();
+            }
+        }
+
         private async void BtnSubmit_Click(object sender, RoutedEventArgs e)
+        {
+            await Submit();
+        }
+
+        private async Task Submit()
         {
             User user = new User()
             {
