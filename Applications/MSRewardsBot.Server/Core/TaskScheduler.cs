@@ -48,7 +48,6 @@ namespace MSRewardsBot.Server.Core
             using (_lock.EnterScope())
             {
                 _todo.Add(dt, job);
-                _todo = (SortedList<DateTime, Job>)_todo.OrderBy(t => t.Key);
             }
         }
 
@@ -62,15 +61,28 @@ namespace MSRewardsBot.Server.Core
             using (_lock.EnterScope())
             {
                 _todo.Remove(key);
-                _todo = (SortedList<DateTime, Job>)_todo.OrderBy(t => t.Key);
             }
+        }
+
+        private SortedList<DateTime, Job> GetTodoList()
+        {
+            SortedList<DateTime, Job> res = new SortedList<DateTime, Job>();
+            using (_lock.EnterScope())
+            {
+                foreach (KeyValuePair<DateTime, Job> item in _todo)
+                {
+                    res.Add(item.Key, item.Value);
+                }
+            }
+
+            return res;
         }
 
         private async void Loop()
         {
             while (!_isDisposing)
             {
-                foreach (KeyValuePair<DateTime, Job> todo in _todo)
+                foreach (KeyValuePair<DateTime, Job> todo in GetTodoList())
                 {
                     if (todo.Key > DateTime.Now)
                     {
@@ -79,41 +91,39 @@ namespace MSRewardsBot.Server.Core
                     }
 
                     Job job = todo.Value;
-                    bool? isPass = null;
 
-                    if (job.Command is DashboardUpdateCommand command)
+                    if (job.Command is DashboardUpdateCommand dashCMD)
                     {
-                        MSAccount acc = await _browser.DashboardUpdate(command.Account);
-                        isPass = acc != null;
-
-                        job.Status = isPass == true ?
+                        job.Status = await _browser.DashboardUpdate(dashCMD.Data) ?
                             JobStatus.Success : JobStatus.Failure;
 
-                        if (isPass == true)
+                        if (job.Status == JobStatus.Success)
                         {
-                            acc.Stats.LastDashboardUpdate = DateTime.Now;
-                            if (!_business.UpdateMSAccount(acc))
+                            dashCMD.Data.Stats.LastDashboardUpdate = DateTime.Now;
+                            if (!_business.UpdateMSAccount(dashCMD.Data.Account))
                             {
-                                acc.Stats.LastDashboardUpdate = DateTime.MinValue;
-                                isPass = false;
+                                dashCMD.Data.Stats.LastDashboardUpdate = DateTime.MinValue;
+                                job.Status = JobStatus.Failure;
                             }
                         }
+                    }
+                    else if (job.Command is PCSearchCommand pcCMD)
+                    {
+                        job.Status = await _browser.DoPCSearch(pcCMD.Data, pcCMD.Keyword) ?
+                            JobStatus.Success : JobStatus.Failure;
                     }
 
 
 
                     if (job.Status != JobStatus.Pending)
                     {
-                        if (isPass.HasValue)
+                        if (job.Status == JobStatus.Success)
                         {
-                            if (isPass.Value)
-                            {
-                                job.Command.OnSuccess?.Invoke();
-                            }
-                            else
-                            {
-                                job.Command.OnFail?.Invoke();
-                            }
+                            job.Command.OnSuccess?.Invoke();
+                        }
+                        else
+                        {
+                            job.Command.OnFail?.Invoke();
                         }
 
                         RemoveJob(todo.Key);
