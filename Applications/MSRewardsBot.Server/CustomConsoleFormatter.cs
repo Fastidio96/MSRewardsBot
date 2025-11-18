@@ -1,5 +1,7 @@
 ﻿using System;
 using System.IO;
+using System.Text;
+using System.Text.RegularExpressions;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 using Microsoft.Extensions.Logging.Console;
@@ -38,6 +40,8 @@ namespace MSRewardsBot.Server
 
             _ => ""
         };
+
+        private static readonly Regex AnsiRegex = new Regex(@"\u001b\[[0-9;]*m", RegexOptions.Compiled);
 
         const string ResetColor = "\u001b[0m";
 
@@ -86,15 +90,20 @@ namespace MSRewardsBot.Server
 
                 if (!_isSameCategory)
                 {
-                    _writer.WriteLine(ApplyColor(null, $"[{category}]"));
+                    string toWrite = ApplyColor(null, $"[{category}]");
+                    _writer.WriteLine(toWrite);
+                    WriteOnFile(toWrite);
                 }
             }
 
             _writer.WriteLine(consoleMsg);
+            WriteOnFile(consoleMsg);
 
             if (logEntry.Exception != null)
             {
-                _writer.WriteLine(logEntry.Exception);
+                string toWrite = ApplyColor(logLevel, logEntry.Exception.Message);
+                _writer.WriteLine(toWrite);
+                WriteOnFile(toWrite);
             }
         }
 
@@ -146,14 +155,32 @@ namespace MSRewardsBot.Server
             return message;
         }
 
-        private void WriteOnFile(string log)
+        private bool WriteOnFile(string log)
         {
             if (!_options.WriteOnFile)
             {
-                return;
+                return true;
             }
 
+            string path = Utils.GetLogFile();
 
+            try
+            {
+                log = AnsiRegex.Replace(log, "");
+
+                using (FileStream fs = File.Open(path, FileMode.Append, FileAccess.Write, FileShare.ReadWrite))
+                using (StreamWriter sw = new StreamWriter(fs, Encoding.UTF8))
+                {
+                    sw.WriteLine(log);
+                }
+
+                return true;
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine(ApplyColor(LogLevel.Critical, e.Message));
+                return false;
+            }
         }
     }
 
