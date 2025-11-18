@@ -137,7 +137,7 @@ namespace MSRewardsBot.Server
                         case LogLevel.Debug:
                             { color = ConsoleColor.Gray; break; }
                         case LogLevel.Information:
-                            { color = ConsoleColor.DarkGreen; break; }
+                            { color = ConsoleColor.Green; break; }
                         case LogLevel.Warning:
                             { color = ConsoleColor.Yellow; break; }
                         case LogLevel.Error:
