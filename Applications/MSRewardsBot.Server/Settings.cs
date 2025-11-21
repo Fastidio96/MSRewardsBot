@@ -10,6 +10,6 @@ namespace MSRewardsBot.Server
         public static TimeSpan DashboardUpdate = new TimeSpan(0, 5, 0);
         public static TimeSpan SearchesCheck = new TimeSpan(3, 0, 0);
 
-        public static TimeSpan KeywordsListRefresh = new TimeSpan(12, 0, 0);
+        public static TimeSpan KeywordsListRefresh = new TimeSpan(3, 0, 0);
     }
 }

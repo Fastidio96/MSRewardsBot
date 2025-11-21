@@ -16,7 +16,7 @@ namespace MSRewardsBot.Server.Core
     {
         private readonly ILogger<Server> _logger;
         private readonly IConnectionManager _connectionManager;
-        private readonly CommandHubProxy _commandHub;
+        private readonly CommandHubProxy _commandHubProxy;
         private readonly BrowserManager _browser;
         private readonly BusinessLayer _business;
 
@@ -29,6 +29,8 @@ namespace MSRewardsBot.Server.Core
 
         private TaskScheduler _taskScheduler;
 
+        public Dictionary<int, MSAccountServerData> CacheMSAccStats;
+
         public Server
         (
             ILogger<Server> logger,
@@ -40,9 +42,11 @@ namespace MSRewardsBot.Server.Core
         {
             _logger = logger;
             _connectionManager = connectionManager;
-            _commandHub = commandHubProxy;
+            _commandHubProxy = commandHubProxy;
             _browser = browser;
             _business = bl;
+
+            CacheMSAccStats = new Dictionary<int, MSAccountServerData>();
 
             _keywordProvider = new KeywordProvider();
             _keywordStore = new KeywordStore();
@@ -94,8 +98,6 @@ namespace MSRewardsBot.Server.Core
         {
             _logger.LogInformation("Core loop thread started");
 
-            Dictionary<int, MSAccountServerData> cacheMSAccStats = new Dictionary<int, MSAccountServerData>();
-
             while (!_isDisposing)
             {
                 if (DateTimeUtilities.HasElapsed(DateTime.Now, _keywordStore.LastRefresh, Settings.KeywordsListRefresh))
@@ -112,7 +114,7 @@ namespace MSRewardsBot.Server.Core
                         continue;
                     }
 
-                    if (!cacheMSAccStats.TryGetValue(acc.DbId, out MSAccountServerData cache))
+                    if (!CacheMSAccStats.TryGetValue(acc.DbId, out MSAccountServerData cache))
                     {
                         cache = new MSAccountServerData()
                         {
@@ -120,13 +122,17 @@ namespace MSRewardsBot.Server.Core
                             Stats = acc.Stats
                         };
 
+                        acc.Stats.UserId = acc.UserId;
+                        acc.Stats.MSAccountId = acc.DbId;
+                        acc.Stats.PropertyChanged += MsAccountStats_PropertyChanged;
+
                         if (!await _browser.CreateContext(cache))
                         {
                             _logger.LogError("Cannot create context for {Email} | {Username}!", acc.Email, acc.User.Username);
                             continue;
                         }
 
-                        cacheMSAccStats.Add(acc.DbId, cache);
+                        CacheMSAccStats.Add(acc.DbId, cache);
                     }
 
                     DateTime now = DateTime.Now;
@@ -158,7 +164,7 @@ namespace MSRewardsBot.Server.Core
                     if (DateTimeUtilities.HasElapsed(now, cache.Stats.LastSearchesCheck, Settings.SearchesCheck))
                     {
                         cache.Stats.LastSearchesCheck = now;
-                        if (cache.Stats.PCSearchesToDo > 0)
+                        if (cache.Stats.PCSearchesToDo > 0 && false)
                         {
                             DateTime start = now;
                             Random rnd = new Random();
@@ -204,11 +210,28 @@ namespace MSRewardsBot.Server.Core
                 Thread.Sleep(1000);
             }
 
-            cacheMSAccStats.Clear();
-            cacheMSAccStats = null;
+            foreach (KeyValuePair<int, MSAccountServerData> acc in CacheMSAccStats)
+            {
+                acc.Value.Account.Stats.PropertyChanged -= MsAccountStats_PropertyChanged;
+            }
+
+            CacheMSAccStats.Clear();
+            CacheMSAccStats = null;
         }
 
+        private async void MsAccountStats_PropertyChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)
+        {
+            if (sender is MSAccountStats stats)
+            {
+                ClientInfo info = _connectionManager.GetConnection(stats.UserId);
+                if (info == null)
+                {
+                    return;
+                }
 
+                await _commandHubProxy.SendUpdateMSAccountStats(info.ConnectionId, stats, e.PropertyName);
+            }
+        }
 
         public void Dispose()
         {

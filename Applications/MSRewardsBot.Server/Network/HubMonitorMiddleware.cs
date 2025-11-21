@@ -57,15 +57,7 @@ namespace MSRewardsBot.Server.Network
                             string val = context.HubMethodArguments[pInfo.Position]?.ToString();
                             if (Guid.TryParse(val, out Guid token))
                             {
-                                if (methodInfo.Name == nameof(IBotAPI.Logout))
-                                {
-                                    RemoveUserFromConnection(token, connectionId);
-                                }
-                                else
-                                {
-                                    UpdateConnectionInfo(token, connectionId);
-
-                                }
+                                UpdateConnectionInfo(token, connectionId);
                             }
                         }
                     }
@@ -112,19 +104,27 @@ namespace MSRewardsBot.Server.Network
 
         public Task OnDisconnectedAsync(HubLifetimeContext context, Exception? exception, Func<HubLifetimeContext, Exception?, Task> next)
         {
-            string connectionid = context.Context.ConnectionId;
+            string connectionId = context.Context.ConnectionId;
+            ClientInfo info = _connection.GetConnection(connectionId);
+
             if (exception != null)
             {
-                _logger.Log(LogLevel.Error, "Client disconnected with an exception: {Error}", exception.Message);
+                _logger.Log(LogLevel.Error, "Client disconnected with ip [{ip}] with an exception: {Error}", info.IP, exception.Message);
             }
 
-            ClientInfo info = _connection.GetConnection(connectionid);
-            UnsubscribeMsAccounts(info);
+            _connection.RemoveConnection(connectionId);
 
-            _connection.RemoveConnection(connectionid);
-
-            _logger.Log(LogLevel.Information, "Client disconnected with ip [{ip}]: {ConnectionId}", info.IP, connectionid);
+            _logger.Log(LogLevel.Information, "Client disconnected with ip [{ip}]: {ConnectionId}", info.IP, connectionId);
             return next(context, exception);
+        }
+
+        private void UpdateConnectionInfo(Guid token, string connectionId)
+        {
+            ClientInfo info = _connection.GetConnection(connectionId);
+            info.User = token != Guid.Empty ?
+                _business.GetUserInfo(token) : null;
+
+            _connection.UpdateConnection(connectionId, info);
         }
 
         private string GetIp(HubLifetimeContext context)
@@ -133,67 +133,6 @@ namespace MSRewardsBot.Server.Network
             return
                 ctx?.Request.Headers["X-Forwarded-For"].FirstOrDefault()
                 ?? ctx?.Connection.RemoteIpAddress?.ToString();
-        }
-
-        private void UpdateConnectionInfo(Guid token, string connectionId)
-        {
-            if (token != Guid.Empty)
-            {
-                ClientInfo info = _connection.GetConnection(connectionId);
-
-                User user = _business.GetUserInfo(token);
-                if (user == null)
-                {
-                    return;
-                }
-
-                info.User = user;
-
-                _connection.UpdateConnection(connectionId, info);
-
-                foreach (MSAccount acc in info.User.MSAccounts)
-                {
-                    acc.Stats.PropertyChanged += Stats_PropertyChanged;
-                }
-            }
-        }
-
-        private async void Stats_PropertyChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)
-        {
-            if (sender is ClientInfo info)
-            {
-                await _commandHub.SendMSAccountsInfo(info);
-            }
-        }
-
-        private void UnsubscribeMsAccounts(ClientInfo info)
-        {
-            if (info.User != null)
-            {
-                foreach (MSAccount acc in info.User.MSAccounts)
-                {
-                    acc.Stats.PropertyChanged -= Stats_PropertyChanged;
-                }
-            }
-        }
-
-        private void RemoveUserFromConnection(Guid token, string connectionId)
-        {
-            if (token != Guid.Empty)
-            {
-                ClientInfo info = _connection.GetConnection(connectionId);
-
-                User user = _business.GetUserInfo(token);
-                if (user == null)
-                {
-                    return;
-                }
-
-                UnsubscribeMsAccounts(info);
-                info.User = null;
-
-                _connection.UpdateConnection(connectionId, info);
-            }
         }
     }
 }
