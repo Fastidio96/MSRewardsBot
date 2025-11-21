@@ -1,9 +1,12 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Security.Cryptography;
 using System.Text;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using MSRewardsBot.Common.DataEntities.Accounting;
+using MSRewardsBot.Server.DataEntities;
 using MSRewardsBot.Server.DB;
 
 namespace MSRewardsBot.Server.Core
@@ -13,11 +16,16 @@ namespace MSRewardsBot.Server.Core
         private const string PWD_SALT = @"C3tn5yrPYPiAv9Pm59L4Y1tArw6eEjYK";
 
         private readonly ILogger<BusinessLayer> _logger;
+        private readonly IServiceProvider _services;
         private readonly DataLayer _data;
 
-        public BusinessLayer(ILogger<BusinessLayer> logger)
+        private Server _server => _serverInternal ??= _services.GetRequiredService<Server>();
+        private Server? _serverInternal;
+
+        public BusinessLayer(ILogger<BusinessLayer> logger, IServiceProvider services)
         {
             _logger = logger;
+            _services = services;
             _data = new DataLayer();
         }
 
@@ -114,6 +122,22 @@ namespace MSRewardsBot.Server.Core
                 return null;
             }
 
+            if(user == null)
+            {
+                return null;
+            }
+
+            foreach (MSAccount acc in user.MSAccounts)
+            {
+                if(!_server.CacheMSAccStats.TryGetValue(acc.DbId, out MSAccountServerData data))
+                {
+                    _logger.LogTrace("Cannot retrieve from server the account instance msaccount id {id}", acc.DbId);
+                    continue;
+                }
+
+                acc.Stats = data.Stats;
+            }
+
             return user;
         }
 
@@ -135,7 +159,6 @@ namespace MSRewardsBot.Server.Core
             }
 
             account.UserId = user.DbId;
-            account.User = user;
 
             return _data.InsertMSAccount(account);
         }
