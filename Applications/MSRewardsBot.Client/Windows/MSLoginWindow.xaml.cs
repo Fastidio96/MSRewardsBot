@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Windows;
 using Microsoft.Web.WebView2.Core;
 using MSRewardsBot.Client.DataEntities;
@@ -31,6 +32,7 @@ namespace MSRewardsBot.Client.Windows
         private void WebViewWorker_InitCompleted(object? sender, EventArgs e)
         {
             webViewWorker.InitCompleted -= WebViewWorker_InitCompleted;
+            this.webViewWorker.WebView.CoreWebView2.CookieManager.DeleteAllCookies();
 
             webViewWorker.WebView.NavigationCompleted += WebView_NavigationCompleted;
             webViewWorker.WebView.CoreWebView2.Navigate(Costants.URL_LOGIN);
