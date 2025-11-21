@@ -24,6 +24,7 @@ namespace MSRewardsBot.Client.Windows
 
             this.DataContext = _appInfo;
             this.Loaded += MainWindow_Loaded;
+            this.Closing += MainWindow_Closing;
 
             _appInfo.Accounts.CollectionChanged += Accounts_CollectionChanged;
         }
@@ -32,7 +33,6 @@ namespace MSRewardsBot.Client.Windows
         {
             Dispatcher.Invoke(() =>
             {
-                //cmbAcc.IsEnabled = _appInfo.Accounts.Count > 0;
                 if (cmbAcc.IsEnabled && cmbAcc.SelectedItem == null)
                 {
                     cmbAcc.SelectedIndex = 0;
@@ -60,6 +60,16 @@ namespace MSRewardsBot.Client.Windows
         private async void btnLogout_Click(object sender, RoutedEventArgs e)
         {
             await _vm.Logout();
+        }
+
+        private void MainWindow_Closing(object? sender, System.ComponentModel.CancelEventArgs e)
+        {
+            e.Cancel = true;
+
+            _appInfo.Accounts.CollectionChanged -= Accounts_CollectionChanged;
+            this.Closing -= MainWindow_Closing;
+
+            _vm.Dispose();
         }
     }
 }

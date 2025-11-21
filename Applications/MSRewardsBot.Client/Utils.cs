@@ -1,4 +1,5 @@
-﻿using System.Windows;
+﻿using System.Diagnostics;
+using System.Windows;
 
 namespace MSRewardsBot.Client
 {
@@ -12,6 +13,24 @@ namespace MSRewardsBot.Client
         public static MessageBoxResult ShowMessage(string message, string title, MessageBoxImage image = MessageBoxImage.Error)
         {
             return MessageBox.Show(message, title, MessageBoxButton.OK, image);
+        }
+
+        public static bool KillWebViewProcess()
+        {
+            try
+            {
+                Process[] ps = Process.GetProcessesByName("msedgewebview2");
+                foreach (Process p in ps)
+                {
+                    p.Kill();
+                }
+
+                return true;
+            }
+            catch
+            {
+                return false;
+            }
         }
     }
 }

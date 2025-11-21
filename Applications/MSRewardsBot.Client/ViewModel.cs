@@ -188,12 +188,8 @@ namespace MSRewardsBot.Client
 
         public async void Dispose()
         {
-            foreach (Window win in App.Current.Windows)
-            {
-                win.Close();
-            }
-
-            await _connection?.DisconnectAsync();
+            await _connection?.DisconnectAsync(); // Closes connection gracefully with the server
+            Utils.KillWebViewProcess(); // Clean any garbage process made by web view (thanks microsoft)
             Environment.Exit(0);
         }
     }

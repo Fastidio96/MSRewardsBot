@@ -44,26 +44,10 @@ namespace MSRewardsBot.Client.Windows
                 }).Wait();
             }
 
-            KillWebViewProcess();
+            Utils.KillWebViewProcess();
         }
 
-        private bool KillWebViewProcess()
-        {
-            try
-            {
-                Process[] ps = Process.GetProcessesByName("msedgewebview2");
-                foreach (Process p in ps)
-                {
-                    p.Kill();
-                }
-
-                return true;
-            }
-            catch
-            {
-                return false;
-            }
-        }
+        
 
     }
 }
