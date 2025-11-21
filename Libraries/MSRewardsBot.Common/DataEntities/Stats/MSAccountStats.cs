@@ -100,14 +100,44 @@ namespace MSRewardsBot.Common.DataEntities.Stats
         [JsonIgnore]
         public DateTime LastSearchesCheck { get; set; }
 
+        public int MSAccountId { get; set; }
+        public int UserId { get; set; }
 
+        public void ChangeProperty(MSAccountStats stats, string propertyName)
+        {
+            switch (propertyName)
+            {
+                case nameof(CurrentAccountLevel):
+                    {
+                        stats.CurrentAccountLevel = CurrentAccountLevel;
+                        break;
+                    }
+                case nameof(CurrentAccountLevelPoints):
+                    {
+                        stats.CurrentAccountLevelPoints = CurrentAccountLevelPoints;
+                        break;
+                    }
+                case nameof(CurrentPointsPCSearches):
+                    {
+                        stats.CurrentPointsPCSearches = CurrentPointsPCSearches;
+                        break;
+                    }
+                case nameof(MaxPointsPCSearches):
+                    {
+                        stats.MaxPointsPCSearches = MaxPointsPCSearches;
+                        break;
+                    }
+                case nameof(LastDashboardUpdate):
+                    {
+                        stats.LastDashboardUpdate = LastDashboardUpdate;
+                        break;
+                    }
+            }
+        }
 
         private void NotifyPropertyChanged([CallerMemberName] string propertyName = null)
         {
-            if (PropertyChanged != null)
-            {
-                PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
-            }
+            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
         }
     }
 }

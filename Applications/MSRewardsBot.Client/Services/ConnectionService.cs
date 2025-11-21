@@ -1,11 +1,14 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Linq;
 using System.Threading.Tasks;
+using System.Windows.Threading;
 using Microsoft.AspNetCore.SignalR.Client;
 using MSRewardsBot.Client.DataEntities;
 using MSRewardsBot.Common.DataEntities.Accounting;
 using MSRewardsBot.Common.DataEntities.Interfaces;
+using MSRewardsBot.Common.DataEntities.Stats;
 
 namespace MSRewardsBot.Client.Services
 {
@@ -47,13 +50,18 @@ namespace MSRewardsBot.Client.Services
                 _appInfo.IsUserLogged = false;
                 return true;
             }));
-            _disposables.Add(_connection.On("SendMSAccountsInfo", delegate (List<MSAccount> acc)
+            _disposables.Add(_connection.On("SendUpdateMSAccountStats", delegate (MSAccountStats changedAcc, string propertyName)
             {
-                _appInfo.Accounts.Clear();
-                foreach (MSAccount account in acc)
+                App.Current.Dispatcher.Invoke(() =>
                 {
-                    _appInfo.Accounts.Add(account);
-                }
+                    MSAccount acc = _appInfo.Accounts.FirstOrDefault(c => c.DbId == changedAcc.MSAccountId);
+                    if (acc == null)
+                    {
+                        return;
+                    }
+
+                    acc.Stats.ChangeProperty(changedAcc, propertyName);
+                });
             }));
         }
 

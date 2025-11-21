@@ -1,8 +1,10 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.SignalR;
 using MSRewardsBot.Common.DataEntities.Accounting;
 using MSRewardsBot.Common.DataEntities.Interfaces;
+using MSRewardsBot.Common.DataEntities.Stats;
 using MSRewardsBot.Server.Core;
 using MSRewardsBot.Server.DataEntities;
 
@@ -43,14 +45,9 @@ namespace MSRewardsBot.Server.Network
             return Task.FromResult(_business.InsertMSAccount(token, account));
         }
 
-        internal Task SendMSAccountsInfo(ClientInfo client)
+        internal Task SendUpdateMSAccountStats(string connectionId, MSAccountStats accountStat, string propertyName)
         {
-            if (client.User == null)
-            {
-                return null;
-            }
-
-            return _hubContext.Clients.Client(client.ConnectionId).SendAsync(nameof(SendMSAccountsInfo), client.User.MSAccounts);
+            return _hubContext.Clients.Client(connectionId).SendAsync(nameof(SendUpdateMSAccountStats), accountStat, propertyName);
         }
 
         public Task<bool> Logout(Guid token)
