@@ -24,10 +24,7 @@ namespace MSRewardsBot.Server.Automation
         {
             _logger.Log(LogLevel.Information, "Checking and installing browser dependencies..");
 
-            await Task.Run(delegate ()
-            {
-                int exitCode = Microsoft.Playwright.Program.Main(["install"]);
-            });
+            Microsoft.Playwright.Program.Main(["install"]);
 
             _logger.Log(LogLevel.Information, "Dependencies installed successfully");
 
