@@ -10,6 +10,7 @@ namespace MSRewardsBot.Server.Network
         event EventHandler<ClientArgs> ClientDisconnected;
         void AddConnection(ClientInfo client);
         ClientInfo GetConnection(string connectionId);
+        ClientInfo GetConnection(int userId);
         void UpdateConnection(string connectionId, ClientInfo updatedClientInfo);
         void RemoveConnection(string connectionId);
         IReadOnlyCollection<ClientInfo> GetClients();

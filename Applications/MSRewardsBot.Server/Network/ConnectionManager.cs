@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using MSRewardsBot.Server.DataEntities;
@@ -60,6 +61,14 @@ namespace MSRewardsBot.Server.Network
             lock (_connections)
             {
                 return _connections.ToList().AsReadOnly();
+            }
+        }
+
+        public ClientInfo GetConnection(int userId)
+        {
+            lock (_connections)
+            {
+                return _connections.FirstOrDefault(c => c.User?.DbId == userId);
             }
         }
     }
