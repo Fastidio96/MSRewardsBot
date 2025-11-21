@@ -172,45 +172,52 @@
                         <ControlTemplate TargetType="ComboBox">
 
                             <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <!-- ContentPresenter -->
+                                    <ColumnDefinition Width="*" />
+                                    <!-- ToggleButton (arrow) -->
+                                    <ColumnDefinition Width="Auto" />
+                                </Grid.ColumnDefinitions>
+
                                 <ToggleButton
-                            Name="ToggleButton"
-                            Template="{StaticResource ComboBoxToggleButton}"
-                            Grid.Column="2"
-                            Focusable="False"
-                            IsChecked="{Binding Path=IsDropDownOpen, RelativeSource={RelativeSource TemplatedParent}, Mode=TwoWay}"
-                            ClickMode="Press"/>
+                                    Name="ToggleButton"
+                                    Template="{StaticResource ComboBoxToggleButton}"
+                                    Focusable="False"
+                                    IsChecked="{Binding Path=IsDropDownOpen, RelativeSource={RelativeSource TemplatedParent}, Mode=TwoWay}"
+                                    ClickMode="Press"/> 
 
                                 <ContentPresenter
-                            Name="ContentSite"
-                            IsHitTestVisible="False"
-                            Content="{TemplateBinding SelectionBoxItem}"
-                            ContentTemplate="{TemplateBinding SelectionBoxItemTemplate}"
-                            ContentTemplateSelector="{TemplateBinding ItemTemplateSelector}"
-                            Margin="6,3"
-                            VerticalAlignment="Center"
-                            HorizontalAlignment="Left"/>
+                                    Name="ContentSite" 
+                                    IsHitTestVisible="False"
+                                    Content="{TemplateBinding SelectionBoxItem}"
+                                    ContentTemplate="{TemplateBinding SelectionBoxItemTemplate}"
+                                    ContentTemplateSelector="{TemplateBinding ItemTemplateSelector}"
+                                    Margin="6,3"
+                                    VerticalAlignment="Center"
+                                    HorizontalAlignment="Left"/>    
 
                                 <Popup 
-                            Name="Popup"
-                            Placement="Bottom"
-                            AllowsTransparency="True"
-                            Focusable="False"
-                            IsOpen="{TemplateBinding IsDropDownOpen}"
-                            PopupAnimation="Fade">
+                                    Name="Popup"
+                                    Placement="Bottom"
+                                    AllowsTransparency="True"
+                                    Focusable="False"
+                                    IsOpen="{TemplateBinding IsDropDownOpen}"
+                                    PopupAnimation="Fade"
+                                    MinWidth="{Binding ActualWidth, RelativeSource={RelativeSource TemplatedParent}}">
 
-                                    <Grid>
-                                        <Border 
-                                    Background="#222222"
-                                    BorderBrush="#444444"
-                                    BorderThickness="1"
-                                    CornerRadius="4">
-                                            <ScrollViewer Margin="2" SnapsToDevicePixels="True">
-                                                <ItemsPresenter/>
-                                            </ScrollViewer>
-                                        </Border>
-                                    </Grid>
+                                    <Border 
+                                        Background="#222222"
+                                        BorderBrush="#444444"
+                                        BorderThickness="1"
+                                        CornerRadius="4">
+                                        <ScrollViewer Margin="2" SnapsToDevicePixels="True">
+                                            <ItemsPresenter/>
+                                        </ScrollViewer>
+                                    </Border>
 
                                 </Popup>
+
+
                             </Grid>
 
                             <ControlTemplate.Triggers>
@@ -225,7 +232,6 @@
                 </Setter>
             </Style>
 
-            <!-- Dark ComboBoxItem Style -->
             <Style TargetType="ComboBoxItem">
                 <Setter Property="Foreground" Value="White"/>
                 <Setter Property="Background" Value="#222222"/>
