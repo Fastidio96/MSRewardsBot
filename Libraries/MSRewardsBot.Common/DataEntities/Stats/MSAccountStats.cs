@@ -13,7 +13,7 @@ namespace MSRewardsBot.Common.DataEntities.Stats
         {
             LastDashboardUpdate = DateTime.MinValue;
         }
-        
+
         public void PCSearchCompleted()
         {
             CurrentPointsPCSearches += _pointsPerSearch;
@@ -109,27 +109,27 @@ namespace MSRewardsBot.Common.DataEntities.Stats
             {
                 case nameof(CurrentAccountLevel):
                     {
-                        stats.CurrentAccountLevel = CurrentAccountLevel;
+                        CurrentAccountLevel = stats.CurrentAccountLevel;
                         break;
                     }
                 case nameof(CurrentAccountLevelPoints):
                     {
-                        stats.CurrentAccountLevelPoints = CurrentAccountLevelPoints;
+                        CurrentAccountLevelPoints = stats.CurrentAccountLevelPoints;
                         break;
                     }
                 case nameof(CurrentPointsPCSearches):
                     {
-                        stats.CurrentPointsPCSearches = CurrentPointsPCSearches;
+                        CurrentPointsPCSearches = stats.CurrentPointsPCSearches;
                         break;
                     }
                 case nameof(MaxPointsPCSearches):
                     {
-                        stats.MaxPointsPCSearches = MaxPointsPCSearches;
+                        MaxPointsPCSearches = stats.MaxPointsPCSearches;
                         break;
                     }
                 case nameof(LastDashboardUpdate):
                     {
-                        stats.LastDashboardUpdate = LastDashboardUpdate;
+                        LastDashboardUpdate = stats.LastDashboardUpdate;
                         break;
                     }
             }

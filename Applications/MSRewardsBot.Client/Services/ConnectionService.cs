@@ -54,13 +54,8 @@ namespace MSRewardsBot.Client.Services
             {
                 App.Current.Dispatcher.Invoke(() =>
                 {
-                    MSAccount acc = _appInfo.Accounts.FirstOrDefault(c => c.DbId == changedAcc.MSAccountId);
-                    if (acc == null)
-                    {
-                        return;
-                    }
-
-                    acc.Stats.ChangeProperty(changedAcc, propertyName);
+                    _appInfo.Accounts.FirstOrDefault(c => c.DbId == changedAcc.MSAccountId)
+                        ?.Stats.ChangeProperty(changedAcc, propertyName);
                 });
             }));
         }
