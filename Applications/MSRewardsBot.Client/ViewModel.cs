@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics;
-using System.Reflection;
+using System.Linq;
 using System.Threading.Tasks;
 using System.Windows;
 using MSRewardsBot.Client.DataEntities;
@@ -107,24 +107,40 @@ namespace MSRewardsBot.Client
             return _appInfo.IsUserLogged;
         }
 
-        public async Task<User> GetUserInfo()
+        public async Task<bool> GetUserInfo()
         {
             User user = await _connection.GetUserInfo(_token);
             if (user == null)
             {
                 await Logout();
-                return null;
+                return false;
             }
 
             _appInfo.Username = user.Username;
 
-            _appInfo.Accounts.Clear();
-            foreach (MSAccount acc in user.MSAccounts)
+            List<MSAccount> toAdd = user.MSAccounts
+                .Where(a => _appInfo.Accounts
+                .FirstOrDefault(acc => acc.DbId == a.DbId) == null)?.ToList();
+            List<MSAccount> toRemove = _appInfo.Accounts
+                .Where(a => user.MSAccounts
+                .FirstOrDefault(acc => acc.DbId == a.DbId) == null)?.ToList();
+
+            if (toAdd != null)
             {
-                _appInfo.Accounts.Add(acc);
+                foreach (MSAccount account in toAdd)
+                {
+                    _appInfo.Accounts.Add(account);
+                }
+            }
+            if (toRemove != null)
+            {
+                foreach (MSAccount account in toRemove)
+                {
+                    _appInfo.Accounts.Remove(account);
+                }
             }
 
-            return user;
+            return true;
         }
 
         public async Task Logout()

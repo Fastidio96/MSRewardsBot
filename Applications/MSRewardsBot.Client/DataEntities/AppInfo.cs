@@ -5,6 +5,7 @@ using System.ComponentModel;
 using System.Reflection;
 using System.Runtime.CompilerServices;
 using MSRewardsBot.Common.DataEntities.Accounting;
+using MSRewardsBot.Common.DataEntities.Stats;
 
 namespace MSRewardsBot.Client.DataEntities
 {
@@ -76,16 +77,37 @@ namespace MSRewardsBot.Client.DataEntities
         }
         private string _username;
 
+        public MSAccount SelectedAccount
+        {
+            get => _selectedAccount;
+            set
+            {
+                _selectedAccount = value;
+                SelectedAccountStats = _selectedAccount?.Stats;
+
+                NotifyPropertyChanged(nameof(SelectedAccount));
+            }
+        }
+        private MSAccount _selectedAccount;
+
+        public MSAccountStats SelectedAccountStats
+        {
+            get => _selectedAccountStats;
+            set
+            {
+                _selectedAccountStats = value;
+                NotifyPropertyChanged(nameof(SelectedAccountStats));
+            }
+        }
+        private MSAccountStats _selectedAccountStats;
+
         public ObservableCollection<MSAccount> Accounts { get; set; }
 
         public Version Version { get; set; }
 
         private void NotifyPropertyChanged([CallerMemberName] string propName = "")
         {
-            if (PropertyChanged != null)
-            {
-                PropertyChanged(this, new PropertyChangedEventArgs(propName));
-            }
+            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propName));
         }
     }
 }

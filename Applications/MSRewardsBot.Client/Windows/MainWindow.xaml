@@ -4,6 +4,7 @@
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:window="clr-namespace:MSRewardsBot.Client.Windows"
+        xmlns:local="clr-namespace:MSRewardsBot.Common.DataEntities.Stats;assembly=MSRewardsBot.Common"
         mc:Ignorable="d"
         Title="MS Rewards Bot" 
         Height="450" Width="800"
@@ -30,8 +31,9 @@
             </Grid.ColumnDefinitions>
 
             <ComboBox Grid.Row="0" Grid.Column="0"
-                Name="cmbAcc" 
-                ItemsSource="{Binding Accounts}">
+                    Name="cmbAcc" 
+                    ItemsSource="{Binding Accounts}"
+                    SelectedItem="{Binding SelectedAccount, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}">
                 <ComboBox.ItemTemplate>
                     <DataTemplate>
                         <StackPanel Orientation="Horizontal">
@@ -45,6 +47,27 @@
         </Grid>
 
         <!-- Main content -->
+        <ContentControl Grid.Row="1" Grid.Column="0" Content="{Binding SelectedAccountStats}">
+            <ContentControl.ContentTemplate>
+                <DataTemplate DataType="{x:Type local:MSAccountStats}">
+                    <StackPanel Margin="6">
+                        <TextBlock Text="Stats:" FontWeight="Bold"/>
+                        <!-- Bind into Stats object -->
+                        <TextBlock>
+                            <TextBlock.Text>
+                                <MultiBinding StringFormat="CurrentPointsPCSearches: {0}/{1}">
+                                    <Binding Path="CurrentPointsPCSearches"/>
+                                    <Binding Path="MaxPointsPCSearches" />
+                                </MultiBinding>
+                            </TextBlock.Text>
+                        </TextBlock>
+                        <TextBlock Text="{Binding CurrentAccountLevel, StringFormat=CurrentAccountLevel: {0}}" />
+                        <TextBlock Text="{Binding CurrentAccountLevelPoints, StringFormat=CurrentAccountLevelPoints: {0}/500}" />
+                        <TextBlock Text="{Binding LastDashboardUpdate, StringFormat=LastDashboardUpdate: {0:HH:mm:ss dd/MM/yyyy}}" />
+                    </StackPanel>
+                </DataTemplate>
+            </ContentControl.ContentTemplate>
+        </ContentControl>
         
         
         <!-- Footer -->
