@@ -30,11 +30,14 @@ namespace MSRewardsBot.Client.Windows
 
         private void Accounts_CollectionChanged(object? sender, System.Collections.Specialized.NotifyCollectionChangedEventArgs e)
         {
-            cmbAcc.IsEnabled = _appInfo.Accounts.Count > 0;
-            if (cmbAcc.IsEnabled && cmbAcc.SelectedItem == null)
+            Dispatcher.Invoke(() =>
             {
-                cmbAcc.SelectedIndex = 0;
-            }
+                //cmbAcc.IsEnabled = _appInfo.Accounts.Count > 0;
+                if (cmbAcc.IsEnabled && cmbAcc.SelectedItem == null)
+                {
+                    cmbAcc.SelectedIndex = 0;
+                }
+            });
         }
 
         private async void MainWindow_Loaded(object sender, RoutedEventArgs e)
@@ -43,7 +46,6 @@ namespace MSRewardsBot.Client.Windows
             _splashScreenWindow.Hide();
 
             await _vm.GetUserInfo();
-
             if (cmbAcc.IsEnabled && cmbAcc.SelectedItem == null)
             {
                 cmbAcc.SelectedIndex = 0;
