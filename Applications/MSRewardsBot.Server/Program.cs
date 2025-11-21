@@ -5,7 +5,6 @@ using Microsoft.AspNetCore.ResponseCompression;
 using Microsoft.AspNetCore.SignalR;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
-using Microsoft.Extensions.Logging.Console;
 using MSRewardsBot.Server.Automation;
 using MSRewardsBot.Server.Core;
 using MSRewardsBot.Server.Network;
@@ -47,8 +46,8 @@ namespace MSRewardsBot.Server
                     options.EnableDetailedErrors = true;
 #endif
                     options.AddFilter<HubMonitorMiddleware>();
-                    options.ClientTimeoutInterval = new TimeSpan(0, 0, 10);
-                    options.KeepAliveInterval = new TimeSpan(0, 0, 5);
+                    //options.ClientTimeoutInterval = new TimeSpan(0, 0, 10);
+                    //options.KeepAliveInterval = new TimeSpan(0, 0, 5);
                 });
 
             builder.Services.AddResponseCompression(opts =>
@@ -73,6 +72,7 @@ namespace MSRewardsBot.Server
 
             Core.Server server = app.Services.GetRequiredService<Core.Server>();
             BrowserManager browser = app.Services.GetRequiredService<BrowserManager>();
+
             app.MapHub<CommandHub>("/cmdhub");
 
             // Configure the HTTP request pipeline.
@@ -82,7 +82,6 @@ namespace MSRewardsBot.Server
             app.UseAuthorization();
 
             server.Start();
-            app.Logger.LogInformation("MS Rewards bot server started");
 
             app.Lifetime.ApplicationStopping.Register(() =>
             {
