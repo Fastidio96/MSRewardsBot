@@ -2,8 +2,10 @@
 using System.Collections.ObjectModel;
 using System.Collections.Specialized;
 using System.ComponentModel;
+using System.Data;
 using System.Reflection;
 using System.Runtime.CompilerServices;
+using Microsoft.AspNetCore.SignalR.Client;
 using MSRewardsBot.Common.DataEntities.Accounting;
 using MSRewardsBot.Common.DataEntities.Stats;
 
@@ -48,6 +50,20 @@ namespace MSRewardsBot.Client.DataEntities
             }
         }
         private bool _connectedToServer;
+
+        public HubConnectionState ConnectionState
+        {
+            get => _connectionState;
+            set
+            {
+                if (_connectionState != value)
+                {
+                    _connectionState = value;
+                    NotifyPropertyChanged();
+                }
+            }
+        }
+        private HubConnectionState _connectionState;
 
         public bool IsUserLogged
         {

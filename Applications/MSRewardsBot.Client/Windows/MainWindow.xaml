@@ -78,27 +78,30 @@
             </Grid.RowDefinitions>
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="125"/>
                 <ColumnDefinition Width="*"/>
-                <ColumnDefinition Width="*"/>
-                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="50"/>
+                <ColumnDefinition Width="175"/>
             </Grid.ColumnDefinitions>
 
             <TextBlock Grid.Row="0" Grid.Column="0">
-                <Run Text="Connected to server" />
-                <Run Text="{Binding ConnectedToServer}" />
+                <Run Text="Connection status:" />
+                <Run Text="{Binding ConnectionState}" />
             </TextBlock>
             <TextBlock Grid.Row="0" Grid.Column="1">
-                <Run Text="User logged" />
+                <Run Text="User logged:" />
                 <Run Text="{Binding IsUserLogged}" />
             </TextBlock>
-            <StackPanel Grid.Row="0" Grid.Column="2" Orientation="Horizontal">
-                <TextBlock>
+            <StackPanel Grid.Row="0" Grid.Column="2">
+                <TextBlock Margin="0,0,20,0">
                  <Run Text="Connected as" />
                  <Run Text="{Binding Username}" />
                 </TextBlock>
+            </StackPanel>
+            <StackPanel Grid.Row="0" Grid.Column="3">
                 <Button x:Name="btnLogout" Content="Log out" Click="btnLogout_Click"/>
             </StackPanel>
-            <TextBlock Grid.Row="0" Grid.Column="3">
+            <TextBlock Grid.Row="0" Grid.Column="4" HorizontalAlignment="Center">
                  <Run Text="Version" />
                  <Run Text="{Binding Version}" />
             </TextBlock>

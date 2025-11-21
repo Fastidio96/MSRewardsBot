@@ -65,6 +65,8 @@ namespace MSRewardsBot.Client.Services
             bool exit = false;
             while (_connection != null && !exit)
             {
+                _appInfo.ConnectionState = _connection.State;
+
                 try
                 {
                     await _connection.StartAsync();
@@ -75,6 +77,8 @@ namespace MSRewardsBot.Client.Services
                     Debug.WriteLine(ex.Message);
                     await Task.Delay(2500);
                 }
+
+                _appInfo.ConnectionState = _connection.State;
             }
         }
 
@@ -94,16 +98,17 @@ namespace MSRewardsBot.Client.Services
 
             await _connection.DisposeAsync();
 
-            _connection.Closed -= Connection_Closed;
+            _appInfo.ConnectionState = _connection.State;
 
+            _connection.Closed -= Connection_Closed;
             _connection = null;
         }
 
-        private Task Connection_Closed(Exception? arg)
+        private async Task Connection_Closed(Exception? arg)
         {
             _appInfo.ConnectedToServer = false;
 
-            return Task.CompletedTask;
+            await TryConnect();
         }
 
         public Task<bool> LoginWithToken(Guid token)
