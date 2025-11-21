@@ -128,6 +128,36 @@
                 </Setter>
             </Style>
 
+            <!-- Dropdown button (arrow) -->
+            <ControlTemplate x:Key="ComboBoxToggleButton" TargetType="ToggleButton">
+                <Grid>
+                    <Border
+                        x:Name="Border"
+                        Background="#222222"
+                        BorderBrush="#444444"
+                        BorderThickness="1"/>
+
+                    <Path 
+                        VerticalAlignment="Center"
+                        HorizontalAlignment="Right"
+                        Margin="0,0,6,0"
+                        Data="M 0 0 L 6 6 L 12 0 Z"
+                        Fill="White"
+                        />
+
+                </Grid>
+
+                <ControlTemplate.Triggers>
+                    <Trigger Property="IsMouseOver" Value="True">
+                        <Setter TargetName="Border" Property="Background" Value="#2f2f2f"/>
+                    </Trigger>
+                    <Trigger Property="IsPressed" Value="True">
+                        <Setter TargetName="Border" Property="Background" Value="#1a1a1a"/>
+                    </Trigger>
+                </ControlTemplate.Triggers>
+
+            </ControlTemplate>
+
             <Style TargetType="ComboBox">
                 <Setter Property="Foreground" Value="White"/>
                 <Setter Property="Background" Value="#222222"/>
@@ -194,36 +224,6 @@
                     </Setter.Value>
                 </Setter>
             </Style>
-
-            <!-- Dropdown button (arrow) -->
-            <ControlTemplate x:Key="ComboBoxToggleButton" TargetType="ToggleButton">
-                <Grid>
-                    <Border
-                        x:Name="Border"
-                        Background="#222222"
-                        BorderBrush="#444444"
-                        BorderThickness="1"/>
-
-                    <Path 
-                        VerticalAlignment="Center"
-                        HorizontalAlignment="Right"
-                        Margin="0,0,6,0"
-                        Data="M 0 0 L 6 6 L 12 0 Z"
-                        Fill="White"
-                        />
-
-                </Grid>
-
-                <ControlTemplate.Triggers>
-                    <Trigger Property="IsMouseOver" Value="True">
-                        <Setter TargetName="Border" Property="Background" Value="#2f2f2f"/>
-                    </Trigger>
-                    <Trigger Property="IsPressed" Value="True">
-                        <Setter TargetName="Border" Property="Background" Value="#1a1a1a"/>
-                    </Trigger>
-                </ControlTemplate.Triggers>
-
-            </ControlTemplate>
 
             <!-- Dark ComboBoxItem Style -->
             <Style TargetType="ComboBoxItem">
