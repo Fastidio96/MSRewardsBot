@@ -164,7 +164,7 @@ namespace MSRewardsBot.Server.Core
                     if (DateTimeUtilities.HasElapsed(now, cache.Stats.LastSearchesCheck, Settings.SearchesCheck))
                     {
                         cache.Stats.LastSearchesCheck = now;
-                        if (cache.Stats.PCSearchesToDo > 0 && false)
+                        if (cache.Stats.PCSearchesToDo > 0)
                         {
                             DateTime start = now;
                             Random rnd = new Random();
