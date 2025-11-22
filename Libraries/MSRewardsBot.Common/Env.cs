@@ -11,7 +11,7 @@
         public const string SERVER_HOST = "msbot.laptopick.com";
         public const int SERVER_PORT = 10500;
         public const string SERVER_HUB_NAME = "cmdhub";
-        public const bool IS_HTTPS_ENABLED = false;
+        public const bool IS_HTTPS_ENABLED = true;
 #endif
 
         public static string GetConnectionString()
