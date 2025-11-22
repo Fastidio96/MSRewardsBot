@@ -14,42 +14,51 @@ namespace MSRewardsBot.Client.Windows
     public partial class MSLoginWindow : Window
     {
         private ViewModel _vm;
+        private event EventHandler InitCompleted;
 
         public MSLoginWindow(ViewModel vm)
         {
             InitializeComponent();
 
             _vm = vm;
-            webViewWorker.InitCompleted += WebViewWorker_InitCompleted;
+
+            webview.NavigationCompleted += Webview_DetectInit_NavigationCompleted;
+            InitCompleted += WebViewWorker_InitCompleted;
+
             this.Closed += MSLoginWindow_Closed;
+        }
+        private void Webview_DetectInit_NavigationCompleted(object? sender, CoreWebView2NavigationCompletedEventArgs e)
+        {
+            this.webview.NavigationCompleted -= Webview_DetectInit_NavigationCompleted;
+            InitCompleted?.Invoke(this, e);
         }
 
         private void MSLoginWindow_Closed(object? sender, EventArgs e)
         {
-            webViewWorker?.Dispose();
+            webview?.Dispose();
         }
 
         private void WebViewWorker_InitCompleted(object? sender, EventArgs e)
         {
-            webViewWorker.InitCompleted -= WebViewWorker_InitCompleted;
-            this.webViewWorker.WebView.CoreWebView2.CookieManager.DeleteAllCookies();
+            InitCompleted -= WebViewWorker_InitCompleted;
+            webview.CoreWebView2.CookieManager.DeleteAllCookies();
 
-            webViewWorker.WebView.NavigationCompleted += WebView_NavigationCompleted;
-            webViewWorker.WebView.CoreWebView2.Navigate(Costants.URL_LOGIN);
+            webview.NavigationCompleted += WebView_NavigationCompleted;
+            webview.CoreWebView2.Navigate(Costants.URL_LOGIN);
         }
 
         private void WebView_NavigationCompleted(object? sender, CoreWebView2NavigationCompletedEventArgs e)
         {
-            if (e.IsSuccess && (webViewWorker.WebView.Source.Host == Costants.URL_HOST_LOGGED))
+            if (e.IsSuccess && (webview.Source.Host == Costants.URL_HOST_LOGGED))
             {
-                webViewWorker.WebView.NavigationCompleted -= WebView_NavigationCompleted;
+                webview.NavigationCompleted -= WebView_NavigationCompleted;
                 GatherCookies();
             }
         }
 
         private async void GatherCookies()
         {
-            List<CoreWebView2Cookie> webviewCoookies = await this.webViewWorker.WebView.CoreWebView2.CookieManager.GetCookiesAsync(Costants.URL_LOGIN);
+            List<CoreWebView2Cookie> webviewCoookies = await webview.CoreWebView2.CookieManager.GetCookiesAsync(Costants.URL_LOGIN);
             if (webviewCoookies == null || webviewCoookies.Count == 0)
             {
                 return;
@@ -81,7 +90,24 @@ namespace MSRewardsBot.Client.Windows
             }
 
             this.Close();
-            webViewWorker?.Dispose();
+            Dispose();
+        }
+
+        public void Dispose()
+        {
+            if (webview != null)
+            {
+                webview.NavigationCompleted -= Webview_DetectInit_NavigationCompleted;
+
+                Dispatcher.InvokeAsync(delegate ()
+                {
+                    webview.CoreWebView2?.Stop();
+                    webview.Dispose();
+                    webview = null;
+                }).Wait();
+            }
+
+            Utils.KillWebViewProcess();
         }
     }
 }
