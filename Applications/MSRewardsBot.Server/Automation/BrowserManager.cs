@@ -1,11 +1,14 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
 using Microsoft.Playwright;
 using MSRewardsBot.Common.DataEntities.Accounting;
 using MSRewardsBot.Common.DataEntities.Stats;
 using MSRewardsBot.Server.DataEntities;
+using static System.Runtime.InteropServices.JavaScript.JSType;
+using static Microsoft.Extensions.Logging.EventSource.LoggingEventSource;
 
 namespace MSRewardsBot.Server.Automation
 {
@@ -260,11 +263,11 @@ namespace MSRewardsBot.Server.Automation
             {
                 Random rnd = new Random();
 
-                _logger.LogDebug("Logged action {time} {action} ", DateTime.Now.ToString("HH:mm:ss:fff"), "CLICK_BING_HOMEPAGE_LOGIN_BTN");
-                await Task.Delay(new TimeSpan(0, 0, rnd.Next(5, 10)));
+                LogDebugAction("CLICK_BING_HOMEPAGE_LOGIN_BTN");
+                await Task.Delay(GetRandomMsTimes(rnd, BrowserConstants.HUMAN_CLICK_BTN_MIN + 2000, BrowserConstants.HUMAN_CLICK_BTN_MAX + 5000));
                 await data.Page.EvaluateAsync(BrowserConstants.CLICK_BING_HOMEPAGE_LOGIN_BTN);
 
-                _logger.LogDebug("Logged action {time} {action} ", DateTime.Now.ToString("HH:mm:ss:fff"), "PAGE RELOAD");
+                LogDebugAction("PAGE RELOAD");
                 await Task.Delay(new TimeSpan(0, 0, rnd.Next(3, 5)));
                 await data.Page.ReloadAsync(new PageReloadOptions()
                 {
@@ -272,37 +275,103 @@ namespace MSRewardsBot.Server.Automation
                     WaitUntil = WaitUntilState.Load
                 });
 
-                _logger.LogDebug("Logged action {time} {action} ", DateTime.Now.ToString("HH:mm:ss:fff"), "CLICK_YES_GDPR_BTN");
-                await Task.Delay(new TimeSpan(0, 0, rnd.Next(2, 5)));
+                LogDebugAction("CLICK_YES_GDPR_BTN");
+                await Task.Delay(GetRandomMsTimes(rnd, BrowserConstants.HUMAN_CLICK_BTN_MIN, BrowserConstants.HUMAN_CLICK_BTN_MAX));
                 await data.Page.EvaluateAsync(BrowserConstants.CLICK_YES_GDPR_BTN);
 
-                _logger.LogDebug("Logged action {time} {action} ", DateTime.Now.ToString("HH:mm:ss:fff"), "After CLICK_BING_HOMEPAGE_LOGIN_BTN");
-                await Task.Delay(new TimeSpan(0, 0, rnd.Next(5, 10)));
-
-                _logger.LogDebug("Logged action {time} {action} ", DateTime.Now.ToString("HH:mm:ss:fff"), "CLICK_SEARCHBAR_TEXTAREA");
-                await Task.Delay(new TimeSpan(0, 0, rnd.Next(1, 3)));
+                LogDebugAction("CLICK_SEARCHBAR_TEXTAREA");
+                await Task.Delay(GetRandomMsTimes(rnd, BrowserConstants.HUMAN_CLICK_BTN_MIN, BrowserConstants.HUMAN_CLICK_BTN_MAX));
                 await data.Page.EvaluateAsync(BrowserConstants.CLICK_SEARCHBAR_TEXTAREA);
 
-                _logger.LogDebug("Logged action {time} {action} ", DateTime.Now.ToString("HH:mm:ss:fff"), "WRITE_KEYWORD_HOMEPAGE_TEXTAREA");
-                string js = BrowserConstants.WRITE_KEYWORD_SEARCHBAR_TEXTAREA.Replace("{keyword}", keyword);
-                await data.Page.EvaluateAsync(js);
+                LogDebugAction("WRITE_KEYWORD_HOMEPAGE_TEXTAREA");
+                if (!await WriteAsHuman(data.Page, rnd, keyword))
+                {
+                    return false;
+                }
 
-                _logger.LogDebug("Logged action {time} {action} ", DateTime.Now.ToString("HH:mm:ss:fff"), "CLICK_SUBMIT_SEARCHBAR_TEXTAREA");
-                await Task.Delay(new TimeSpan(0, 0, rnd.Next(1, 5)));
-                await data.Page.EvaluateAsync(BrowserConstants.CLICK_SUBMIT_SEARCHBAR_TEXTAREA);
+                if (!await TrySubmitKeyword(data.Page, rnd))
+                {
+                    return false;
+                }
 
+                LogDebugAction("Viewing page content & scrolling");
+                await Task.Delay(new TimeSpan(0, 0, rnd.Next(2, 5)));
+                await data.Page.Mouse.WheelAsync(0, rnd.Next(500, 800));
                 await Task.Delay(new TimeSpan(0, 0, rnd.Next(5, 10)));
 
-                _logger.LogDebug("Logged action {time} {action} ", DateTime.Now.ToString("HH:mm:ss:fff"), "After Enter press");
-
+                LogDebugAction("Resetting start page for next request");
                 await NavigateToURL(data, "about:blank");
-                _logger.LogDebug("Resetting start page for next request");
 
                 return true;
             }
             catch (Exception e)
             {
                 _logger.LogError("Error on URL {url}: {e}", data.Page.Url, e.Message);
+                return false;
+            }
+        }
+
+        private async Task<bool> TrySubmitKeyword(IPage page, Random rnd)
+        {
+            int tried = 1;
+            while (tried <= 3)
+            {
+                try
+                {
+                    LogDebugAction("CLICK_SUBMIT_SEARCHBAR_TEXTAREA try n° " + tried);
+                    await Task.Delay(GetRandomMsTimes(rnd, BrowserConstants.HUMAN_CLICK_BTN_MIN, BrowserConstants.HUMAN_CLICK_BTN_MAX));
+                    await page.EvaluateAsync(BrowserConstants.CLICK_SUBMIT_SEARCHBAR_TEXTAREA);
+                    return true;
+                }
+                catch
+                {
+                    _logger.LogDebug("Page {url}", page.Url);
+                    tried += 1;
+                    LogDebugAction("SUBMIT BUTTON NOT FOUND >> TRY TO SUBMIT WITH ENTER");
+                    await page.Keyboard.PressAsync("Enter", new KeyboardPressOptions()
+                    {
+                        Delay = rnd.Next(BrowserConstants.HUMAN_CLICK_BTN_MIN, BrowserConstants.HUMAN_CLICK_BTN_MAX)
+                    });
+
+                    if (page.Url.StartsWith(BrowserConstants.URL_SEARCHES))
+                    {
+                        LogDebugAction("SUBMIT SENT SUCCESSFULLY");
+                        return true;
+                    }
+
+                    await Task.Delay(GetRandomMsTimes(rnd, BrowserConstants.HUMAN_CLICK_BTN_MIN, BrowserConstants.HUMAN_CLICK_BTN_MAX));
+                }
+            }
+
+            _logger.LogError("Error on submit keyword => submit button not found");
+            return false;
+        }
+        private void LogDebugAction(string actionName)
+        {
+            _logger.LogDebug("Logged action {time} {action} ", DateTime.Now.ToString("mm:ss:fff"), actionName.ToUpper());
+        }
+        private TimeSpan GetRandomMsTimes(Random rndInstance, int min, int max)
+        {
+            return new TimeSpan(0, 0, 0, 0, rndInstance.Next(min, max));
+        }
+        private async Task<bool> WriteAsHuman(IPage page, Random rnd, string keyword)
+        {
+            try
+            {
+                char[] split = keyword.ToCharArray();
+                foreach (char cr in split)
+                {
+                    string js = BrowserConstants.APPEND_KEYWORD_SEARCHBAR_TEXTAREA.Replace("{keyword}", cr.ToString());
+                    await page.EvaluateAsync(js);
+
+                    await Task.Delay(GetRandomMsTimes(rnd, BrowserConstants.HUMAN_WRITING_MIN, BrowserConstants.HUMAN_WRITING_MAX));
+                }
+
+                return true;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError("Error on writing keyword {keyword}: {e}", keyword, ex.Message);
                 return false;
             }
         }
