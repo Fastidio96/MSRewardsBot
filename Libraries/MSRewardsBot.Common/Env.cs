@@ -14,15 +14,19 @@
         public const bool IS_HTTPS_ENABLED = true;
 #endif
 
-        public static string GetConnectionString()
+        public static string GetServerConnection()
         {
-            string protocol = IS_HTTPS_ENABLED ? "https" : "http";
-            return $"{protocol}://{SERVER_HOST}:{SERVER_PORT}";
+#if DEBUG
+            return $"http://{SERVER_HOST}:{SERVER_PORT}";
+#else
+            return $"http://0.0.0.0:{SERVER_PORT}";
+#endif
         }
 
-        public static string GetConnectionStringForClient()
+        public static string GetClientConnection()
         {
-            return $"{GetConnectionString()}/{SERVER_HUB_NAME}";
+            string protocol = IS_HTTPS_ENABLED ? "https" : "http";
+            return $"{protocol}://{SERVER_HOST}:{SERVER_PORT}/{SERVER_HUB_NAME}";
         }
     }
 }

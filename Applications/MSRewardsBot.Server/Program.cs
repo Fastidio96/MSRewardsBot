@@ -34,7 +34,7 @@ namespace MSRewardsBot.Server
                 });
             });
 
-            builder.WebHost.UseUrls(Env.GetConnectionString());
+            builder.WebHost.UseUrls(Env.GetServerConnection());
 
             // Add services to the container.
             builder.Services.AddAuthorization();
@@ -81,12 +81,12 @@ namespace MSRewardsBot.Server
 
             // Configure the HTTP request pipeline.
 
-            if (Env.IS_HTTPS_ENABLED)
-            {
-#pragma warning disable CS0162 // Unreachable code detected
-                app.UseHttpsRedirection();
-#pragma warning restore CS0162 // Unreachable code detected
-            }
+//            if (Env.IS_HTTPS_ENABLED)
+//            {
+//#pragma warning disable CS0162 // Unreachable code detected
+//                app.UseHttpsRedirection();
+//#pragma warning restore CS0162 // Unreachable code detected
+//            }
 
             app.UseAuthorization();
 

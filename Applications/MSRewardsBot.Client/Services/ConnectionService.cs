@@ -14,7 +14,6 @@ namespace MSRewardsBot.Client.Services
 {
     public class ConnectionService
     {
-
         private HubConnection _connection { get; set; }
         private AppInfo _appInfo;
 
@@ -36,7 +35,7 @@ namespace MSRewardsBot.Client.Services
             }
 
             _connection = new HubConnectionBuilder()
-                .WithUrl(Env.GetConnectionStringForClient())
+                .WithUrl(Env.GetClientConnection())
                 .WithAutomaticReconnect()
                 .Build();
 
