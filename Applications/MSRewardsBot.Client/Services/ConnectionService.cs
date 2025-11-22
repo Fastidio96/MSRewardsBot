@@ -3,9 +3,9 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using System.Threading.Tasks;
-using System.Windows.Threading;
 using Microsoft.AspNetCore.SignalR.Client;
 using MSRewardsBot.Client.DataEntities;
+using MSRewardsBot.Common;
 using MSRewardsBot.Common.DataEntities.Accounting;
 using MSRewardsBot.Common.DataEntities.Interfaces;
 using MSRewardsBot.Common.DataEntities.Stats;
@@ -14,6 +14,7 @@ namespace MSRewardsBot.Client.Services
 {
     public class ConnectionService
     {
+
         private HubConnection _connection { get; set; }
         private AppInfo _appInfo;
 
@@ -35,7 +36,7 @@ namespace MSRewardsBot.Client.Services
             }
 
             _connection = new HubConnectionBuilder()
-                .WithUrl("http://localhost:10500/cmdhub")
+                .WithUrl(Env.GetConnectionStringForClient())
                 .WithAutomaticReconnect()
                 .Build();
 
@@ -72,7 +73,7 @@ namespace MSRewardsBot.Client.Services
                     await _connection.StartAsync();
                     exit = true;
                 }
-                catch (Exception ex) 
+                catch (Exception ex)
                 {
                     Debug.WriteLine(ex.Message);
                     await Task.Delay(2500);

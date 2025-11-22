@@ -1,10 +1,12 @@
 ﻿using System;
 using System.Linq;
 using Microsoft.AspNetCore.Builder;
+using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.ResponseCompression;
 using Microsoft.AspNetCore.SignalR;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
+using MSRewardsBot.Common;
 using MSRewardsBot.Server.Automation;
 using MSRewardsBot.Server.Core;
 using MSRewardsBot.Server.Network;
@@ -31,6 +33,8 @@ namespace MSRewardsBot.Server
                     cco.GroupedCategories = true;
                 });
             });
+
+            builder.WebHost.UseUrls(Env.GetConnectionString());
 
             // Add services to the container.
             builder.Services.AddAuthorization();
@@ -73,11 +77,16 @@ namespace MSRewardsBot.Server
             Core.Server server = app.Services.GetRequiredService<Core.Server>();
             BrowserManager browser = app.Services.GetRequiredService<BrowserManager>();
 
-            app.MapHub<CommandHub>("/cmdhub");
+            app.MapHub<CommandHub>($"/{Env.SERVER_HUB_NAME}");
 
             // Configure the HTTP request pipeline.
 
-            //app.UseHttpsRedirection();
+            if (Env.IS_HTTPS_ENABLED)
+            {
+#pragma warning disable CS0162 // Unreachable code detected
+                app.UseHttpsRedirection();
+#pragma warning restore CS0162 // Unreachable code detected
+            }
 
             app.UseAuthorization();
 
