@@ -1,10 +1,11 @@
 ﻿using System.Collections.Generic;
+using System.Threading.Tasks;
 
 namespace MSRewardsBot.Server.Automation
 {
     public interface IKeywordProvider
     {
-        string GetKeyword();
+        Task<string> GetKeyword();
         IReadOnlyList<string> GetAll();
     }
 }

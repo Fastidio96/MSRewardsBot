@@ -48,8 +48,8 @@ namespace MSRewardsBot.Server.Core
 
             CacheMSAccStats = new Dictionary<int, MSAccountServerData>();
 
-            _keywordProvider = new KeywordProvider();
             _keywordStore = new KeywordStore();
+            _keywordProvider = new KeywordProvider(_keywordStore);
         }
 
         public void Start()
@@ -176,7 +176,7 @@ namespace MSRewardsBot.Server.Core
                                     start = start.AddSeconds(rnd.Next(60, 180));
                                 }
 
-                                string keyword = _keywordProvider.GetKeyword();
+                                string keyword = await _keywordProvider.GetKeyword();
 
                                 Job job = new Job(
                                     new PCSearchCommand()

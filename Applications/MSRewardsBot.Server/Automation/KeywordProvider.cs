@@ -2,11 +2,14 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Threading;
+using System.Threading.Tasks;
 
 namespace MSRewardsBot.Server.Automation
 {
     public class KeywordProvider : IKeywordProvider, IDisposable
     {
+        private readonly KeywordStore _store;
+
         private List<string> _keywords = new List<string>();
         private readonly object _randomLock = new object();
         private readonly FileSystemWatcher _watcher;
@@ -14,8 +17,9 @@ namespace MSRewardsBot.Server.Automation
 
         private int _keywordIndex = 0;
 
-        public KeywordProvider()
+        public KeywordProvider(KeywordStore store)
         {
+            _store = store;
             _filePath = Utils.GetKeywordsFile();
 
             LoadKeywords();
@@ -63,22 +67,25 @@ namespace MSRewardsBot.Server.Automation
             return _keywords;
         }
 
-        public string GetKeyword()
+        public async Task<string> GetKeyword()
         {
-            lock (_randomLock)
+            if (_keywords.Count == 0)
             {
-                if (_keywords.Count == 0)
-                {
-                    return null;
-                }
-
-                int idx = _keywordIndex > _keywords.Count ? 0 : _keywordIndex;
-                string k = _keywords[idx];
-
-                _keywordIndex += 1;
-
-                return k;
+                return null;
             }
+
+            string keyword = _keywords[_keywordIndex];
+            if (_keywordIndex > _keywords.Count)
+            {
+                await _store.RefreshList();
+                _keywordIndex = 0;
+            }
+            else
+            {
+                _keywordIndex += 1;
+            }
+
+            return keyword;
         }
 
         public void Dispose()
