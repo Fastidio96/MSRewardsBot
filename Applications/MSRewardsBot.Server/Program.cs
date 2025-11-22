@@ -82,8 +82,7 @@ namespace MSRewardsBot.Server
 
             app.MapHub<CommandHub>($"/{Env.SERVER_HUB_NAME}");
 
-            // Configure the HTTP request pipeline.
-
+//            // Configure the HTTP request pipeline.
 //            if (Env.IS_HTTPS_ENABLED)
 //            {
 //#pragma warning disable CS0162 // Unreachable code detected
