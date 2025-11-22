@@ -1,5 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
+	<PropertyGroup Label="Globals" />
+
 	<PropertyGroup>
 		<OutputType>WinExe</OutputType>
 		<TargetFramework>net9.0-windows</TargetFramework>
@@ -8,6 +10,8 @@
 		<UseWPF>true</UseWPF>
 		<NoWin32Manifest>true</NoWin32Manifest>
 		<ApplicationIcon>icon.ico</ApplicationIcon>
+		<StartupObject>MSRewardsBot.Client.App</StartupObject>
+		<ProduceReferenceAssembly>False</ProduceReferenceAssembly>
 	</PropertyGroup>
 
 	<PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">
