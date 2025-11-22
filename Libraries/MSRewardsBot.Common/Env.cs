@@ -2,7 +2,7 @@
 {
     public class Env
     {
-#if !DEBUG
+#if DEBUG
         public const string SERVER_HOST = "localhost";
         public const int SERVER_PORT = 10500;
         public const string SERVER_HUB_NAME = "cmdhub";
