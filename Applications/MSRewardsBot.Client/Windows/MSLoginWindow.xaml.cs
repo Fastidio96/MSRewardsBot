@@ -71,9 +71,13 @@ namespace MSRewardsBot.Client.Windows
                 });
             }
 
-            if(!await _vm.InsertMSAccount(cookies))
+            if (!await _vm.InsertMSAccount(cookies))
             {
                 Utils.ShowMessage("Unable to save ms account!");
+            }
+            else
+            {
+                await _vm.GetUserInfo();
             }
 
             this.Close();
