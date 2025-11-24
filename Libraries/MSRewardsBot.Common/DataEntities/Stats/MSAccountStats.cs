@@ -19,6 +19,11 @@ namespace MSRewardsBot.Common.DataEntities.Stats
             CurrentPointsPCSearches += _pointsPerSearch;
         }
 
+        public void PCSearchFailed()
+        {
+            CurrentPointsPCSearches -= _pointsPerSearch;
+        }
+
         public int CurrentPointsPCSearches
         {
             get => _currentPointsPCSearches;
