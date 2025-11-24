@@ -141,23 +141,7 @@ namespace MSRewardsBot.Server.Core
                         cache.Stats.LastDashboardCheck = now; //Fix for not queueing the same job while we wait for the job's completion
                         if (DateTimeUtilities.HasElapsed(now, cache.Stats.LastDashboardUpdate, Settings.DashboardUpdate))
                         {
-                            Job job = new Job(
-                                new DashboardUpdateCommand()
-                                {
-                                    Data = cache,
-                                    OnSuccess = delegate ()
-                                    {
-                                        cache.Stats.LastSearchesCheck = DateTime.MinValue; // Triggers search check
-                                    },
-                                    OnFail = delegate ()
-                                    {
-                                        _logger.LogWarning("Job {name} failed", nameof(DashboardUpdateCommand));
-                                        cache.Stats.LastDashboardCheck = DateTime.MinValue; // Retry again after failure
-                                    }
-                                });
-
-                            _taskScheduler.AddJob(now, job);
-                            _logger.LogInformation("Added job {name} on {time}", nameof(DashboardUpdateCommand), now);
+                            AddJobDashboardUpdate(cache);
                         }
                     }
 
@@ -167,13 +151,12 @@ namespace MSRewardsBot.Server.Core
                         if (cache.Stats.PCSearchesToDo > 0)
                         {
                             DateTime start = now;
-                            Random rnd = new Random();
 
                             for (int i = 0; i < cache.Stats.PCSearchesToDo; i++)
                             {
                                 if (i != 0)
                                 {
-                                    start = start.AddSeconds(rnd.Next(60, 180));
+                                    start = start.AddSeconds(Random.Shared.Next(60, 180));
                                 }
 
                                 string keyword = await _keywordProvider.GetKeyword();
@@ -188,12 +171,19 @@ namespace MSRewardsBot.Server.Core
                                             _logger.LogDebug("Job {name} succeded (with keyword {keyword}) for {user}",
                                                 nameof(PCSearchCommand), keyword, acc.Email);
 
+                                            if(i == cache.Stats.PCSearchesToDo - 1)
+                                            {
+                                                AddJobDashboardUpdate(cache);
+                                            }
+
                                             cache.Stats.PCSearchCompleted();
                                         },
                                         OnFail = delegate ()
                                         {
                                             _logger.LogWarning("Job {name} failed", nameof(PCSearchCommand));
-                                            cache.Stats.LastDashboardCheck = DateTime.MinValue; // Reload stats
+
+                                            cache.Stats.PCSearchFailed();
+                                            AddJobDashboardUpdate(cache);
                                         }
                                     });
 
@@ -217,6 +207,28 @@ namespace MSRewardsBot.Server.Core
 
             CacheMSAccStats.Clear();
             CacheMSAccStats = null;
+        }
+
+        private void AddJobDashboardUpdate(MSAccountServerData data)
+        {
+            Job job = new Job(
+                                new DashboardUpdateCommand()
+                                {
+                                    Data = data,
+                                    OnSuccess = delegate ()
+                                    {
+                                        data.Stats.LastSearchesCheck = DateTime.MinValue; // Triggers search check
+                                    },
+                                    OnFail = delegate ()
+                                    {
+                                        _logger.LogWarning("Job {name} failed", nameof(DashboardUpdateCommand));
+                                        data.Stats.LastDashboardCheck = DateTime.MinValue; // Retry again after failure
+                                    }
+                                });
+
+            DateTime now = DateTime.Now;
+            _taskScheduler.AddJob(now, job);
+            _logger.LogInformation("Added job {name} on {time}", nameof(DashboardUpdateCommand), now);
         }
 
         private async void MsAccountStats_PropertyChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)
