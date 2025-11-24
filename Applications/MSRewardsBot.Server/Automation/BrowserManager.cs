@@ -38,7 +38,7 @@ namespace MSRewardsBot.Server.Automation
             (new BrowserTypeLaunchOptions()
             {
 #if DEBUG
-                Headless = false,
+                //Headless = false,
 #endif
                 Args =
                     [
