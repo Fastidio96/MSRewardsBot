@@ -17,8 +17,8 @@ namespace MSRewardsBot.Server.Automation
                 return false;
             }
 
-            //if (!await NavigateToURL(data, BrowserConstants.URL_DASHBOARD_PTS_BREAKDOWN))
-            if (!await NavigateToURL(data, "https://deviceandbrowserinfo.com/are_you_a_bot"))
+            if (!await NavigateToURL(data, BrowserConstants.URL_DASHBOARD_PTS_BREAKDOWN))
+            //if (!await NavigateToURL(data, "https://deviceandbrowserinfo.com/are_you_a_bot"))
             //if (!await NavigateToURL(data, "https://deviceandbrowserinfo.com/info_device"))
             {
                 return false;
