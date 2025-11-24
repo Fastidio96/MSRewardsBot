@@ -1,5 +1,4 @@
-﻿using System.Threading.Tasks;
-using System.Windows;
+﻿using System.Windows;
 using MSRewardsBot.Client.DataEntities;
 
 namespace MSRewardsBot.Client.Windows
@@ -25,8 +24,6 @@ namespace MSRewardsBot.Client.Windows
             this.DataContext = _appInfo;
             this.Loaded += MainWindow_Loaded;
             this.Closing += MainWindow_Closing;
-
-            _appInfo.Accounts.CollectionChanged += Accounts_CollectionChanged;
         }
 
         private void Accounts_CollectionChanged(object? sender, System.Collections.Specialized.NotifyCollectionChangedEventArgs e)
@@ -43,6 +40,8 @@ namespace MSRewardsBot.Client.Windows
         private async void MainWindow_Loaded(object sender, RoutedEventArgs e)
         {
             this.Loaded -= MainWindow_Loaded;
+            _appInfo.Accounts.CollectionChanged += Accounts_CollectionChanged;
+
             _splashScreenWindow.Hide();
 
             await _vm.GetUserInfo();
