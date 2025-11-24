@@ -26,38 +26,41 @@ namespace MSRewardsBot.Client.Services
 
         public async Task ConnectAsync()
         {
-            if (_connection != null)
+            await Task.Run(async () =>
             {
-                if (_connection.State != HubConnectionState.Disconnected)
+                if (_connection != null)
                 {
-                    return;
+                    if (_connection.State != HubConnectionState.Disconnected)
+                    {
+                        return;
+                    }
                 }
-            }
 
-            _connection = new HubConnectionBuilder()
-                .WithUrl(Env.GetClientConnection())
-                .WithAutomaticReconnect()
-                .Build();
+                _connection = new HubConnectionBuilder()
+                    .WithUrl(Env.GetClientConnection())
+                    .WithAutomaticReconnect()
+                    .Build();
 
-            _connection.Closed += Connection_Closed;
+                _connection.Closed += Connection_Closed;
 
-            await TryConnect();
-            _appInfo.ConnectedToServer = true;
+                await TryConnect();
+                _appInfo.ConnectedToServer = true;
 
-            _disposables.Add(_connection.On<Guid>(nameof(IBotAPI.GetUserInfo), GetUserInfo));
-            _disposables.Add(_connection.On<bool>(nameof(IBotAPI.Logout), delegate ()
-            {
-                _appInfo.IsUserLogged = false;
-                return true;
-            }));
-            _disposables.Add(_connection.On("SendUpdateMSAccountStats", delegate (MSAccountStats changedAcc, string propertyName)
-            {
-                App.Current.Dispatcher.Invoke(() =>
+                _disposables.Add(_connection.On<Guid>(nameof(IBotAPI.GetUserInfo), GetUserInfo));
+                _disposables.Add(_connection.On<bool>(nameof(IBotAPI.Logout), delegate ()
                 {
-                    _appInfo.Accounts.FirstOrDefault(c => c.DbId == changedAcc.MSAccountId)
-                        ?.Stats.ChangeProperty(changedAcc, propertyName);
-                });
-            }));
+                    _appInfo.IsUserLogged = false;
+                    return true;
+                }));
+                _disposables.Add(_connection.On("SendUpdateMSAccountStats", delegate (MSAccountStats changedAcc, string propertyName)
+                {
+                    App.Current.Dispatcher.Invoke(() =>
+                    {
+                        _appInfo.Accounts.FirstOrDefault(c => c.DbId == changedAcc.MSAccountId)
+                            ?.Stats.ChangeProperty(changedAcc, propertyName);
+                    });
+                }));
+            });
         }
 
         private async Task TryConnect()
