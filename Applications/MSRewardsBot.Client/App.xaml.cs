@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Diagnostics;
 using System.Windows;
-using MSRewardsBot.Client.Windows;
 
 namespace MSRewardsBot.Client
 {
@@ -10,7 +9,6 @@ namespace MSRewardsBot.Client
     /// </summary>
     public partial class App : Application
     {
-        private SplashScreenWindow _splashScreenWindow;
         private ViewModel _viewModel;
 
         public App()
@@ -19,9 +17,6 @@ namespace MSRewardsBot.Client
 
             this.DispatcherUnhandledException += App_DispatcherUnhandledException;
             this.Startup += App_Startup;
-
-            _splashScreenWindow = new SplashScreenWindow();
-            _splashScreenWindow.Show();
         }
 
         private void CheckForInstanceRunning()
@@ -36,7 +31,7 @@ namespace MSRewardsBot.Client
         {
             this.Startup -= App_Startup;
 
-            _viewModel = new ViewModel(_splashScreenWindow);
+            _viewModel = new ViewModel();
             _viewModel.Init();
         }
 

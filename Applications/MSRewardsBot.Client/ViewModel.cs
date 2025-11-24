@@ -26,25 +26,17 @@ namespace MSRewardsBot.Client
         private MSLoginWindow _msLoginWindow;
         private UserLoginWindow _userLoginWindow;
 
-        public ViewModel(SplashScreenWindow splashScreenWindow)
+        public ViewModel()
         {
-            _splashScreenWindow = splashScreenWindow;
         }
 
         public async void Init()
         {
-            if (_splashScreenWindow == null)
-            {
-                _splashScreenWindow = new SplashScreenWindow();
-            }
-
-            if (!_splashScreenWindow.IsVisible)
-            {
-                _splashScreenWindow.Show();
-            }
-
             _appInfo = new AppInfo();
             _connection = new ConnectionService(_appInfo);
+
+            _splashScreenWindow = new SplashScreenWindow(_appInfo);
+            _splashScreenWindow.Show();
 
             await _connection.ConnectAsync();
             if (!FileManager.LoadData(out _appData))
@@ -147,7 +139,7 @@ namespace MSRewardsBot.Client
         {
             if (_token != Guid.Empty)
             {
-                await _connection.Logout(_token);            
+                await _connection.Logout(_token);
             }
 
             FileManager.SaveData(new AppData());

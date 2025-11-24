@@ -1,4 +1,5 @@
 ﻿using System.Windows;
+using MSRewardsBot.Client.DataEntities;
 
 namespace MSRewardsBot.Client.Windows
 {
@@ -7,9 +8,14 @@ namespace MSRewardsBot.Client.Windows
     /// </summary>
     public partial class SplashScreenWindow : Window
     {
-        public SplashScreenWindow()
+        private AppInfo _appInfo;
+
+        public SplashScreenWindow(AppInfo appInfo)
         {
             InitializeComponent();
+
+            _appInfo = appInfo;
+            DataContext = _appInfo;
         }
     }
 }
