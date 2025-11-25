@@ -10,6 +10,7 @@ using MSRewardsBot.Server.Automation;
 using MSRewardsBot.Server.DataEntities;
 using MSRewardsBot.Server.DataEntities.Commands;
 using MSRewardsBot.Server.Network;
+using static Microsoft.Extensions.Logging.EventSource.LoggingEventSource;
 
 namespace MSRewardsBot.Server.Core
 {
@@ -193,8 +194,6 @@ namespace MSRewardsBot.Server.Core
                                     });
 
                                 _taskScheduler.AddJob(start, job);
-                                _logger.LogInformation("Added job {name} (with keyword {keyword}) on {time} for {user}",
-                                    nameof(PCSearchCommand), keyword, start, acc.Email);
 
                                 cache.Stats.LastSearchesCheck = start;
                             }
@@ -222,17 +221,20 @@ namespace MSRewardsBot.Server.Core
                                     Data = data,
                                     OnSuccess = delegate ()
                                     {
+                                        _logger.LogDebug("Job {name} succeded for {user}",
+                                                nameof(PCSearchCommand), data.Account.Email);
+
                                         data.Stats.LastSearchesCheck = DateTime.MinValue; // Triggers search check
                                     },
                                     OnFail = delegate ()
                                     {
                                         _logger.LogWarning("Job {name} failed", nameof(DashboardUpdateCommand));
+
                                         data.Stats.LastDashboardCheck = DateTime.MinValue; // Retry again after failure
                                     }
                                 });
 
-            DateTime now = DateTime.Now;
-            _taskScheduler.AddJob(now, job);
+            _taskScheduler.AddJob(DateTime.Now, job);
         }
 
         private async void MsAccountStats_PropertyChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)

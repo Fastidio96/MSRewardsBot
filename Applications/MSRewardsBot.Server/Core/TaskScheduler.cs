@@ -1,10 +1,12 @@
 ﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Threading;
 using Microsoft.Extensions.Logging;
 using MSRewardsBot.Server.Automation;
 using MSRewardsBot.Server.DataEntities;
 using MSRewardsBot.Server.DataEntities.Commands;
+using static Microsoft.Extensions.Logging.EventSource.LoggingEventSource;
 
 namespace MSRewardsBot.Server.Core
 {
@@ -51,7 +53,17 @@ namespace MSRewardsBot.Server.Core
                 _todo.Add(dt, job);
             }
 
-            _logger.LogInformation("Added job {name} on {time}", job.Command.GetType().Name, dt.ToString("dd/MM/yyyy HH:mm:ss"));
+            string dtCmd = dt.ToString("dd/MM/yyyy HH:mm:ss");
+            if (job.Command is DashboardUpdateCommand cmdDash)
+            {
+                _logger.LogInformation("Added job {name} on {time}", 
+                    nameof(DashboardUpdateCommand), dtCmd);
+            }
+            else if(job.Command is PCSearchCommand cmdPcSearch)
+            {
+                _logger.LogInformation("Added job {name} (with keyword {keyword}) on {time} for {user}",
+                                    nameof(PCSearchCommand), cmdPcSearch.Keyword, dtCmd, cmdPcSearch.Data.Account.Email);
+            }
         }
 
         private void RemoveJob(DateTime key)
