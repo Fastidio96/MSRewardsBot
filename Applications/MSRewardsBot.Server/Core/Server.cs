@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Threading;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using MSRewardsBot.Common.DataEntities.Accounting;
 using MSRewardsBot.Common.DataEntities.Stats;
@@ -19,6 +20,7 @@ namespace MSRewardsBot.Server.Core
         private readonly CommandHubProxy _commandHubProxy;
         private readonly BrowserManager _browser;
         private readonly BusinessLayer _business;
+        private readonly IServiceProvider _serviceProvider;
 
         private readonly IKeywordProvider _keywordProvider;
         private readonly KeywordStore _keywordStore;
@@ -37,7 +39,8 @@ namespace MSRewardsBot.Server.Core
             IConnectionManager connectionManager,
             CommandHubProxy commandHubProxy,
             BrowserManager browser,
-            BusinessLayer bl
+            BusinessLayer bl,
+            IServiceProvider service
         )
         {
             _logger = logger;
@@ -45,6 +48,7 @@ namespace MSRewardsBot.Server.Core
             _commandHubProxy = commandHubProxy;
             _browser = browser;
             _business = bl;
+            _serviceProvider = service;
 
             CacheMSAccStats = new Dictionary<int, MSAccountServerData>();
 
@@ -55,7 +59,8 @@ namespace MSRewardsBot.Server.Core
         public void Start()
         {
             _browser.Init();
-            _taskScheduler = new TaskScheduler(_browser, _business);
+
+            _taskScheduler = new TaskScheduler(_browser, _business, _serviceProvider.GetRequiredService<ILogger<TaskScheduler>>());
 
             _clientsThread = new Thread(ClientLoop);
             _clientsThread.Name = nameof(ClientLoop);
@@ -228,7 +233,6 @@ namespace MSRewardsBot.Server.Core
 
             DateTime now = DateTime.Now;
             _taskScheduler.AddJob(now, job);
-            _logger.LogInformation("Added job {name} on {time}", nameof(DashboardUpdateCommand), now);
         }
 
         private async void MsAccountStats_PropertyChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)

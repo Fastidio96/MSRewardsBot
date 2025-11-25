@@ -1,8 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Threading;
-using MSRewardsBot.Common.DataEntities.Accounting;
+using Microsoft.Extensions.Logging;
 using MSRewardsBot.Server.Automation;
 using MSRewardsBot.Server.DataEntities;
 using MSRewardsBot.Server.DataEntities.Commands;
@@ -16,16 +15,18 @@ namespace MSRewardsBot.Server.Core
 
         private readonly BrowserManager _browser;
         private readonly BusinessLayer _business;
+        private readonly ILogger _logger;
 
         private bool _isDisposing = false;
         private Lock _lock = new Lock();
 
-        public TaskScheduler(BrowserManager browser, BusinessLayer bl)
+        public TaskScheduler(BrowserManager browser, BusinessLayer bl, ILogger<TaskScheduler> logger)
         {
             _todo = new SortedList<DateTime, Job>();
 
             _browser = browser;
             _business = bl;
+            _logger = logger;
 
             Init();
         }
@@ -49,6 +50,8 @@ namespace MSRewardsBot.Server.Core
             {
                 _todo.Add(dt, job);
             }
+
+            _logger.LogInformation("Added job {name} on {time}", job.Command.GetType().Name, dt.ToString("dd/MM/yyyy HH:mm:ss"));
         }
 
         private void RemoveJob(DateTime key)
