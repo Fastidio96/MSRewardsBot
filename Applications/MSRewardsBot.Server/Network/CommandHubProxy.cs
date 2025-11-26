@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.SignalR;
 using MSRewardsBot.Common.DataEntities.Accounting;
@@ -14,11 +13,13 @@ namespace MSRewardsBot.Server.Network
     {
         private readonly BusinessLayer _business;
         private readonly IHubContext<CommandHub> _hubContext;
+        private readonly IConnectionManager _connectionManager;
 
-        public CommandHubProxy(BusinessLayer bl, IHubContext<CommandHub> hubContext)
+        public CommandHubProxy(BusinessLayer bl, IHubContext<CommandHub> hubContext, IConnectionManager connectionManager)
         {
             _business = bl;
             _hubContext = hubContext;
+            _connectionManager = connectionManager;
         }
 
         public Task<bool> LoginWithToken(Guid token)
@@ -48,6 +49,21 @@ namespace MSRewardsBot.Server.Network
         internal Task SendUpdateMSAccountStats(string connectionId, MSAccountStats accountStat, string propertyName)
         {
             return _hubContext.Clients.Client(connectionId).SendAsync(nameof(SendUpdateMSAccountStats), accountStat, propertyName);
+        }
+
+        internal Task RequestClientVersion(string connectionId)
+        {
+            return _hubContext.Clients.Client(connectionId).SendAsync(nameof(RequestClientVersion), connectionId);
+        }
+
+        public Task SendClientVersion(string connectionId, Version version)
+        {
+            ClientInfo clientInfo = _connectionManager.GetConnection(connectionId);
+            clientInfo.Version = version;
+
+            _connectionManager.UpdateConnection(connectionId, clientInfo);
+
+            return Task.FromResult(clientInfo);
         }
 
         public Task<bool> Logout(Guid token)

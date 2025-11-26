@@ -15,7 +15,9 @@ namespace MSRewardsBot.Server.DataEntities
         public User User { get; set; }
 
         public string IP {  get; set; }
-        public Version ClientVersion { get; set; }
+        public Version Version { get; set; }
+
+        public DateTime LastVersionRequest { get; set; }
 
     }
 }

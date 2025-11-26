@@ -60,6 +60,10 @@ namespace MSRewardsBot.Client.Services
                             ?.Stats.ChangeProperty(changedAcc, propertyName);
                     });
                 }));
+                _disposables.Add(_connection.On("RequestClientVersion", async delegate (string clientId)
+                {
+                    await SendClientVersion(clientId, _appInfo.Version);
+                }));
             });
         }
 
@@ -142,6 +146,11 @@ namespace MSRewardsBot.Client.Services
         public Task<bool> Logout(Guid token)
         {
             return _connection.InvokeAsync<bool>(nameof(IBotAPI.Logout), token);
+        }
+
+        public Task SendClientVersion(string clientId, Version version)
+        {
+            return _connection.InvokeAsync(nameof(SendClientVersion), clientId, version);
         }
     }
 }

@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Security.Principal;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.SignalR;
 using MSRewardsBot.Common.DataEntities.Accounting;
@@ -51,6 +52,11 @@ namespace MSRewardsBot.Server.Network
         public Task<bool> InsertMSAccount(Guid token, MSAccount account)
         {
             return _hubProxy.InsertMSAccount(token, account);
+        }
+
+        public Task SendClientVersion(string connectionId, Version version)
+        {
+            return _hubProxy.SendClientVersion(connectionId, version);
         }
     }
 }

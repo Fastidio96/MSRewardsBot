@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Threading;
+using System.Threading.Tasks;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using MSRewardsBot.Common.DataEntities.Accounting;
@@ -10,7 +11,6 @@ using MSRewardsBot.Server.Automation;
 using MSRewardsBot.Server.DataEntities;
 using MSRewardsBot.Server.DataEntities.Commands;
 using MSRewardsBot.Server.Network;
-using static Microsoft.Extensions.Logging.EventSource.LoggingEventSource;
 
 namespace MSRewardsBot.Server.Core
 {
@@ -69,11 +69,11 @@ namespace MSRewardsBot.Server.Core
             _mainThread = new Thread(CoreLoop);
             _mainThread.Name = nameof(CoreLoop);
 
-            //_clientsThread.Start();
+            _clientsThread.Start();
             _mainThread.Start();
         }
 
-        private void ClientLoop()
+        private async void ClientLoop()
         {
             _logger.LogInformation("Clients loop thread started");
 
@@ -85,13 +85,16 @@ namespace MSRewardsBot.Server.Core
 
                     if (DateTimeUtilities.HasElapsed(now, client.LastServerCheck, new TimeSpan(0, 5, 0)))
                     {
-                        if (client.User == null)
-                        {
-                            Thread.Sleep(1000);
-                            continue;
-                        }
-
                         client.LastServerCheck = now;
+
+                        if (client.Version == null)
+                        {
+                            if (DateTimeUtilities.HasElapsed(now, client.LastVersionRequest, new TimeSpan(0, 15, 0)))
+                            {
+                                await _commandHubProxy.RequestClientVersion(client.ConnectionId);
+                                client.LastVersionRequest = now;
+                            }
+                        }
                     }
                 }
 
@@ -177,7 +180,7 @@ namespace MSRewardsBot.Server.Core
                                             _logger.LogDebug("Job {name} succeded (with keyword {keyword}) for {user}",
                                                 nameof(PCSearchCommand), keyword, acc.Email);
 
-                                            if(i == cache.Stats.PCSearchesToDo - 1)
+                                            if (i == cache.Stats.PCSearchesToDo - 1)
                                             {
                                                 AddJobDashboardUpdate(cache);
                                             }
