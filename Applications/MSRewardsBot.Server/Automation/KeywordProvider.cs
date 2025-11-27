@@ -11,7 +11,6 @@ namespace MSRewardsBot.Server.Automation
         private readonly KeywordStore _store;
 
         private List<string> _keywords = new List<string>();
-        private readonly object _randomLock = new object();
         private readonly FileSystemWatcher _watcher;
         private readonly string _filePath;
 

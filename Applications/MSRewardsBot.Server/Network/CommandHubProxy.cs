@@ -46,6 +46,11 @@ namespace MSRewardsBot.Server.Network
             return Task.FromResult(_business.InsertMSAccount(token, account));
         }
 
+        public Task<bool> Logout(Guid token)
+        {
+            return Task.FromResult(_business.Logout(token));
+        }
+
         internal Task SendUpdateMSAccountStats(string connectionId, MSAccountStats accountStat, string propertyName)
         {
             return _hubContext.Clients.Client(connectionId).SendAsync(nameof(SendUpdateMSAccountStats), accountStat, propertyName);
@@ -60,15 +65,16 @@ namespace MSRewardsBot.Server.Network
         {
             ClientInfo clientInfo = _connectionManager.GetConnection(connectionId);
             clientInfo.Version = version;
+            clientInfo.LastVersionRequest = DateTime.Now;
 
             _connectionManager.UpdateConnection(connectionId, clientInfo);
 
             return Task.FromResult(clientInfo);
         }
 
-        public Task<bool> Logout(Guid token)
+        public Task SendClientUpdateFile(string connectionId, byte[] file)
         {
-            return Task.FromResult(_business.Logout(token));
+            return _hubContext.Clients.Client(connectionId).SendAsync(nameof(SendClientUpdateFile), file);
         }
     }
 }

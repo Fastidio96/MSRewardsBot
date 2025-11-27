@@ -1,7 +1,9 @@
 ﻿using System;
 using System.Linq;
 using Microsoft.AspNetCore.Builder;
+using Microsoft.AspNetCore.Diagnostics;
 using Microsoft.AspNetCore.Hosting;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.ResponseCompression;
 using Microsoft.AspNetCore.SignalR;
 using Microsoft.Extensions.DependencyInjection;
@@ -65,6 +67,9 @@ namespace MSRewardsBot.Server
 
             WebApplication app = builder.Build();
             app.UseResponseCompression();
+
+            ILogger<Program> logger = app.Services.GetRequiredService<ILogger<Program>>();
+
             app.Use(async (context, next) =>
             {
                 try
@@ -73,12 +78,19 @@ namespace MSRewardsBot.Server
                 }
                 catch (Exception ex)
                 {
-                    app.Logger.LogError("Error: {ErrMessage}", ex.Message);
+                    logger.Log(LogLevel.Critical, ex, "Error");
                 }
             });
 
             Core.Server server = app.Services.GetRequiredService<Core.Server>();
             BrowserManager browser = app.Services.GetRequiredService<BrowserManager>();
+            
+
+            AppDomain.CurrentDomain.UnhandledException += delegate (object sender, UnhandledExceptionEventArgs e)
+            {
+                Exception ex = (Exception)e.ExceptionObject;
+                logger.Log(LogLevel.Critical, ex, "Unhandled exception on CurrentDomain | IsTerminating: {IsTerminating}", e.IsTerminating);
+            };
 
             app.MapHub<CommandHub>($"/{Env.SERVER_HUB_NAME}");
 
@@ -101,6 +113,11 @@ namespace MSRewardsBot.Server
             });
 
             app.Run();
+        }
+
+        private static void CurrentDomain_UnhandledException()
+        {
+            
         }
     }
 }

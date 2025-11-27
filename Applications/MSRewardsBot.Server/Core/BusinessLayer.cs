@@ -7,10 +7,11 @@ using Microsoft.Extensions.Logging;
 using MSRewardsBot.Common.DataEntities.Accounting;
 using MSRewardsBot.Server.DataEntities;
 using MSRewardsBot.Server.DB;
+using MSRewardsBot.Server.Network;
 
 namespace MSRewardsBot.Server.Core
 {
-    public class BusinessLayer : IDisposable
+    public partial class BusinessLayer : IDisposable
     {
         private const string PWD_SALT = @"C3tn5yrPYPiAv9Pm59L4Y1tArw6eEjYK";
 
@@ -25,7 +26,8 @@ namespace MSRewardsBot.Server.Core
         {
             _logger = logger;
             _services = services;
-            _data = new DataLayer();
+            
+            _data = new DataLayer(_services.GetRequiredService<ILogger<DataLayer>>());
         }
 
         public bool Login(Guid token)
@@ -121,14 +123,14 @@ namespace MSRewardsBot.Server.Core
                 return null;
             }
 
-            if(user == null)
+            if (user == null)
             {
                 return null;
             }
 
             foreach (MSAccount acc in user.MSAccounts)
             {
-                if(!_server.CacheMSAccStats.TryGetValue(acc.DbId, out MSAccountServerData data))
+                if (!_server.CacheMSAccStats.TryGetValue(acc.DbId, out MSAccountServerData data))
                 {
                     _logger.LogTrace("Cannot retrieve from server the account instance msaccount id {id}", acc.DbId);
                     continue;

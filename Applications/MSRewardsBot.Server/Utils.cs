@@ -8,7 +8,10 @@ namespace MSRewardsBot.Server
     {
         private static string _serverPath => new Uri(AppDomain.CurrentDomain.BaseDirectory + "MSRB").LocalPath;
         private static string _logsPath => Path.Combine(_serverPath, "logs");
+        private static string _clientUpdatePath => Path.Combine(_serverPath, "updates");
 
+        #region Folders
+        
         public static string GetFolderServerData()
         {
             if (!Directory.Exists(_serverPath))
@@ -29,6 +32,20 @@ namespace MSRewardsBot.Server
             return _logsPath;
         }
 
+        public static string GetFolderClientUpdate()
+        {
+            if (!Directory.Exists(_clientUpdatePath))
+            {
+                Directory.CreateDirectory(_clientUpdatePath);
+            }
+
+            return _clientUpdatePath;
+        }
+
+        #endregion
+
+        #region Files
+
         public static string GetDBFile()
         {
             return Path.Combine(GetFolderServerData(), "data.db");
@@ -43,6 +60,33 @@ namespace MSRewardsBot.Server
         {
             string now = DateTime.Now.ToString("yyyy-MM-dd");
             return Path.Combine(GetFolderLogs(), $"{now}.txt");
+        }
+
+        public static string GetVersionFile()
+        {
+            return Path.Combine(GetFolderClientUpdate(), "latest.txt");
+        }
+
+        public static string GetFileLatestUpdate()
+        {
+            return Path.Combine(GetFolderClientUpdate(), "update.zip");
+        }
+
+        #endregion
+
+        public static string GetFileHash(string path)
+        {
+            if (!File.Exists(path))
+            {
+                return string.Empty;
+            }
+
+            using (FileStream fs = File.OpenRead(path))
+            using (System.Security.Cryptography.MD5 md5 = System.Security.Cryptography.MD5.Create())
+            {
+                byte[] hash = md5.ComputeHash(fs);
+                return Convert.ToBase64String(hash);
+            }
         }
 
         #region Enable console colors

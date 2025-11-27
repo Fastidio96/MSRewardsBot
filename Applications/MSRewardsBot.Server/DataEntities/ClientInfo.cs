@@ -18,6 +18,7 @@ namespace MSRewardsBot.Server.DataEntities
         public Version Version { get; set; }
 
         public DateTime LastVersionRequest { get; set; }
+        public DateTime LastSendUpdateFile { get; set; }
 
     }
 }

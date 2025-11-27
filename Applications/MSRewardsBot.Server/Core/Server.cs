@@ -63,14 +63,14 @@ namespace MSRewardsBot.Server.Core
 
             _taskScheduler = new TaskScheduler(_browser, _business, _serviceProvider.GetRequiredService<ILogger<TaskScheduler>>());
 
-            _clientsThread = new Thread(ClientLoop);
-            _clientsThread.Name = nameof(ClientLoop);
-
             _mainThread = new Thread(CoreLoop);
             _mainThread.Name = nameof(CoreLoop);
 
-            _clientsThread.Start();
+            _clientsThread = new Thread(ClientLoop);
+            _clientsThread.Name = nameof(ClientLoop);
+
             _mainThread.Start();
+            _clientsThread.Start();
         }
 
         private async void ClientLoop()
@@ -91,8 +91,23 @@ namespace MSRewardsBot.Server.Core
                         {
                             if (DateTimeUtilities.HasElapsed(now, client.LastVersionRequest, new TimeSpan(0, 15, 0)))
                             {
-                                await _commandHubProxy.RequestClientVersion(client.ConnectionId);
                                 client.LastVersionRequest = now;
+                                await _commandHubProxy.RequestClientVersion(client.ConnectionId);
+                            }
+                        }
+
+                        if (_business.ClientNeedsToUpdate(client.Version))
+                        {
+                            _logger.LogInformation("The client {id} needs to update. Client version {ClientVersion} | Server version {ServerVersion}",
+                                client.ConnectionId, client.Version, _business.LatestClientVersion);
+
+                            if (DateTimeUtilities.HasElapsed(now, client.LastSendUpdateFile, new TimeSpan(0, 15, 0)))
+                            {
+                                _logger.LogInformation("Sending to client {id} update {ServerVersion}",
+                                    client.ConnectionId, _business.LatestClientVersion);
+
+                                client.LastSendUpdateFile = now;
+                                await StartClientUpdate(client.ConnectionId);
                             }
                         }
                     }
@@ -252,6 +267,18 @@ namespace MSRewardsBot.Server.Core
 
                 await _commandHubProxy.SendUpdateMSAccountStats(info.ConnectionId, stats, e.PropertyName);
             }
+        }
+
+        private async Task<bool> StartClientUpdate(string connectionId)
+        {
+            byte[] file = _business.GetClientUpdateFile();
+            if (file == null || file.Length == 0)
+            {
+                return false;
+            }
+
+            await _commandHubProxy.SendClientUpdateFile(connectionId, file);
+            return true;
         }
 
         public void Dispose()
