@@ -178,10 +178,7 @@ namespace MSRewardsBot.Server.Core
 
                             for (int i = 0; i < cache.Stats.PCSearchesToDo; i++)
                             {
-                                if (i != 0)
-                                {
-                                    start = start.AddSeconds(Random.Shared.Next(180, 300));
-                                }
+                                start = start.AddSeconds(Random.Shared.Next(180, 600));
 
                                 string keyword = await _keywordProvider.GetKeyword();
 
