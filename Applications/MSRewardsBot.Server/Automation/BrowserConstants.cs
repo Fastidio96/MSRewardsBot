@@ -10,12 +10,11 @@ namespace MSRewardsBot.Server.Automation
         public const string URL_SEARCHES = "https://www.bing.com/search?q=";
 
         #region URL_DASHBOARD_PTS_BREAKDOWN
-        public const string SELECTOR_EMAIL = @"document.querySelector('#mectrl_currentAccount_secondary').innerHTML.trim()";
-
-        public const string SELECTOR_BREAKDOWN_PC_POINTS = @"document.querySelector('#userPointsBreakdown > div > div:nth-child(2) > div > div > div > div.pointsDetail > mee-rewards-user-points-details > div > div > div > div > p.pointsDetail.c-subheading-3.ng-binding').innerText";
-
-        public const string SELECTOR_ACCOUNT_LEVEL = @"document.querySelector('#meeGradientBanner > div > div > div > p').innerText";
-        public const string SELECTOR_ACCOUNT_LEVEL_POINTS = @"document.querySelector('#earningreport-level-heading > p.pointsDetail.c-subheading-3.ng-binding.ng-scope').innerText";
+        public const string SELECTOR_EMAIL = @"document.querySelector('#mectrl_currentAccount_secondary').innerHTML.trim();";
+        public const string SELECTOR_ACCOUNT_TOTAL_POINTS = @"document.querySelector(""#balanceToolTipDiv > p > mee-rewards-counter-animation > span"").innerText;";
+        public const string SELECTOR_BREAKDOWN_PC_POINTS = @"document.querySelector('#userPointsBreakdown > div > div:nth-child(2) > div > div > div > div.pointsDetail > mee-rewards-user-points-details > div > div > div > div > p.pointsDetail.c-subheading-3.ng-binding').innerText;";
+        public const string SELECTOR_ACCOUNT_LEVEL = @"document.querySelector('#meeGradientBanner > div > div > div > p').innerText;";
+        public const string SELECTOR_ACCOUNT_LEVEL_POINTS = @"document.querySelector('#earningreport-level-heading > p.pointsDetail.c-subheading-3.ng-binding.ng-scope').innerText;";
         #endregion
 
         #region URL_SEARCHES_HOMEPAGE

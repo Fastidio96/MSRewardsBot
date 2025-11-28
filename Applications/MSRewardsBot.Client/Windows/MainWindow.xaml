@@ -42,7 +42,9 @@
                     </DataTemplate>
                 </ComboBox.ItemTemplate>
             </ComboBox>
-            <Button Grid.Row="0" Grid.Column="1" Name="btnAddAcc" Content="+ Add MS account" Click="BtnAddAcc_Click" />
+            <Button Grid.Row="0" Grid.Column="1" 
+                    Name="btnAddAcc" Content="+ Add MS account" Click="BtnAddAcc_Click"
+                    IsEnabled="{Binding ConnectedToServer}"/>
 
         </Grid>
 
@@ -51,8 +53,9 @@
             <ContentControl.ContentTemplate>
                 <DataTemplate DataType="{x:Type local:MSAccountStats}">
                     <StackPanel Margin="6">
-                        <TextBlock Text="Stats:" FontWeight="Bold"/>
                         <!-- Bind into Stats object -->
+                        <TextBlock Text="Stats:" FontWeight="Bold"/>
+                        <TextBlock Text="{Binding TotalAccountPoints, StringFormat=Total points available: {0}}" />
                         <TextBlock>
                             <TextBlock.Text>
                                 <MultiBinding StringFormat="Points PC searches: {0}/{1}">

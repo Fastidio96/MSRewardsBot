@@ -42,6 +42,23 @@ namespace MSRewardsBot.Server.Automation
 
             try
             {
+                string totPts = await data.Page.EvaluateAsync<string>(BrowserConstants.SELECTOR_ACCOUNT_TOTAL_POINTS);
+                totPts = totPts.Trim();
+
+                if (int.TryParse(totPts, out int totalPts))
+                {
+                    _logger.LogDebug("Found value for {stat}: {val}", nameof(MSAccountStats.TotalAccountPoints), totalPts);
+                    data.Account.Stats.TotalAccountPoints = totalPts;
+                }
+            }
+            catch (Exception e)
+            {
+                _logger.LogError("Error: {e}", e.Message);
+                res = false;
+            }
+
+            try
+            {
                 string pcPoints = await data.Page.EvaluateAsync<string>(BrowserConstants.SELECTOR_BREAKDOWN_PC_POINTS);
                 pcPoints = pcPoints.Trim();
                 string[] sub = pcPoints.Split('/');

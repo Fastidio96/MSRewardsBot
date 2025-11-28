@@ -18,11 +18,24 @@ namespace MSRewardsBot.Common.DataEntities.Stats
         {
             CurrentPointsPCSearches += _pointsPerSearch;
         }
-
         public void PCSearchFailed()
         {
             CurrentPointsPCSearches -= _pointsPerSearch;
         }
+
+        public int TotalAccountPoints
+        {
+            get => _totalAccountPoints;
+            set
+            {
+                if (_totalAccountPoints != value)
+                {
+                    _totalAccountPoints = value;
+                    NotifyPropertyChanged();
+                }
+            }
+        }
+        private int _totalAccountPoints;
 
         public int CurrentPointsPCSearches
         {
@@ -106,12 +119,19 @@ namespace MSRewardsBot.Common.DataEntities.Stats
         public DateTime LastSearchesCheck { get; set; }
 
         public int MSAccountId { get; set; }
+
+        [JsonIgnore]
         public int UserId { get; set; }
 
         public void ChangeProperty(MSAccountStats stats, string propertyName)
         {
             switch (propertyName)
             {
+                case nameof(TotalAccountPoints):
+                    {
+                        TotalAccountPoints = stats.TotalAccountPoints;
+                        break;
+                    }
                 case nameof(CurrentAccountLevel):
                     {
                         CurrentAccountLevel = stats.CurrentAccountLevel;
