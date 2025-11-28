@@ -1,5 +1,6 @@
 ﻿using System.Windows;
 using MSRewardsBot.Client.DataEntities;
+using MSRewardsBot.Common;
 
 namespace MSRewardsBot.Client.Windows
 {
@@ -24,6 +25,11 @@ namespace MSRewardsBot.Client.Windows
             this.DataContext = _appInfo;
             this.Loaded += MainWindow_Loaded;
             this.Closing += MainWindow_Closing;
+
+            if (!Env.IS_PRODUCTION)
+            {
+                Title += " - DEBUG";
+            }
         }
 
         private void Accounts_CollectionChanged(object? sender, System.Collections.Specialized.NotifyCollectionChangedEventArgs e)
