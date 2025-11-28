@@ -122,7 +122,7 @@ namespace MSRewardsBot.Server.Automation
                 });
 
                 // Wait for the animations to finish
-                await Task.Delay(Random.Shared.Next(5000, 10000));
+                await Task.Delay(Random.Shared.Next(5000, 7500));
 
                 _logger.LogDebug("Navigated to {url}", url);
                 return true;
