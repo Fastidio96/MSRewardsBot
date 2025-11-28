@@ -101,7 +101,7 @@ namespace MSRewardsBot.Client.Windows
 
                 Dispatcher.InvokeAsync(delegate ()
                 {
-                    webview.CoreWebView2?.Stop();
+                    //webview.CoreWebView2?.Stop();
                     webview.Dispose();
                     webview = null;
                 }).Wait();
