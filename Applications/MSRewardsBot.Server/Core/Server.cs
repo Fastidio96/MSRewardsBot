@@ -180,7 +180,7 @@ namespace MSRewardsBot.Server.Core
                             {
                                 if (i != 0)
                                 {
-                                    start = start.AddSeconds(Random.Shared.Next(60, 180));
+                                    start = start.AddSeconds(Random.Shared.Next(180, 300));
                                 }
 
                                 string keyword = await _keywordProvider.GetKeyword();
