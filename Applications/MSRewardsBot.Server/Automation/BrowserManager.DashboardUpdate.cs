@@ -24,6 +24,9 @@ namespace MSRewardsBot.Server.Automation
                 return false;
             }
 
+            // Wait for the animations to finish
+            await Task.Delay(1500);
+
             bool res = true;
 
             try
