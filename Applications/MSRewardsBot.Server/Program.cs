@@ -86,8 +86,9 @@ namespace MSRewardsBot.Server
             AppDomain.CurrentDomain.UnhandledException += delegate (object sender, UnhandledExceptionEventArgs e)
             {
                 Exception ex = (Exception)e.ExceptionObject;
-                logger.Log(LogLevel.Critical, "Source: {source} Stack: {stack}", ex.Source, ex.StackTrace);
                 logger.Log(LogLevel.Critical, ex, "Unhandled exception on CurrentDomain | IsTerminating: {IsTerminating}", e.IsTerminating);
+                logger.Log(LogLevel.Critical, "Source: {source}", ex.Source);
+                logger.Log(LogLevel.Critical, "StackTrace: {stack}", ex.StackTrace);
             };
 
             app.MapHub<CommandHub>($"/{Env.SERVER_HUB_NAME}");
