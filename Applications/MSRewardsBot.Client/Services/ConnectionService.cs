@@ -20,6 +20,7 @@ namespace MSRewardsBot.Client.Services
         private AppInfo _appInfo;
 
         private List<IDisposable> _disposables = new List<IDisposable>();
+        private bool _isDisposing = false;
 
         public ConnectionService(AppInfo info)
         {
@@ -44,6 +45,7 @@ namespace MSRewardsBot.Client.Services
                     .Build();
 
                 _connection.Closed += Connection_Closed;
+                _isDisposing = false;
 
                 await TryConnect();
                 _appInfo.ConnectedToServer = true;
@@ -73,7 +75,7 @@ namespace MSRewardsBot.Client.Services
         private async Task TryConnect()
         {
             bool exit = false;
-            while (_connection != null && !exit)
+            while (_connection != null && (!exit || _isDisposing))
             {
                 _appInfo.ConnectionState = _connection.State;
 
@@ -94,12 +96,17 @@ namespace MSRewardsBot.Client.Services
 
         public async Task DisconnectAsync()
         {
-            if (_connection == null || _connection.State != HubConnectionState.Connected)
+            _isDisposing = true;
+
+            if (_connection == null)
             {
                 return;
             }
 
-            await _connection.StopAsync();
+            if(_connection.State == HubConnectionState.Connected)
+            {
+                await _connection.StopAsync();
+            }
 
             foreach (IDisposable d in _disposables)
             {
