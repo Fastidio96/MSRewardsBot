@@ -3,11 +3,13 @@
     public class Env
     {
 #if DEBUG
+        public const bool IS_PRODUCTION = false;
         public const string SERVER_HOST = "localhost";
         public const int SERVER_PORT = 10500;
         public const string SERVER_HUB_NAME = "cmdhub";
         public const bool IS_HTTPS_ENABLED = false;
 #else
+        public const bool IS_PRODUCTION = true;
         public const string SERVER_HOST = "msbot.laptopick.com";
         public const int SERVER_PORT = 10500;
         public const string SERVER_HUB_NAME = "cmdhub";
