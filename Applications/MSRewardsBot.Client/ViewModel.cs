@@ -42,7 +42,6 @@ namespace MSRewardsBot.Client
             if (!FileManager.LoadData(out _appData))
             {
                 _appInfo.IsUserLogged = false;
-                return;
             }
             else
             {
