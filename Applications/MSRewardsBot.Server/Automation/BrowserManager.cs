@@ -59,7 +59,7 @@ namespace MSRewardsBot.Server.Automation
 
             //await CreateChromeStealthContext(data);
             await CreateFirefoxStealthContext(data);
-            
+
             //data.Context = await _browser.NewContextAsync(new BrowserNewContextOptions()
             //{
             //    UserAgent = BrowserConstants.UA_PC_EDGE
@@ -121,6 +121,9 @@ namespace MSRewardsBot.Server.Automation
                     Timeout = 15000
                 });
 
+                // Wait for the animations to finish
+                await Task.Delay(Random.Shared.Next(5000, 10000));
+
                 _logger.LogDebug("Navigated to {url}", url);
                 return true;
             }
@@ -140,7 +143,7 @@ namespace MSRewardsBot.Server.Automation
 
             try
             {
-                int secs = Random.Shared.Next(5, 30);
+                int secs = Random.Shared.Next(10, 60);
                 IResponse response = await data.Page.GotoAsync(url, new PageGotoOptions()
                 {
                     WaitUntil = WaitUntilState.Load,
