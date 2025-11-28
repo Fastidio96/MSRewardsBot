@@ -22,7 +22,7 @@ namespace MSRewardsBot.Server.Automation
         public const string CLICK_BING_HOMEPAGE_LOGIN_BTN = @"document.querySelector('#id_l').click();";
         public const string CLICK_YES_GDPR_BTN = @"document.querySelector('#bnp_btn_accept')?.click();";
         public const string CLICK_SEARCHBAR_TEXTAREA = @"document.querySelector('#sb_form_q').click();";
-        public const string APPEND_KEYWORD_SEARCHBAR_TEXTAREA = @"document.querySelector('#sb_form_q').value += '{keyword}';";
+        public const string APPEND_KEYWORD_SEARCHBAR_TEXTAREA = @"document.querySelector('#sb_form_q').value += ""{keyword}"";";
         public const string CLICK_SUBMIT_SEARCHBAR_TEXTAREA = @"document.querySelector('#sb_form_go').click();";
         #endregion
 

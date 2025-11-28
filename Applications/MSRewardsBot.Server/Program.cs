@@ -84,23 +84,23 @@ namespace MSRewardsBot.Server
 
             Core.Server server = app.Services.GetRequiredService<Core.Server>();
             BrowserManager browser = app.Services.GetRequiredService<BrowserManager>();
-            
 
             AppDomain.CurrentDomain.UnhandledException += delegate (object sender, UnhandledExceptionEventArgs e)
             {
                 Exception ex = (Exception)e.ExceptionObject;
+                logger.Log(LogLevel.Critical, "Source: {source} Stack: {stack}", ex.Source, ex.StackTrace);
                 logger.Log(LogLevel.Critical, ex, "Unhandled exception on CurrentDomain | IsTerminating: {IsTerminating}", e.IsTerminating);
             };
 
             app.MapHub<CommandHub>($"/{Env.SERVER_HUB_NAME}");
 
-//            // Configure the HTTP request pipeline.
-//            if (Env.IS_HTTPS_ENABLED)
-//            {
-//#pragma warning disable CS0162 // Unreachable code detected
-//                app.UseHttpsRedirection();
-//#pragma warning restore CS0162 // Unreachable code detected
-//            }
+            //            // Configure the HTTP request pipeline.
+            //            if (Env.IS_HTTPS_ENABLED)
+            //            {
+            //#pragma warning disable CS0162 // Unreachable code detected
+            //                app.UseHttpsRedirection();
+            //#pragma warning restore CS0162 // Unreachable code detected
+            //            }
 
             app.UseAuthorization();
 
@@ -113,11 +113,6 @@ namespace MSRewardsBot.Server
             });
 
             app.Run();
-        }
-
-        private static void CurrentDomain_UnhandledException()
-        {
-            
         }
     }
 }
