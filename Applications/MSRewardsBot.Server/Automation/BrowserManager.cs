@@ -38,7 +38,7 @@ namespace MSRewardsBot.Server.Automation
             (new BrowserTypeLaunchOptions()
             {
 #if DEBUG
-                Headless = false,
+                //Headless = false,
 #endif
                 Args =
                     [
@@ -127,7 +127,7 @@ namespace MSRewardsBot.Server.Automation
                 });
 
                 // Wait for the animations to finish
-                await Task.Delay(Random.Shared.Next(5000, 7500));
+                await Task.Delay(Random.Shared.Next(3000, 5000));
 
                 _logger.LogDebug("Navigated to {url}", url);
                 return true;
@@ -182,6 +182,9 @@ namespace MSRewardsBot.Server.Automation
 
         private async Task<bool> WriteAsHuman(IPage page, string keyword, string selectorSearchbar)
         {
+            //Wait for the animation to finishs
+            await Task.Delay(GetRandomMsTimes(1000, 1600));
+
             try
             {
                 char[] split = keyword.ToCharArray();

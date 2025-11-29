@@ -142,7 +142,7 @@ namespace MSRewardsBot.Server.Core
                     {
                         await _browser.CreateContext(job.Command.Data, true);
 
-                        job.Status = await _browser.PCSearch(mobileCMD.Data, mobileCMD.Keyword) ?
+                        job.Status = await _browser.MobileSearch(mobileCMD.Data, mobileCMD.Keyword) ?
                             JobStatus.Success : JobStatus.Failure;
 
                         await _browser.DeleteContext(job.Command.Data);

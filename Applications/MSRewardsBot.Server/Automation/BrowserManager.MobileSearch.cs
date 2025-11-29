@@ -20,22 +20,6 @@ namespace MSRewardsBot.Server.Automation
 
             try
             {
-                LogDebugAction("MOBILE_CLICK_BING_HOMEPAGE_LOGIN_BTN");
-                await Task.Delay(GetRandomMsTimes(BrowserConstants.HUMAN_CLICK_BTN_MIN + 2000, BrowserConstants.HUMAN_CLICK_BTN_MAX + 5000));
-                await data.Page.EvaluateAsync(BrowserConstants.MOBILE_CLICK_BING_HOMEPAGE_LOGIN_BTN);
-
-                LogDebugAction("PAGE RELOAD");
-                await Task.Delay(new TimeSpan(0, 0, Random.Shared.Next(3, 5)));
-                await data.Page.ReloadAsync(new PageReloadOptions()
-                {
-                    Timeout = 15000,
-                    WaitUntil = WaitUntilState.Load
-                });
-
-                LogDebugAction("MOBILE_CLICK_YES_GDPR_BTN");
-                await Task.Delay(GetRandomMsTimes(BrowserConstants.HUMAN_CLICK_BTN_MIN, BrowserConstants.HUMAN_CLICK_BTN_MAX));
-                await data.Page.EvaluateAsync(BrowserConstants.MOBILE_CLICK_YES_GDPR_BTN);
-
                 LogDebugAction("MOBILE_CLICK_SEARCHBAR_TEXTAREA");
                 await Task.Delay(GetRandomMsTimes(BrowserConstants.HUMAN_CLICK_BTN_MIN, BrowserConstants.HUMAN_CLICK_BTN_MAX));
                 await data.Page.EvaluateAsync(BrowserConstants.MOBILE_CLICK_SEARCHBAR_TEXTAREA);
@@ -59,12 +43,17 @@ namespace MSRewardsBot.Server.Automation
                     return false;
                 }
 
+                LogDebugAction("MOBILE_CLICK_YES_GDPR_BTN");
+                await Task.Delay(GetRandomMsTimes(BrowserConstants.HUMAN_CLICK_BTN_MIN, BrowserConstants.HUMAN_CLICK_BTN_MAX));
+                await data.Page.EvaluateAsync(BrowserConstants.MOBILE_CLICK_YES_GDPR_BTN);
+
                 LogDebugAction("Viewing page content & scrolling");
                 for (int i = 0; i < 5; i++)
                 {
-                    await data.Page.Mouse.WheelAsync(0, Random.Shared.Next(200, 700));
-                    await Task.Delay(Random.Shared.Next(200, 500));
+                    await data.Page.Mouse.WheelAsync(0, Random.Shared.Next(500, 900));
+                    await Task.Delay(Random.Shared.Next(500, 1000));
                 }
+                await Task.Delay(Random.Shared.Next(1000, 3000));
 
                 LogDebugAction("Resetting start page for next request");
                 await NavigateToURL(data, "about:blank");
