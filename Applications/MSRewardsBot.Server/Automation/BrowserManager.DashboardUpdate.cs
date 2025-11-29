@@ -59,6 +59,23 @@ namespace MSRewardsBot.Server.Automation
 
             try
             {
+                string accLevel = await data.Page.EvaluateAsync<string>(BrowserConstants.SELECTOR_ACCOUNT_LEVEL);
+                accLevel = accLevel.Trim();
+                string nLev = accLevel.Substring(accLevel.Length - 1, 1);
+                if (int.TryParse(nLev, out int accountLevel))
+                {
+                    _logger.LogDebug("Found value for {stat}: {val}", nameof(MSAccountStats.CurrentAccountLevel), accountLevel);
+                    data.Account.Stats.CurrentAccountLevel = accountLevel;
+                }
+            }
+            catch (Exception e)
+            {
+                _logger.LogError("Error: {e}", e.Message);
+                res = false;
+            }
+
+            try
+            {
                 string pcPoints = await data.Page.EvaluateAsync<string>(BrowserConstants.SELECTOR_BREAKDOWN_PC_POINTS);
                 pcPoints = pcPoints.Trim();
                 string[] sub = pcPoints.Split('/');
@@ -83,24 +100,7 @@ namespace MSRewardsBot.Server.Automation
                 res = false;
             }
 
-            try
-            {
-                string accLevel = await data.Page.EvaluateAsync<string>(BrowserConstants.SELECTOR_ACCOUNT_LEVEL);
-                accLevel = accLevel.Trim();
-                string nLev = accLevel.Substring(accLevel.Length - 1, 1);
-                if (int.TryParse(nLev, out int accountLevel))
-                {
-                    _logger.LogDebug("Found value for {stat}: {val}", nameof(MSAccountStats.CurrentAccountLevel), accountLevel);
-                    data.Account.Stats.CurrentAccountLevel = accountLevel;
-                }
-            }
-            catch (Exception e)
-            {
-                _logger.LogError("Error: {e}", e.Message);
-                res = false;
-            }
-
-            if(data.Account.Stats.CurrentAccountLevel != 2)
+            if (data.Account.Stats.CurrentAccountLevel < 2)
             {
                 try
                 {
@@ -123,10 +123,36 @@ namespace MSRewardsBot.Server.Automation
             }
             else
             {
-                data.Account.Stats.CurrentAccountLevelPoints = 500; // Max level points
+                data.Account.Stats.CurrentAccountLevelPoints = 500; // Reached max level points
+
+                try
+                {
+                    string mobilePoints = await data.Page.EvaluateAsync<string>(BrowserConstants.SELECTOR_BREAKDOWN_MOBILE_POINTS);
+                    mobilePoints = mobilePoints.Trim();
+                    string[] sub = mobilePoints.Split('/');
+
+                    if (sub.Length == 2)
+                    {
+                        if (int.TryParse(sub[0], out int currentPts))
+                        {
+                            _logger.LogDebug("Found value for {stat}: {val}", nameof(MSAccountStats.CurrentPointsMobileSearches), currentPts);
+                            data.Account.Stats.CurrentPointsMobileSearches = currentPts;
+                        }
+                        if (int.TryParse(sub[1], out int maxPts))
+                        {
+                            _logger.LogDebug("Found value for {stat}: {val}", nameof(MSAccountStats.MaxPointsMobileSearches), maxPts);
+                            data.Account.Stats.MaxPointsMobileSearches = maxPts;
+                        }
+                    }
+                }
+                catch (Exception e)
+                {
+                    _logger.LogError("Error: {e}", e.Message);
+                    res = false;
+                }
             }
 
-                return res;
+            return res;
         }
     }
 }

@@ -23,6 +23,15 @@ namespace MSRewardsBot.Common.DataEntities.Stats
             CurrentPointsPCSearches -= _pointsPerSearch;
         }
 
+        public void MobileSearchCompleted()
+        {
+            CurrentPointsMobileSearches += _pointsPerSearch;
+        }
+        public void MobileSearchFailed()
+        {
+            CurrentPointsMobileSearches -= _pointsPerSearch;
+        }
+
         public int TotalAccountPoints
         {
             get => _totalAccountPoints;
@@ -36,6 +45,8 @@ namespace MSRewardsBot.Common.DataEntities.Stats
             }
         }
         private int _totalAccountPoints;
+
+        #region PC searches
 
         public int CurrentPointsPCSearches
         {
@@ -68,6 +79,41 @@ namespace MSRewardsBot.Common.DataEntities.Stats
         private readonly int _pointsPerSearch = 3;
         public int PCSearchesToDo => (MaxPointsPCSearches - CurrentPointsPCSearches) / _pointsPerSearch;
 
+        #endregion
+
+        #region Mobile searches
+
+        public int CurrentPointsMobileSearches
+        {
+            get => _currentPointsMobileSearches;
+            set
+            {
+                if (_currentPointsMobileSearches != value)
+                {
+                    _currentPointsMobileSearches = value;
+                    NotifyPropertyChanged();
+                }
+            }
+        }
+        private int _currentPointsMobileSearches;
+
+        public int MaxPointsMobileSearches
+        {
+            get => _maxPointsMobileSearches;
+            set
+            {
+                if (_maxPointsMobileSearches != value)
+                {
+                    _maxPointsMobileSearches = value;
+                    NotifyPropertyChanged();
+                }
+            }
+        }
+        private int _maxPointsMobileSearches;
+
+        public int MobileSearchesToDo => (MaxPointsMobileSearches - CurrentPointsMobileSearches) / _pointsPerSearch;
+
+        #endregion
 
         public int CurrentAccountLevel
         {
@@ -150,6 +196,16 @@ namespace MSRewardsBot.Common.DataEntities.Stats
                 case nameof(MaxPointsPCSearches):
                     {
                         MaxPointsPCSearches = stats.MaxPointsPCSearches;
+                        break;
+                    }
+                case nameof(CurrentPointsMobileSearches):
+                    {
+                        CurrentPointsMobileSearches = stats.CurrentPointsMobileSearches;
+                        break;
+                    }
+                case nameof(MaxPointsMobileSearches):
+                    {
+                        MaxPointsMobileSearches = stats.MaxPointsMobileSearches;
                         break;
                     }
                 case nameof(LastDashboardUpdate):
