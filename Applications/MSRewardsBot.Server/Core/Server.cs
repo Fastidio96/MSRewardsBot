@@ -181,6 +181,10 @@ namespace MSRewardsBot.Server.Core
                                 start = start.AddSeconds(Random.Shared.Next(180, 600));
 
                                 string keyword = await _keywordProvider.GetKeyword();
+                                if(keyword == null)
+                                {
+                                    break;
+                                }
 
                                 Job job = new Job(
                                     new PCSearchCommand()

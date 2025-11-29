@@ -73,16 +73,20 @@ namespace MSRewardsBot.Server.Automation
                 return null;
             }
 
-            string keyword = _keywords[_keywordIndex];
-            if (_keywordIndex > _keywords.Count)
+            if (_keywordIndex > (_keywords.Count - 1))
             {
-                await _store.RefreshList();
                 _keywordIndex = 0;
+
+                if (!await _store.RefreshList())
+                {
+                    return null;
+                }
+
+                return _keywords[_keywordIndex];
             }
-            else
-            {
-                _keywordIndex += 1;
-            }
+
+            string keyword = _keywords[_keywordIndex];
+            _keywordIndex += 1;
 
             return keyword;
         }
