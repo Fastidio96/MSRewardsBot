@@ -52,27 +52,55 @@
         <ContentControl Grid.Row="1" Grid.Column="0" Content="{Binding SelectedAccountStats}">
             <ContentControl.ContentTemplate>
                 <DataTemplate DataType="{x:Type local:MSAccountStats}">
-                    <StackPanel Margin="6">
-                        <!-- Bind into Stats object -->
-                        <TextBlock Text="Stats:" FontWeight="Bold"/>
-                        <TextBlock Text="{Binding TotalAccountPoints, StringFormat=Total points available: {0}}" />
-                        <TextBlock>
+                    <Grid Margin="10,5">
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="30"/>
+                            <RowDefinition Height="20"/>
+                            <RowDefinition Height="20"/>
+                            <RowDefinition Height="20"/>
+                            <RowDefinition Height="20"/>
+                            <RowDefinition Height="*"/>
+                        </Grid.RowDefinitions>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="2*"/>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="*"/>
+                        </Grid.ColumnDefinitions>
+                        
+                        <TextBlock Grid.Row="0" Grid.Column="0" Grid.ColumnSpan="3"
+                            Text="Stats" FontWeight="Bold" FontSize="15px" HorizontalAlignment="Center"/>
+                        <TextBlock Grid.Row="1" Grid.Column="0"
+                            Text="{Binding TotalAccountPoints, StringFormat=Total points available: {0}}" />
+                        <TextBlock Grid.Row="2" Grid.Column="0"
+                            Text="{Binding CurrentAccountLevel, StringFormat=Current account level: {0}}" />
+                        <TextBlock Grid.Row="3" Grid.Column="0"
+                            Text="{Binding CurrentAccountLevelPoints, StringFormat=Current account level points: {0}/500}" />
+                        <TextBlock Grid.Row="4" Grid.Column="0"
+                            Text="{Binding LastDashboardUpdate, StringFormat=Last dashboard update: {0:HH:mm:ss dd/MM/yyyy}}" />
+                        <TextBlock Grid.Row="3" Grid.Column="1">
                             <TextBlock.Text>
-                                <MultiBinding StringFormat="Points PC searches: {0}/{1}">
+                                <MultiBinding StringFormat="PC points searches: {0}/{1}">
                                     <Binding Path="CurrentPointsPCSearches"/>
                                     <Binding Path="MaxPointsPCSearches" />
                                 </MultiBinding>
                             </TextBlock.Text>
                         </TextBlock>
-                        <TextBlock Text="{Binding PCSearchesToDo, StringFormat=PC searches to do: {0}}" />
-                        <TextBlock Text="{Binding CurrentAccountLevel, StringFormat=Current account level: {0}}" />
-                        <TextBlock Text="{Binding CurrentAccountLevelPoints, StringFormat=Current account level points: {0}/500}" />
-                        <TextBlock Text="{Binding LastDashboardUpdate, StringFormat=Last dashboard update: {0:HH:mm:ss dd/MM/yyyy}}" />
-                    </StackPanel>
+                        <TextBlock Grid.Row="4" Grid.Column="1"
+                            Text="{Binding PCSearchesToDo, StringFormat=PC searches to do: {0}}" />
+                        <TextBlock Grid.Row="3" Grid.Column="2">
+                            <TextBlock.Text>
+                                <MultiBinding StringFormat="Mobile points searches: {0}/{1}">
+                                    <Binding Path="CurrentPointsMobileSearches"/>
+                                    <Binding Path="MaxPointsMobileSearches" />
+                                </MultiBinding>
+                            </TextBlock.Text>
+                        </TextBlock>
+                        <TextBlock Grid.Row="4" Grid.Column="2"
+                            Text="{Binding MobileSearchesToDo, StringFormat=Mobile searches to do: {0}}" />
+                    </Grid>
                 </DataTemplate>
             </ContentControl.ContentTemplate>
         </ContentControl>
-        
         
         <!-- Footer -->
         <Grid Grid.Row="2" Grid.Column="0">
