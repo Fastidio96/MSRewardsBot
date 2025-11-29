@@ -100,26 +100,33 @@ namespace MSRewardsBot.Server.Automation
                 res = false;
             }
 
-            try
+            if(data.Account.Stats.CurrentAccountLevel != 2)
             {
-                string accLevelRatioPts = await data.Page.EvaluateAsync<string>(BrowserConstants.SELECTOR_ACCOUNT_LEVEL_POINTS);
-                accLevelRatioPts = accLevelRatioPts.Trim();
-                string[] split = accLevelRatioPts.Split('/');
-                string nLevPts = split[0].Trim();
-
-                if (int.TryParse(nLevPts, out int accountPtsLevel))
+                try
                 {
-                    _logger.LogDebug("Found value for {stat}: {val}", nameof(MSAccountStats.CurrentAccountLevelPoints), accountPtsLevel);
-                    data.Account.Stats.CurrentAccountLevelPoints = accountPtsLevel;
+                    string accLevelRatioPts = await data.Page.EvaluateAsync<string>(BrowserConstants.SELECTOR_ACCOUNT_LEVEL_POINTS);
+                    accLevelRatioPts = accLevelRatioPts.Trim();
+                    string[] split = accLevelRatioPts.Split('/');
+                    string nLevPts = split[0].Trim();
+
+                    if (int.TryParse(nLevPts, out int accountPtsLevel))
+                    {
+                        _logger.LogDebug("Found value for {stat}: {val}", nameof(MSAccountStats.CurrentAccountLevelPoints), accountPtsLevel);
+                        data.Account.Stats.CurrentAccountLevelPoints = accountPtsLevel;
+                    }
+                }
+                catch (Exception e)
+                {
+                    _logger.LogError("Error: {e}", e.Message);
+                    res = false;
                 }
             }
-            catch (Exception e)
+            else
             {
-                _logger.LogError("Error: {e}", e.Message);
-                res = false;
+                data.Account.Stats.CurrentAccountLevelPoints = 500; // Max level points
             }
 
-            return res;
+                return res;
         }
     }
 }
