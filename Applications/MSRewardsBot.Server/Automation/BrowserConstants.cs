@@ -18,12 +18,20 @@ namespace MSRewardsBot.Server.Automation
         public const string SELECTOR_ACCOUNT_LEVEL_POINTS = @"document.querySelector('#earningreport-level-heading > p.pointsDetail.c-subheading-3.ng-binding.ng-scope').innerText;";
         #endregion
 
-        #region URL_SEARCHES_HOMEPAGE
-        public const string CLICK_BING_HOMEPAGE_LOGIN_BTN = @"document.querySelector('#id_l').click();";
-        public const string CLICK_YES_GDPR_BTN = @"document.querySelector('#bnp_btn_accept')?.click();";
-        public const string CLICK_SEARCHBAR_TEXTAREA = @"document.querySelector('#sb_form_q').click();";
-        public const string APPEND_KEYWORD_SEARCHBAR_TEXTAREA = @"document.querySelector('#sb_form_q').value += ""{keyword}"";";
-        public const string CLICK_SUBMIT_SEARCHBAR_TEXTAREA = @"document.querySelector('#sb_form_go').click();";
+        #region URL_SEARCHES_HOMEPAGE_PC
+        public const string PC_CLICK_BING_HOMEPAGE_LOGIN_BTN = @"document.querySelector('#id_l').click();";
+        public const string PC_CLICK_YES_GDPR_BTN = @"document.querySelector('#bnp_btn_accept')?.click();";
+        public const string PC_CLICK_SEARCHBAR_TEXTAREA = @"document.querySelector('#sb_form_q').click();";
+        public const string PC_APPEND_KEYWORD_SEARCHBAR_TEXTAREA = @"document.querySelector('#sb_form_q').value += ""{keyword}"";";
+        public const string PC_CLICK_SUBMIT_SEARCHBAR_TEXTAREA = @"document.querySelector('#sb_form_go').click();";
+        #endregion
+
+        #region URL_SEARCHES_HOMEPAGE_MOBILE
+        public const string MOBILE_CLICK_BING_HOMEPAGE_LOGIN_BTN = @"document.querySelector('#id_l').click();";
+        public const string MOBILE_CLICK_YES_GDPR_BTN = @"document.querySelector('#bnp_btn_accept')?.click();";
+        public const string MOBILE_CLICK_SEARCHBAR_TEXTAREA = @"document.querySelector('#sb_form_q').click();";
+        public const string MOBILE_APPEND_KEYWORD_SEARCHBAR_TEXTAREA = @"document.querySelector('#sb_form_q').value += ""{keyword}"";";
+        public const string MOBILE_CLICK_SUBMIT_SEARCHBAR_TEXTAREA = @"document.querySelector('#sb_form_go').click();";
         #endregion
 
         #region Timespans delay (milliseconds)
@@ -38,6 +46,6 @@ namespace MSRewardsBot.Server.Automation
         public const string UA_PC_FIREFOX = @"Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:138.0) Gecko/20100101 Firefox/138.0";
         public const string UA_PC_CHROME = @"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/142.0.0.0 Safari/537.36";
         public const string UA_PC_EDGE = @"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/142.0.0.0 Safari/537.36 Edg/142.0.0.0";
-        public const string UA_MOBILE_EDGE = @"";
+        public const string UA_MOBILE_FIREFOX = @"Mozilla/5.0 (Android 16; Mobile; rv:145.0) Gecko/145.0 Firefox/145.0";
     }
 }

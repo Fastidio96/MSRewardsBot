@@ -38,7 +38,7 @@ namespace MSRewardsBot.Server.Automation
             (new BrowserTypeLaunchOptions()
             {
 #if DEBUG
-                //Headless = false,
+                Headless = false,
 #endif
                 Args =
                     [
@@ -53,17 +53,11 @@ namespace MSRewardsBot.Server.Automation
             _logger.Log(LogLevel.Information, "BrowserManager init completed");
         }
 
-        public async Task<bool> CreateContext(MSAccountServerData data)
+        public async Task<bool> CreateContext(MSAccountServerData data, bool isMobile)
         {
             _logger.LogDebug("Creating new context for {Data} | {User}", data.Account.Email, data.Account.User.Username);
 
-            //await CreateChromeStealthContext(data);
-            await CreateFirefoxStealthContext(data);
-
-            //data.Context = await _browser.NewContextAsync(new BrowserNewContextOptions()
-            //{
-            //    UserAgent = BrowserConstants.UA_PC_EDGE
-            //});
+            await CreateFirefoxStealthContext(data, isMobile);
 
             data.Page = await data.Context.NewPageAsync();
 
@@ -75,6 +69,17 @@ namespace MSRewardsBot.Server.Automation
 
             _logger.LogDebug("Cookies installed for {Data} | {User}", data.Account.Email, data.Account.User.Username);
             return true;
+        }
+
+        public async Task DeleteContext(MSAccountServerData data)
+        {
+            _logger.LogDebug("Deleting context for {Data} | {User}", data.Account.Email, data.Account.User.Username);
+
+            await data.Context.CloseAsync();
+            await data.Context.DisposeAsync();
+
+            data.Page = null;
+            data.Context = null;
         }
 
         private async Task<bool> StartLoggedSession(MSAccountServerData data)
@@ -175,6 +180,28 @@ namespace MSRewardsBot.Server.Automation
             return new TimeSpan(0, 0, 0, 0, Random.Shared.Next(min, max));
         }
 
+        private async Task<bool> WriteAsHuman(IPage page, string keyword, string selectorSearchbar)
+        {
+            try
+            {
+                char[] split = keyword.ToCharArray();
+                foreach (char cr in split)
+                {
+                    string js = selectorSearchbar.Replace("{keyword}", cr.ToString());
+                    await page.EvaluateAsync(js);
+
+                    await Task.Delay(GetRandomMsTimes(BrowserConstants.HUMAN_WRITING_MIN, BrowserConstants.HUMAN_WRITING_MAX));
+                }
+
+                return true;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError("Error on writing keyword {keyword}: {e}", keyword, ex.Message);
+                return false;
+            }
+        }
+
         private List<Cookie> ConvertToPWCookies(IEnumerable<AccountCookie> cookies)
         {
             List<Cookie> result = new List<Cookie>();
@@ -218,8 +245,9 @@ namespace MSRewardsBot.Server.Automation
 
                 await _browser.CloseAsync();
             }
-            catch
+            catch (Exception ex)
             {
+                _logger.Log(LogLevel.Error, ex, "Error while disposing browser");
             }
         }
     }

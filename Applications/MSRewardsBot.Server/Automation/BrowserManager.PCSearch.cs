@@ -8,9 +8,9 @@ namespace MSRewardsBot.Server.Automation
 {
     public partial class BrowserManager
     {
-        public async Task<bool> DoPCSearch(MSAccountServerData data, string keyword)
+        public async Task<bool> PCSearch(MSAccountServerData data, string keyword)
         {
-            _logger.LogDebug("PC searches started for {User} | {Data}",
+            _logger.LogDebug("PC search started for {User} | {Data}",
                 data.Account.Email, data.Account.User.Username);
 
             if (!await NavigateToURLWithoutCheck(data, BrowserConstants.URL_SEARCHES_HOMEPAGE))
@@ -20,9 +20,9 @@ namespace MSRewardsBot.Server.Automation
 
             try
             {
-                LogDebugAction("CLICK_BING_HOMEPAGE_LOGIN_BTN");
+                LogDebugAction("PC_CLICK_BING_HOMEPAGE_LOGIN_BTN");
                 await Task.Delay(GetRandomMsTimes(BrowserConstants.HUMAN_CLICK_BTN_MIN + 2000, BrowserConstants.HUMAN_CLICK_BTN_MAX + 5000));
-                await data.Page.EvaluateAsync(BrowserConstants.CLICK_BING_HOMEPAGE_LOGIN_BTN);
+                await data.Page.EvaluateAsync(BrowserConstants.PC_CLICK_BING_HOMEPAGE_LOGIN_BTN);
 
                 LogDebugAction("PAGE RELOAD");
                 await Task.Delay(new TimeSpan(0, 0, Random.Shared.Next(3, 5)));
@@ -32,16 +32,16 @@ namespace MSRewardsBot.Server.Automation
                     WaitUntil = WaitUntilState.Load
                 });
 
-                LogDebugAction("CLICK_YES_GDPR_BTN");
+                LogDebugAction("PC_CLICK_YES_GDPR_BTN");
                 await Task.Delay(GetRandomMsTimes(BrowserConstants.HUMAN_CLICK_BTN_MIN, BrowserConstants.HUMAN_CLICK_BTN_MAX));
-                await data.Page.EvaluateAsync(BrowserConstants.CLICK_YES_GDPR_BTN);
+                await data.Page.EvaluateAsync(BrowserConstants.PC_CLICK_YES_GDPR_BTN);
 
-                LogDebugAction("CLICK_SEARCHBAR_TEXTAREA");
+                LogDebugAction("PC_CLICK_SEARCHBAR_TEXTAREA");
                 await Task.Delay(GetRandomMsTimes(BrowserConstants.HUMAN_CLICK_BTN_MIN, BrowserConstants.HUMAN_CLICK_BTN_MAX));
-                await data.Page.EvaluateAsync(BrowserConstants.CLICK_SEARCHBAR_TEXTAREA);
+                await data.Page.EvaluateAsync(BrowserConstants.PC_CLICK_SEARCHBAR_TEXTAREA);
 
                 LogDebugAction("WRITE_KEYWORD_HOMEPAGE_TEXTAREA");
-                if (!await WriteAsHuman(data.Page, keyword))
+                if (!await WriteAsHuman(data.Page, keyword, BrowserConstants.PC_APPEND_KEYWORD_SEARCHBAR_TEXTAREA))
                 {
                     return false;
                 }
@@ -74,28 +74,6 @@ namespace MSRewardsBot.Server.Automation
             catch (Exception e)
             {
                 _logger.LogError("Error on URL {url}: {e}", data.Page.Url, e.Message);
-                return false;
-            }
-        }
-
-        private async Task<bool> WriteAsHuman(IPage page, string keyword)
-        {
-            try
-            {
-                char[] split = keyword.ToCharArray();
-                foreach (char cr in split)
-                {
-                    string js = BrowserConstants.APPEND_KEYWORD_SEARCHBAR_TEXTAREA.Replace("{keyword}", cr.ToString());
-                    await page.EvaluateAsync(js);
-
-                    await Task.Delay(GetRandomMsTimes(BrowserConstants.HUMAN_WRITING_MIN, BrowserConstants.HUMAN_WRITING_MAX));
-                }
-
-                return true;
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError("Error on writing keyword {keyword}: {e}", keyword, ex.Message);
                 return false;
             }
         }

@@ -1,10 +1,6 @@
-﻿using MSRewardsBot.Common.DataEntities.Accounting;
-
-namespace MSRewardsBot.Server.DataEntities.Commands
+﻿namespace MSRewardsBot.Server.DataEntities.Commands
 {
     public class DashboardUpdateCommand : CommandBase
     {
-        public MSAccountServerData Data { get; set; }
-
     }
 }

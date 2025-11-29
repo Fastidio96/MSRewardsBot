@@ -1,12 +1,10 @@
 ﻿using System;
-using System.Collections;
 using System.Collections.Generic;
 using System.Threading;
 using Microsoft.Extensions.Logging;
 using MSRewardsBot.Server.Automation;
 using MSRewardsBot.Server.DataEntities;
 using MSRewardsBot.Server.DataEntities.Commands;
-using static Microsoft.Extensions.Logging.EventSource.LoggingEventSource;
 
 namespace MSRewardsBot.Server.Core
 {
@@ -56,13 +54,18 @@ namespace MSRewardsBot.Server.Core
             string dtCmd = dt.ToString("dd/MM/yyyy HH:mm:ss");
             if (job.Command is DashboardUpdateCommand cmdDash)
             {
-                _logger.LogInformation("Added job {name} on {time}", 
+                _logger.LogInformation("Added job {name} on {time}",
                     nameof(DashboardUpdateCommand), dtCmd);
             }
-            else if(job.Command is PCSearchCommand cmdPcSearch)
+            else if (job.Command is PCSearchCommand cmdPcSearch)
             {
                 _logger.LogInformation("Added job {name} (with keyword {keyword}) on {time} for {user}",
-                                    nameof(PCSearchCommand), cmdPcSearch.Keyword, dtCmd, cmdPcSearch.Data.Account.Email);
+                    nameof(PCSearchCommand), cmdPcSearch.Keyword, dtCmd, cmdPcSearch.Data.Account.Email);
+            }
+            else if (job.Command is MobileSearchCommand cmdMobileSearch)
+            {
+                _logger.LogInformation("Added job {name} (with keyword {keyword}) on {time} for {user}",
+                    nameof(MobileSearchCommand), cmdMobileSearch.Keyword, dtCmd, cmdMobileSearch.Data.Account.Email);
             }
         }
 
@@ -109,8 +112,12 @@ namespace MSRewardsBot.Server.Core
 
                     if (job.Command is DashboardUpdateCommand dashCMD)
                     {
+                        await _browser.CreateContext(job.Command.Data, false);
+
                         job.Status = await _browser.DashboardUpdate(dashCMD.Data) ?
                             JobStatus.Success : JobStatus.Failure;
+
+                        await _browser.DeleteContext(job.Command.Data);
 
                         if (job.Status == JobStatus.Success)
                         {
@@ -124,8 +131,21 @@ namespace MSRewardsBot.Server.Core
                     }
                     else if (job.Command is PCSearchCommand pcCMD)
                     {
-                        job.Status = await _browser.DoPCSearch(pcCMD.Data, pcCMD.Keyword) ?
+                        await _browser.CreateContext(job.Command.Data, false);
+
+                        job.Status = await _browser.PCSearch(pcCMD.Data, pcCMD.Keyword) ?
                             JobStatus.Success : JobStatus.Failure;
+
+                        await _browser.DeleteContext(job.Command.Data);
+                    }
+                    else if (job.Command is MobileSearchCommand mobileCMD)
+                    {
+                        await _browser.CreateContext(job.Command.Data, true);
+
+                        job.Status = await _browser.PCSearch(mobileCMD.Data, mobileCMD.Keyword) ?
+                            JobStatus.Success : JobStatus.Failure;
+
+                        await _browser.DeleteContext(job.Command.Data);
                     }
 
 

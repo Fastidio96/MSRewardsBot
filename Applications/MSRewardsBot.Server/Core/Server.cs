@@ -150,12 +150,6 @@ namespace MSRewardsBot.Server.Core
                         acc.Stats.MSAccountId = acc.DbId;
                         acc.Stats.PropertyChanged += MsAccountStats_PropertyChanged;
 
-                        if (!await _browser.CreateContext(cache))
-                        {
-                            _logger.LogError("Cannot create context for {Email} | {Username}!", acc.Email, acc.User.Username);
-                            continue;
-                        }
-
                         CacheMSAccStats.Add(acc.DbId, cache);
                     }
 
@@ -196,18 +190,66 @@ namespace MSRewardsBot.Server.Core
                                             _logger.LogDebug("Job {name} succeded (with keyword {keyword}) for {user}",
                                                 nameof(PCSearchCommand), keyword, acc.Email);
 
+                                            cache.Stats.PCSearchCompleted();
+
                                             if (i == cache.Stats.PCSearchesToDo - 1)
                                             {
                                                 AddJobDashboardUpdate(cache);
                                             }
-
-                                            cache.Stats.PCSearchCompleted();
                                         },
                                         OnFail = delegate ()
                                         {
-                                            _logger.LogWarning("Job {name} failed", nameof(PCSearchCommand));
+                                            _logger.LogWarning("Job {name} failed for {user}",
+                                                nameof(PCSearchCommand), acc.Email);
 
                                             cache.Stats.PCSearchFailed();
+                                            AddJobDashboardUpdate(cache);
+                                        }
+                                    });
+
+                                _taskScheduler.AddJob(start, job);
+
+                                cache.Stats.LastSearchesCheck = start;
+                            }
+                        }
+
+                        if (cache.Stats.MobileSearchesToDo > 0)
+                        {
+                            DateTime start = now;
+
+                            for (int i = 0; i < cache.Stats.MobileSearchesToDo; i++)
+                            {
+                                start = start.AddSeconds(Random.Shared.Next(180, 600));
+
+                                string keyword = await _keywordProvider.GetKeyword();
+                                if (keyword == null)
+                                {
+                                    break;
+                                }
+
+                                Job job = new Job(
+                                    new MobileSearchCommand()
+                                    {
+                                        Data = cache,
+                                        Keyword = keyword,
+                                        OnSuccess = delegate ()
+                                        {
+                                            _logger.LogDebug("Job {name} succeded (with keyword {keyword}) for {user}",
+                                                nameof(MobileSearchCommand), keyword, acc.Email);
+
+                                            cache.Stats.MobileSearchCompleted();
+
+                                            if (i == cache.Stats.MobileSearchesToDo - 1)
+                                            {
+                                                AddJobDashboardUpdate(cache);
+                                            }
+                                        },
+                                        OnFail = delegate ()
+                                        {
+                                            _logger.LogWarning("Job {name} failed for {user}", 
+                                                nameof(MobileSearchCommand), acc.Email);
+
+                                            cache.Stats.MobileSearchFailed();
                                             AddJobDashboardUpdate(cache);
                                         }
                                     });

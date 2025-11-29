@@ -10,7 +10,7 @@ namespace MSRewardsBot.Server.Automation
         {
             data.Context = await _browser.NewContextAsync(new BrowserNewContextOptions
             {
-                UserAgent = useUAforPC ? BrowserConstants.UA_PC_EDGE : BrowserConstants.UA_MOBILE_EDGE,
+                UserAgent = useUAforPC ? BrowserConstants.UA_PC_EDGE : BrowserConstants.UA_MOBILE_FIREFOX,
                 ViewportSize = new() { Width = 1366, Height = 768 },
                 Locale = "it-IT"
             });
@@ -205,14 +205,29 @@ Object.defineProperty(navigator,'userAgent',{get:()=>${JSON.stringify(ua)}});
 ");
         }
 
-        private async Task CreateFirefoxStealthContext(MSAccountServerData data)
+        private async Task CreateFirefoxStealthContext(MSAccountServerData data, bool isMobile)
         {
-            data.Context = await _browser.NewContextAsync(new BrowserNewContextOptions
+            if (isMobile)
             {
-                UserAgent = BrowserConstants.UA_PC_FIREFOX,
-                ViewportSize = new() { Width = 1366, Height = 768 },
-                Locale = "it-IT"
-            });
+                data.Context = await _browser.NewContextAsync(new BrowserNewContextOptions
+                {
+                    UserAgent = BrowserConstants.UA_MOBILE_FIREFOX,
+                    ViewportSize = new ViewportSize() { Width = 915, Height = 412 },
+                    DeviceScaleFactor = 2.625f,
+                    //IsMobile = true,
+                    HasTouch = true,
+                    Locale = "it-IT"
+                });
+            }
+            else
+            {
+                data.Context = await _browser.NewContextAsync(new BrowserNewContextOptions
+                {
+                    UserAgent = BrowserConstants.UA_PC_FIREFOX,
+                    ViewportSize = new ViewportSize() { Width = 1366, Height = 768 },
+                    Locale = "it-IT"
+                });
+            }
 
             // Fix hasWebdriverTrue
             await data.Context.AddInitScriptAsync(@"
