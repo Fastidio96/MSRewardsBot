@@ -43,7 +43,7 @@ namespace MSRewardsBot.Server.Core
         {
             while (_todo.ContainsKey(dt)) //Find first available space (index)
             {
-                dt.AddMicroseconds(1);
+                dt = dt.AddMicroseconds(1);
             }
 
             using (_lock.EnterScope())
