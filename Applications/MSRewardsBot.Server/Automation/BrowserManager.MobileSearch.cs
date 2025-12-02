@@ -13,7 +13,7 @@ namespace MSRewardsBot.Server.Automation
             _logger.LogDebug("Mobile search started for {User} | {Data}",
                 data.Account.Email, data.Account.User.Username);
 
-            if (!await NavigateToURLWithoutCheck(data, BrowserConstants.URL_SEARCHES_HOMEPAGE))
+            if (!await NavigateToURL(data, BrowserConstants.URL_SEARCHES_HOMEPAGE))
             {
                 return false;
             }

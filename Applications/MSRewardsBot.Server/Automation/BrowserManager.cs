@@ -38,7 +38,7 @@ namespace MSRewardsBot.Server.Automation
             (new BrowserTypeLaunchOptions()
             {
 #if DEBUG
-                //Headless = false,
+                Headless = false,
 #endif
                 Args =
                     [
@@ -46,7 +46,11 @@ namespace MSRewardsBot.Server.Automation
                         "--disable-infobars",
                         "--no-default-browser-check",
                         "--disable-extensions"
-                    ]
+                    ],
+                FirefoxUserPrefs = new Dictionary<string, object>()
+                {
+                    ["network.http.http3.enabled"] = false,
+                }
             }
             );
 
@@ -119,61 +123,38 @@ namespace MSRewardsBot.Server.Automation
 
             try
             {
-                await data.Page.GotoAsync(url);
-                await data.Page.WaitForURLAsync(url, new PageWaitForURLOptions()
+                if (data.Page.Url != url)
                 {
-                    WaitUntil = WaitUntilState.Load,
-                    Timeout = 15000
-                });
+                    IResponse response = await data.Page.GotoAsync(url, new PageGotoOptions()
+                    {
+                        WaitUntil = WaitUntilState.Load,
+                        Timeout = 15000
+                    });
+                    if (response == null || !response.Ok)
+                    {
+                        _logger.LogWarning("Failed to Navigate to {url} - response: {res}", url, response?.StatusText);
+                        return false;
+                    }
 
-                // Wait for the animations to finish
-                await Task.Delay(Random.Shared.Next(3000, 5000));
-
-                _logger.LogDebug("Navigated to {url}", url);
-                return true;
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError("Error on {MethodName}: {Message}", nameof(NavigateToURL), ex.Message);
-                return false;
-            }
-        }
-
-        private async Task<bool> NavigateToURLWithoutCheck(MSAccountServerData data, string url)
-        {
-            if (data.Page == null)
-            {
-                return false;
-            }
-
-            try
-            {
-                int secs = Random.Shared.Next(10, 60);
-                IResponse response = await data.Page.GotoAsync(url, new PageGotoOptions()
-                {
-                    WaitUntil = WaitUntilState.Load,
-                    Timeout = 15000
-                }).WaitAsync(new TimeSpan(0, 0, secs));
-                if (response == null || !response.Ok)
-                {
-                    _logger.LogWarning("Failed to Navigate to {url} - response is {res}", url, response?.StatusText);
-                    return false;
+                    await Task.Delay(GetRandomMsTimes(3000, 5000));
                 }
 
-                _logger.LogDebug("Navigated to {url} with a waiting of {s} seconds for {usr} | {email}",
-                    url, secs, data.Account.User.Username, data.Account.Email);
+                await data.Page.BringToFrontAsync();
+
+                _logger.LogDebug("Navigated to {url} for {usr} | {email}",
+                    url, data.Account.User.Username, data.Account.Email);
                 return true;
             }
             catch (Exception ex)
             {
-                _logger.LogError("Error on {MethodName}: {Message}", nameof(NavigateToURL), ex.Message);
+                _logger.LogError("Error while navigating to {url}: {Message}", url, ex.Message);
                 return false;
             }
         }
 
         private void LogDebugAction(string actionName)
         {
-            _logger.LogDebug("Logged action {time} {action} ", DateTime.Now.ToString("mm:ss:fff"), actionName.ToUpper());
+            _logger.LogTrace("Logged action {time} {action} ", DateTime.Now.ToString("mm:ss:fff"), actionName.ToUpper());
         }
         private TimeSpan GetRandomMsTimes(int min, int max)
         {

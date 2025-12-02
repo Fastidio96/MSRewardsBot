@@ -117,6 +117,8 @@ namespace MSRewardsBot.Server.Core
                         job.Status = await _browser.DashboardUpdate(dashCMD.Data) ?
                             JobStatus.Success : JobStatus.Failure;
 
+                        await _browser.GetAdditionalPoints(dashCMD.Data);
+
                         await _browser.DeleteContext(job.Command.Data);
 
                         if (job.Status == JobStatus.Success)
