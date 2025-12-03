@@ -63,8 +63,8 @@ namespace MSRewardsBot.Server.Core
 
             _taskScheduler = new TaskScheduler(_browser, _business, _serviceProvider.GetRequiredService<ILogger<TaskScheduler>>());
 
-            _mainThread = new Thread(CoreLoop);
-            _mainThread.Name = nameof(CoreLoop);
+            _mainThread = new Thread(AccountLoop);
+            _mainThread.Name = nameof(AccountLoop);
 
             _clientsThread = new Thread(ClientLoop);
             _clientsThread.Name = nameof(ClientLoop);
@@ -75,7 +75,7 @@ namespace MSRewardsBot.Server.Core
 
         private async void ClientLoop()
         {
-            _logger.LogInformation("Clients loop thread started");
+            _logger.LogInformation("Clients thread started");
 
             while (!_isDisposing)
             {
@@ -117,10 +117,9 @@ namespace MSRewardsBot.Server.Core
             }
         }
 
-
-        private async void CoreLoop()
+        private async void AccountLoop()
         {
-            _logger.LogInformation("Core loop thread started");
+            _logger.LogInformation("Accounts thread started");
 
             while (!_isDisposing)
             {
@@ -143,6 +142,7 @@ namespace MSRewardsBot.Server.Core
                         cache = new MSAccountServerData()
                         {
                             Account = acc,
+                            IsFirstTimeUpdateStats = true,
                             Stats = acc.Stats
                         };
 
@@ -154,8 +154,9 @@ namespace MSRewardsBot.Server.Core
                     }
 
                     DateTime now = DateTime.Now;
-                    if (DateTimeUtilities.HasElapsed(now, cache.Stats.LastDashboardCheck, Settings.DashboardCheck))
+                    if (DateTimeUtilities.HasElapsed(now, cache.Stats.LastDashboardCheck, Settings.DashboardCheck) || cache.IsFirstTimeUpdateStats)
                     {
+                        cache.IsFirstTimeUpdateStats = false;
                         cache.Stats.LastDashboardCheck = now; //Fix for not queueing the same job while we wait for the job's completion
                         if (DateTimeUtilities.HasElapsed(now, cache.Stats.LastDashboardUpdate, Settings.DashboardUpdate))
                         {
@@ -163,9 +164,32 @@ namespace MSRewardsBot.Server.Core
                         }
                     }
 
+                    if (cache.IsFirstTimeUpdateStats)
+                    {
+                        continue;
+                    }
+
                     if (DateTimeUtilities.HasElapsed(now, cache.Stats.LastSearchesCheck, Settings.SearchesCheck))
                     {
                         cache.Stats.LastSearchesCheck = now;
+
+                        _taskScheduler.AddJob(now, new Job(new AdditionalPointsCommand()
+                        {
+                            Data = cache,
+                            OnSuccess = delegate ()
+                            {
+                                _logger.LogDebug("Job {name} succeded for {user}",
+                                    nameof(AdditionalPointsCommand), acc.Email);
+                            },
+                            OnFail = delegate ()
+                            {
+                                _logger.LogWarning("Job {name} failed for {user}",
+                                    nameof(AdditionalPointsCommand), acc.Email);
+
+                                cache.Stats.LastSearchesCheck = DateTime.Now;
+                            }
+                        }));
+
                         if (cache.Stats.PCSearchesToDo > 0)
                         {
                             DateTime start = now;

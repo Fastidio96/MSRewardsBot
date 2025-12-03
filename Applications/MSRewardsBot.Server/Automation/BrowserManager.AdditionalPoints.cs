@@ -13,8 +13,8 @@ namespace MSRewardsBot.Server.Automation
         /// </summary>
         public async Task<bool> GetAdditionalPoints(MSAccountServerData data)
         {
-            _logger.LogInformation("Getting additional points for {User} | {Data}",
-                data.Account.User.Username, data.Account.Email);
+            _logger.LogInformation("Getting additional points for {Email} | {User}",
+               data.Account.Email, data.Account.User.Username);
 
             if (!await NavigateToURL(data, BrowserConstants.URL_DASHBOARD))
             {
@@ -23,7 +23,7 @@ namespace MSRewardsBot.Server.Automation
 
             try
             {
-                int currentPoints = data.Stats.TotalAccountPoints;
+                int previousPoints = data.Stats.TotalAccountPoints;
 
                 await Task.Delay(GetRandomMsTimes(BrowserConstants.HUMAN_CLICK_BTN_MIN, BrowserConstants.HUMAN_CLICK_BTN_MAX));
                 ILocator elements = data.Page.Locator(".mee-icon-AddMedium");
@@ -33,7 +33,7 @@ namespace MSRewardsBot.Server.Automation
 
                 if (count == 0)
                 {
-                    _logger.LogInformation("No additional points found from the dashboard for {User} | {Data}",
+                    _logger.LogInformation("No additional points found from the dashboard for {Email} | {User}",
                         data.Account.Email, data.Account.User.Username);
 
                     return true;
@@ -68,15 +68,15 @@ namespace MSRewardsBot.Server.Automation
 
                 if (!int.TryParse(totPts, out int totalPts))
                 {
-                    _logger.LogError("Cannot get total points from account for {User} | {Data}",
+                    _logger.LogError("Cannot get total points from account for {Email} | {User}",
                         data.Account.Email, data.Account.User.Username);
                     return false;
                 }
 
                 data.Account.Stats.TotalAccountPoints = totalPts;
-                int gainedPts = data.Stats.TotalAccountPoints - currentPoints;
+                int gainedPts = data.Stats.TotalAccountPoints - previousPoints;
 
-                _logger.LogInformation("Gained {pts} points from the dashboard for {User} | {Data}",
+                _logger.LogInformation("Gained {pts} points from the dashboard for {Email} | {User}",
                     gainedPts, data.Account.Email, data.Account.User.Username);
 
                 return true;

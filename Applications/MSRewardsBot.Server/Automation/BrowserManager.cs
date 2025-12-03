@@ -38,7 +38,7 @@ namespace MSRewardsBot.Server.Automation
             (new BrowserTypeLaunchOptions()
             {
 #if DEBUG
-                Headless = false,
+                //Headless = false,
 #endif
                 Args =
                     [
@@ -141,8 +141,8 @@ namespace MSRewardsBot.Server.Automation
 
                 await data.Page.BringToFrontAsync();
 
-                _logger.LogDebug("Navigated to {url} for {usr} | {email}",
-                    url, data.Account.User.Username, data.Account.Email);
+                _logger.LogDebug("Navigated to {url} for {email} | {user}",
+                    url, data.Account.Email, data.Account.User.Username);
                 return true;
             }
             catch (Exception ex)

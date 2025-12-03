@@ -46,16 +46,23 @@ namespace MSRewardsBot.Server.Core
                 dt = dt.AddMicroseconds(1);
             }
 
+
+
             using (_lock.EnterScope())
             {
                 _todo.Add(dt, job);
             }
 
-            string dtCmd = dt.ToString("dd/MM/yyyy HH:mm:ss");
+            string dtCmd = dt.ToString("HH:mm:ss dd/MM/yyyy");
             if (job.Command is DashboardUpdateCommand cmdDash)
             {
-                _logger.LogInformation("Added job {name} on {time}",
-                    nameof(DashboardUpdateCommand), dtCmd);
+                _logger.LogInformation("Added job {name} on {time} for {user}",
+                    nameof(DashboardUpdateCommand), dtCmd, cmdDash.Data.Account.Email);
+            }
+            else if (job.Command is AdditionalPointsCommand cmdAdd)
+            {
+                _logger.LogInformation("Added job {name} on {time} for {user}",
+                    nameof(AdditionalPointsCommand), dtCmd, cmdAdd.Data.Account.Email);
             }
             else if (job.Command is PCSearchCommand cmdPcSearch)
             {
@@ -117,8 +124,6 @@ namespace MSRewardsBot.Server.Core
                         job.Status = await _browser.DashboardUpdate(dashCMD.Data) ?
                             JobStatus.Success : JobStatus.Failure;
 
-                        await _browser.GetAdditionalPoints(dashCMD.Data);
-
                         await _browser.DeleteContext(job.Command.Data);
 
                         if (job.Status == JobStatus.Success)
@@ -130,6 +135,15 @@ namespace MSRewardsBot.Server.Core
                                 job.Status = JobStatus.Failure;
                             }
                         }
+                    }
+                    else if (job.Command is AdditionalPointsCommand addCMD)
+                    {
+                        await _browser.CreateContext(job.Command.Data, false);
+
+                        job.Status = await _browser.GetAdditionalPoints(addCMD.Data) ?
+                            JobStatus.Success : JobStatus.Failure;
+
+                        await _browser.DeleteContext(job.Command.Data);
                     }
                     else if (job.Command is PCSearchCommand pcCMD)
                     {
