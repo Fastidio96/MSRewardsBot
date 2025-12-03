@@ -132,11 +132,11 @@ namespace MSRewardsBot.Server.Automation
                     });
                     if (response == null || !response.Ok)
                     {
-                        _logger.LogWarning("Failed to Navigate to {url} - response: {res}", url, response?.StatusText);
+                        _logger.LogWarning("Failed to navigate to {url} - response: {res}", url, response?.StatusText);
                         return false;
                     }
 
-                    await Task.Delay(GetRandomMsTimes(3000, 5000));
+                    await Task.Delay(GetRandomMsTimes(3500, 5000));
                 }
 
                 await data.Page.BringToFrontAsync();

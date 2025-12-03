@@ -58,8 +58,6 @@ namespace MSRewardsBot.Server.Core
                 dt = dt.AddSeconds(1);
             }
 
-
-
             using (_lock.EnterScope())
             {
                 _todo.Add(dt, job);

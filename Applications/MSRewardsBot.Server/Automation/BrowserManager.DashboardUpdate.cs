@@ -24,6 +24,8 @@ namespace MSRewardsBot.Server.Automation
                 return false;
             }
 
+            await Task.Delay(GetRandomMsTimes(5000, 10000));
+
             bool res = true;
 
             try
