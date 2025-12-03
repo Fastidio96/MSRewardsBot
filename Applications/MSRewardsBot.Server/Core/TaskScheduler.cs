@@ -41,9 +41,21 @@ namespace MSRewardsBot.Server.Core
 
         public void AddJob(DateTime dt, Job job)
         {
+            dt = new DateTime //Cleaned datetime from ms
+            (
+                dt.Year,
+                dt.Month,
+                dt.Day,
+                dt.Hour,
+                dt.Minute,
+                dt.Second,
+                0,
+                dt.Kind
+            );
+
             while (_todo.ContainsKey(dt)) //Find first available space (index)
             {
-                dt = dt.AddMicroseconds(1);
+                dt = dt.AddSeconds(1);
             }
 
 

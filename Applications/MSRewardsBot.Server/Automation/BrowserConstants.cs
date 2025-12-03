@@ -33,6 +33,12 @@ namespace MSRewardsBot.Server.Automation
         public const string MOBILE_CLICK_SUBMIT_SEARCHBAR_TEXTAREA = @"document.querySelector('#sb_form_go').click();";
         #endregion
 
+        #region Additional Points Dashboard
+        public const string ADDITIONAL_PTS_IMAGE_LOCATOR = @".mee-icon-AddMedium";
+        public const string ADDITIONAL_PTS_IMAGE_CLICK = @"document.querySelectorAll('{locator}')[{idx}].click();";
+        public const string ADDITIONAL_PTS_CLAIM_PTS = @"document.querySelector('#user-pointclaim > button.button.ng-binding')?.click();";
+        #endregion
+
         #region Timespans delay (milliseconds)
         public const int HUMAN_WRITING_MIN = 300;
         public const int HUMAN_WRITING_MAX = 700;

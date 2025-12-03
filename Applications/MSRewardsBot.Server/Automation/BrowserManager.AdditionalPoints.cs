@@ -26,7 +26,7 @@ namespace MSRewardsBot.Server.Automation
                 int previousPoints = data.Stats.TotalAccountPoints;
 
                 await Task.Delay(GetRandomMsTimes(BrowserConstants.HUMAN_CLICK_BTN_MIN, BrowserConstants.HUMAN_CLICK_BTN_MAX));
-                ILocator elements = data.Page.Locator(".mee-icon-AddMedium");
+                ILocator elements = data.Page.Locator(BrowserConstants.ADDITIONAL_PTS_IMAGE_LOCATOR);
 
                 await Task.Delay(GetRandomMsTimes(2500, 5000));
                 int count = await elements.CountAsync();
@@ -48,7 +48,10 @@ namespace MSRewardsBot.Server.Automation
                     {
                         IPage newPage = await data.Page.Context.RunAndWaitForPageAsync(async () =>
                         {
-                            await data.Page.EvaluateAsync($"document.querySelectorAll('.mee-icon-AddMedium')[{i}].click();");
+                            string js = BrowserConstants.ADDITIONAL_PTS_IMAGE_CLICK
+                                .Replace("{locator}", BrowserConstants.ADDITIONAL_PTS_IMAGE_LOCATOR)
+                                .Replace("{idx}", i.ToString());
+                            await data.Page.EvaluateAsync(js);
 
                             await Task.Delay(GetRandomMsTimes(5000, 7000));
                         });
@@ -61,7 +64,11 @@ namespace MSRewardsBot.Server.Automation
                     }
                 }
 
-                await Task.Delay(GetRandomMsTimes(2500, 5000));
+                await Task.Delay(GetRandomMsTimes(3000, 7000));
+
+                await data.Page.EvaluateAsync(BrowserConstants.ADDITIONAL_PTS_CLAIM_PTS);
+
+                await Task.Delay(GetRandomMsTimes(3000, 7000));
 
                 string totPts = await data.Page.EvaluateAsync<string>(BrowserConstants.SELECTOR_ACCOUNT_TOTAL_POINTS);
                 totPts = totPts.Trim();
