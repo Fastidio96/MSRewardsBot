@@ -154,9 +154,8 @@ namespace MSRewardsBot.Server.Core
                     }
 
                     DateTime now = DateTime.Now;
-                    if (DateTimeUtilities.HasElapsed(now, cache.Stats.LastDashboardCheck, Settings.DashboardCheck) || cache.IsFirstTimeUpdateStats)
+                    if (DateTimeUtilities.HasElapsed(now, cache.Stats.LastDashboardCheck, Settings.DashboardCheck))
                     {
-                        cache.IsFirstTimeUpdateStats = false;
                         cache.Stats.LastDashboardCheck = now; //Fix for not queueing the same job while we wait for the job's completion
                         if (DateTimeUtilities.HasElapsed(now, cache.Stats.LastDashboardUpdate, Settings.DashboardUpdate))
                         {
@@ -307,9 +306,9 @@ namespace MSRewardsBot.Server.Core
                                     OnSuccess = delegate ()
                                     {
                                         _logger.LogDebug("Job {name} succeded for {user}",
-                                                nameof(PCSearchCommand), data.Account.Email);
+                                                nameof(DashboardUpdateCommand), data.Account.Email);
 
-                                        data.Stats.LastSearchesCheck = DateTime.MinValue; // Triggers search check
+                                        data.IsFirstTimeUpdateStats = false;
                                     },
                                     OnFail = delegate ()
                                     {
