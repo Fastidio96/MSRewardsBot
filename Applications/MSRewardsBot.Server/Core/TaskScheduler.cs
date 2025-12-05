@@ -58,6 +58,11 @@ namespace MSRewardsBot.Server.Core
                 dt = dt.AddSeconds(1);
             }
 
+            if (DateTime.Now.Day != dt.Day)
+            {
+                return;
+            }
+
             using (_lock.EnterScope())
             {
                 _todo.Add(dt, job);
@@ -99,6 +104,14 @@ namespace MSRewardsBot.Server.Core
             }
         }
 
+        public void RemoveAllJobs()
+        {
+            using (_lock.EnterScope())
+            {
+                _todo.Clear();
+            }
+        }
+
         private SortedList<DateTime, Job> GetTodoList()
         {
             SortedList<DateTime, Job> res = new SortedList<DateTime, Job>();
@@ -119,9 +132,13 @@ namespace MSRewardsBot.Server.Core
             {
                 foreach (KeyValuePair<DateTime, Job> todo in GetTodoList())
                 {
+                    if (DateTime.Now.Day != todo.Key.Day)
+                    {
+                        break;
+                    }
+
                     if (todo.Key > DateTime.Now)
                     {
-                        Thread.Sleep(1000);
                         break;
                     }
 

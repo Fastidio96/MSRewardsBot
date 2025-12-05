@@ -121,6 +121,7 @@ namespace MSRewardsBot.Server.Core
         {
             _logger.LogInformation("Accounts thread started");
 
+            DateTime now = DateTime.Now;
             while (!_isDisposing)
             {
                 if (DateTimeUtilities.HasElapsed(DateTime.Now, _keywordStore.LastRefresh, Settings.KeywordsListRefresh))
@@ -128,9 +129,24 @@ namespace MSRewardsBot.Server.Core
                     await _keywordStore.RefreshList();
                 }
 
+                if(DateTime.Now.Day > now.Day) // Triggered when the next day occurs
+                {
+                    _logger.LogWarning("Next day occurred. Removing all jobs and resetting stats..");
+
+                    _taskScheduler.RemoveAllJobs(); // Reset all jobs queued
+                    foreach(KeyValuePair<int, MSAccountServerData> cache in CacheMSAccStats) // Force to update stats
+                    {
+                        cache.Value.Stats.LastDashboardCheck = DateTime.MinValue;
+                        cache.Value.Stats.LastDashboardUpdate = DateTime.MinValue;
+                        cache.Value.IsFirstTimeUpdateStats = true;
+                    }
+                }
+
                 List<MSAccount> accounts = _business.GetAllMSAccounts();
                 foreach (MSAccount acc in accounts)
                 {
+                    now = DateTime.Now;
+
                     if (acc.Cookies.Count == 0)
                     {
                         _logger.LogWarning("No cookies found for account {Email} | {Username}. Skipping..", acc.Email, acc.User.Username);
@@ -153,7 +169,6 @@ namespace MSRewardsBot.Server.Core
                         CacheMSAccStats.Add(acc.DbId, cache);
                     }
 
-                    DateTime now = DateTime.Now;
                     if (DateTimeUtilities.HasElapsed(now, cache.Stats.LastDashboardCheck, Settings.DashboardCheck))
                     {
                         cache.Stats.LastDashboardCheck = now; //Fix for not queueing the same job while we wait for the job's completion
