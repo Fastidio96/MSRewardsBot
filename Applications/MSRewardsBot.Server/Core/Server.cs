@@ -128,7 +128,10 @@ namespace MSRewardsBot.Server.Core
             {
                 if (DateTimeUtilities.HasElapsed(DateTime.Now, _keywordStore.LastRefresh, Settings.KeywordsListRefresh))
                 {
-                    await _keywordStore.RefreshList();
+                    if(await _keywordStore.RefreshList())
+                    {
+                        _logger.LogInformation("Keywords list refreshed");
+                    }
                 }
 
                 if(DateTime.Now.Day > now.Day) // Triggered when the next day occurs
