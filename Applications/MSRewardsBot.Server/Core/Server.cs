@@ -66,11 +66,11 @@ namespace MSRewardsBot.Server.Core
             _mainThread = new Thread(AccountLoop);
             _mainThread.Name = nameof(AccountLoop);
 
-            _clientsThread = new Thread(ClientLoop);
-            _clientsThread.Name = nameof(ClientLoop);
+            //_clientsThread = new Thread(ClientLoop);
+            //_clientsThread.Name = nameof(ClientLoop);
 
             _mainThread.Start();
-            _clientsThread.Start();
+            //_clientsThread.Start();
         }
 
         private async void ClientLoop()
@@ -147,9 +147,10 @@ namespace MSRewardsBot.Server.Core
                 {
                     now = DateTime.Now;
 
-                    if (acc.Cookies.Count == 0)
+                    if (acc.Cookies.Count == 0 || acc.IsCookiesExpired)
                     {
-                        _logger.LogWarning("No cookies found for account {Email} | {Username}. Skipping..", acc.Email, acc.User.Username);
+                        _logger.LogWarning("No valid cookies found for account {Email} | {Username}. Skipping..", 
+                            acc.Email, acc.User.Username);
                         continue;
                     }
 

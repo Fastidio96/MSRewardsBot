@@ -12,6 +12,7 @@ namespace MSRewardsBot.Common.DataEntities.Accounting
         {
             Cookies = new List<AccountCookie>();
             Stats = new MSAccountStats();
+            IsCookiesExpired = false;
         }
 
         [JsonIgnore]
@@ -24,6 +25,9 @@ namespace MSRewardsBot.Common.DataEntities.Accounting
         [JsonIgnore]
         public User User { get; set; }
         public List<AccountCookie> Cookies { get; set; }
+
+        [NotMapped]
+        public bool IsCookiesExpired { get; set; }
 
         [NotMapped]
         public MSAccountStats Stats { get; set; }

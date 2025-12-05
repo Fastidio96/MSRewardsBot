@@ -28,6 +28,7 @@ namespace MSRewardsBot.Server.DataEntities
     {
         Pending = 0,
         Success = 1,
-        Failure = 2
+        Failure = 2,
+        CriticalFailure = 3,
     }
 }

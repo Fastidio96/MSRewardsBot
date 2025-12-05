@@ -144,53 +144,50 @@ namespace MSRewardsBot.Server.Core
 
                     Job job = todo.Value;
 
-                    if (job.Command is DashboardUpdateCommand dashCMD)
+                    if (!await _browser.CreateContext(job.Command.Data, false))
                     {
-                        await _browser.CreateContext(job.Command.Data, false);
-
-                        job.Status = await _browser.DashboardUpdate(dashCMD.Data) ?
-                            JobStatus.Success : JobStatus.Failure;
-
-                        await _browser.DeleteContext(job.Command.Data);
-
-                        if (job.Status == JobStatus.Success)
+                        job.Status = JobStatus.CriticalFailure;
+                    }
+                    else
+                    {
+                        if (job.Command is DashboardUpdateCommand dashCMD)
                         {
-                            dashCMD.Data.Stats.LastDashboardUpdate = DateTime.Now;
-                            if (!_business.UpdateMSAccount(dashCMD.Data.Account))
+                            job.Status = await _browser.DashboardUpdate(dashCMD.Data) ?
+                                JobStatus.Success : JobStatus.Failure;
+
+                            if (job.Status == JobStatus.Success)
                             {
-                                dashCMD.Data.Stats.LastDashboardUpdate = DateTime.MinValue;
-                                job.Status = JobStatus.Failure;
+                                dashCMD.Data.Stats.LastDashboardUpdate = DateTime.Now;
+                                if (!_business.UpdateMSAccount(dashCMD.Data.Account))
+                                {
+                                    dashCMD.Data.Stats.LastDashboardUpdate = DateTime.MinValue;
+                                    job.Status = JobStatus.Failure;
+                                }
                             }
                         }
-                    }
-                    else if (job.Command is AdditionalPointsCommand addCMD)
-                    {
-                        await _browser.CreateContext(job.Command.Data, false);
-
-                        job.Status = await _browser.GetAdditionalPoints(addCMD.Data) ?
-                            JobStatus.Success : JobStatus.Failure;
-
-                        await _browser.DeleteContext(job.Command.Data);
-                    }
-                    else if (job.Command is PCSearchCommand pcCMD)
-                    {
-                        await _browser.CreateContext(job.Command.Data, false);
-
-                        job.Status = await _browser.PCSearch(pcCMD.Data, pcCMD.Keyword) ?
-                            JobStatus.Success : JobStatus.Failure;
-
-                        await _browser.DeleteContext(job.Command.Data);
-                    }
-                    else if (job.Command is MobileSearchCommand mobileCMD)
-                    {
-                        await _browser.CreateContext(job.Command.Data, true);
-
-                        job.Status = await _browser.MobileSearch(mobileCMD.Data, mobileCMD.Keyword) ?
-                            JobStatus.Success : JobStatus.Failure;
-
-                        await _browser.DeleteContext(job.Command.Data);
+                        else if (job.Command is AdditionalPointsCommand addCMD)
+                        {
+                            job.Status = await _browser.GetAdditionalPoints(addCMD.Data) ?
+                                JobStatus.Success : JobStatus.Failure;
+                        }
+                        else if (job.Command is PCSearchCommand pcCMD)
+                        {
+                            job.Status = await _browser.PCSearch(pcCMD.Data, pcCMD.Keyword) ?
+                                JobStatus.Success : JobStatus.Failure;
+                        }
+                        else if (job.Command is MobileSearchCommand mobileCMD)
+                        {
+                            job.Status = await _browser.MobileSearch(mobileCMD.Data, mobileCMD.Keyword) ?
+                                JobStatus.Success : JobStatus.Failure;
+                        }
+                        else
+                        {
+                            _logger.LogError("Unknown command received! Command {cmd}", job.Command);
+                            job.Status = JobStatus.CriticalFailure;
+                        }
                     }
 
+                    await _browser.DeleteContext(job.Command.Data);
 
 
                     if (job.Status != JobStatus.Pending)
@@ -199,7 +196,7 @@ namespace MSRewardsBot.Server.Core
                         {
                             job.Command.OnSuccess?.Invoke();
                         }
-                        else
+                        else if (job.Status == JobStatus.Failure)
                         {
                             job.Command.OnFail?.Invoke();
                         }

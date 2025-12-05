@@ -67,17 +67,17 @@ namespace MSRewardsBot.Server.Automation
 
             if (!await StartLoggedSession(data))
             {
-                _logger.LogWarning("Cannot install cookies for {Data} | {User}", data.Account.Email, data.Account.User.Username);
-
+                _logger.LogWarning("Cannot install cookies for {Email} | {User}", data.Account.Email, data.Account.User.Username);
+                return false;
             }
 
-            _logger.LogDebug("Cookies installed for {Data} | {User}", data.Account.Email, data.Account.User.Username);
+            _logger.LogDebug("Cookies installed for {Email} | {User}", data.Account.Email, data.Account.User.Username);
             return true;
         }
 
         public async Task DeleteContext(MSAccountServerData data)
         {
-            _logger.LogDebug("Deleting context for {Data} | {User}", data.Account.Email, data.Account.User.Username);
+            _logger.LogDebug("Deleting context for {Email} | {User}", data.Account.Email, data.Account.User.Username);
 
             await data.Context.CloseAsync();
             await data.Context.DisposeAsync();
@@ -90,12 +90,33 @@ namespace MSRewardsBot.Server.Automation
         {
             if (data.Account.Cookies == null || data.Account.Cookies.Count == 0)
             {
-                _logger.LogError("Cannot proceed. No cookies for account {Data} | {User} found.",
+                _logger.LogError("Cannot proceed. No cookies for account {Email} | {User} found.",
                     data.Account.Email, data.Account.User.Username);
                 return false;
             }
 
             await data.Context.AddCookiesAsync(ConvertToPWCookies(data.Account.Cookies));
+
+            if (!await CheckIsLogged(data))
+            {
+                _logger.LogError("Cannot proceed. Expired cookies for {Email} | {User}.",
+                    data.Account.Email, data.Account.User.Username);
+                return false;
+            }
+
+            return true;
+        }
+
+        private async Task<bool> CheckIsLogged(MSAccountServerData data)
+        {
+            await NavigateToURL(data, BrowserConstants.URL_DASHBOARD);
+
+            if (data.Page.Url.StartsWith(BrowserConstants.URL_EXPIRED_COOKIES))
+            {
+                data.Account.IsCookiesExpired = true;
+                return false;
+            }
+
             return true;
         }
 
@@ -163,7 +184,7 @@ namespace MSRewardsBot.Server.Automation
 
         private async Task<bool> WriteAsHuman(IPage page, string keyword, string selectorSearchbar)
         {
-            //Wait for the animation to finishs
+            //Wait for the animation to finish
             await Task.Delay(GetRandomMsTimes(1000, 1600));
 
             try
