@@ -1,6 +1,4 @@
 ﻿using System;
-using System.Threading.Tasks;
-using MSRewardsBot.Server.DataEntities;
 
 namespace MSRewardsBot.Server.Core
 {

@@ -4,6 +4,11 @@ namespace MSRewardsBot.Server
 {
     public class Settings
     {
+        /// <summary>
+        /// Disable this if you want to save some performances
+        /// </summary>
+        public static bool IsClientUpdaterEnabled = false;
+
         public static TimeSpan AuthTokenExpires = new TimeSpan(30, 0, 0, 0);
 
         public static TimeSpan DashboardCheck = new TimeSpan(1, 0, 0);

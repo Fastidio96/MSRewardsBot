@@ -27,7 +27,7 @@ namespace MSRewardsBot.Server.Core
         private readonly KeywordStore _keywordStore;
 
         private Thread _mainThread;
-        //private Thread _clientsThread;
+        private Thread _clientsThread;
         private bool _isDisposing = false;
 
         private TaskScheduler _taskScheduler;
@@ -65,12 +65,14 @@ namespace MSRewardsBot.Server.Core
 
             _mainThread = new Thread(AccountLoop);
             _mainThread.Name = nameof(AccountLoop);
-
-            //_clientsThread = new Thread(ClientLoop);
-            //_clientsThread.Name = nameof(ClientLoop);
-
             _mainThread.Start();
-            //_clientsThread.Start();
+
+            if (Settings.IsClientUpdaterEnabled)
+            {
+                _clientsThread = new Thread(ClientLoop);
+                _clientsThread.Name = nameof(ClientLoop);
+                _clientsThread.Start();
+            }
         }
 
         private async void ClientLoop()
@@ -375,6 +377,19 @@ namespace MSRewardsBot.Server.Core
                 }
 
                 _mainThread = null;
+            }
+
+            if (Settings.IsClientUpdaterEnabled)
+            {
+                if (_clientsThread != null)
+                {
+                    if (_clientsThread.IsAlive)
+                    {
+                        _clientsThread.Join(5000);
+                    }
+
+                    _clientsThread = null;
+                }
             }
 
             if (_taskScheduler != null)

@@ -20,7 +20,10 @@ namespace MSRewardsBot.Server.DB
             _db = new MSRBContext();
             _db.Database.EnsureCreated();
 
-            InitUpdater();
+            if (Settings.IsClientUpdaterEnabled)
+            {
+                InitUpdater();
+            }
         }
 
         public List<MSAccount> GetAllMSAccounts()
