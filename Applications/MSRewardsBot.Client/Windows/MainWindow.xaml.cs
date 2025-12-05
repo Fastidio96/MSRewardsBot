@@ -12,7 +12,7 @@ namespace MSRewardsBot.Client.Windows
         private readonly SplashScreenWindow _splashScreenWindow;
         private readonly ViewModel _vm;
 
-        private AppInfo _appInfo;
+        private readonly AppInfo _appInfo;
 
         public MainWindow(ViewModel vm, SplashScreenWindow splash, AppInfo info)
         {
@@ -28,7 +28,9 @@ namespace MSRewardsBot.Client.Windows
 
             if (!Env.IS_PRODUCTION)
             {
+#pragma warning disable CS0162 // Unreachable code detected
                 Title += " - DEBUG";
+#pragma warning restore CS0162 // Unreachable code detected
             }
         }
 
@@ -62,7 +64,7 @@ namespace MSRewardsBot.Client.Windows
             _vm.AddMSAccount();
         }
 
-        private async void btnLogout_Click(object sender, RoutedEventArgs e)
+        private async void BtnLogout_Click(object sender, RoutedEventArgs e)
         {
             await _vm.Logout();
         }

@@ -7,7 +7,6 @@ using Microsoft.Extensions.Logging;
 using MSRewardsBot.Common.DataEntities.Accounting;
 using MSRewardsBot.Server.DataEntities;
 using MSRewardsBot.Server.DB;
-using MSRewardsBot.Server.Network;
 
 namespace MSRewardsBot.Server.Core
 {
@@ -86,12 +85,9 @@ namespace MSRewardsBot.Server.Core
             return _data.GetUserAuthToken(user.Username);
         }
 
-        private string GenerateHashFromPassword(string password)
+        private static string GenerateHashFromPassword(string password)
         {
-            using (SHA256 sha = SHA256.Create())
-            {
-                return Convert.ToBase64String(sha.ComputeHash(Encoding.UTF8.GetBytes(PWD_SALT + password)));
-            }
+            return Convert.ToBase64String(SHA256.HashData(Encoding.UTF8.GetBytes(PWD_SALT + password)));
         }
 
 

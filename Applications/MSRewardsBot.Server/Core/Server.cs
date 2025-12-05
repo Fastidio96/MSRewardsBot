@@ -27,7 +27,7 @@ namespace MSRewardsBot.Server.Core
         private readonly KeywordStore _keywordStore;
 
         private Thread _mainThread;
-        private Thread _clientsThread;
+        //private Thread _clientsThread;
         private bool _isDisposing = false;
 
         private TaskScheduler _taskScheduler;

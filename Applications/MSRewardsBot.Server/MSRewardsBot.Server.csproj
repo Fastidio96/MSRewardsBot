@@ -1,17 +1,30 @@
 <Project Sdk="Microsoft.NET.Sdk.Web">
 
+	<PropertyGroup Label="Configuration" Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
+	  <TypeScriptSourceMap>True</TypeScriptSourceMap>
+	</PropertyGroup>
+
+	<PropertyGroup Label="Configuration" Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">
+	  <TypeScriptSourceMap>False</TypeScriptSourceMap>
+	  <TypeScriptNoEmitOnError>False</TypeScriptNoEmitOnError>
+	</PropertyGroup>
+
 	<PropertyGroup>
-		<TargetFramework>net9.0</TargetFramework>
+		<TargetFramework>net9.0-windows10.0.17763.0</TargetFramework>
 		<ImplicitUsings>disable</ImplicitUsings>
 		<Nullable>annotations</Nullable>
 		<UserSecretsId>f6b7e8c8-9990-4ab3-bce6-ce11e1697eb3</UserSecretsId>
 		<DockerDefaultTargetOS>Linux</DockerDefaultTargetOS>
 		<DockerfileContext>..\..</DockerfileContext>
+		<StartupObject>MSRewardsBot.Server.Program</StartupObject>
+		<ProduceReferenceAssembly>False</ProduceReferenceAssembly>
 	</PropertyGroup>
 
 	<PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">
 	  <DebugType>none</DebugType>
 	</PropertyGroup>
+
+	<PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'" />
 
 	<ItemGroup>
 	  <None Remove="data.db" />
