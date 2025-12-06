@@ -16,8 +16,8 @@
 		<UserSecretsId>f6b7e8c8-9990-4ab3-bce6-ce11e1697eb3</UserSecretsId>
 		<DockerDefaultTargetOS>Linux</DockerDefaultTargetOS>
 		<DockerfileContext>..\..</DockerfileContext>
-		<StartupObject>MSRewardsBot.Server.Program</StartupObject>
 		<ProduceReferenceAssembly>False</ProduceReferenceAssembly>
+		<StartupObject>MSRewardsBot.Server.Program</StartupObject>
 	</PropertyGroup>
 
 	<PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">
@@ -36,7 +36,7 @@
 	  <PackageReference Include="Microsoft.EntityFrameworkCore" Version="9.0.9" />
 	  <PackageReference Include="Microsoft.EntityFrameworkCore.Sqlite" Version="9.0.9" />
 	  <PackageReference Include="Microsoft.Extensions.Logging" Version="9.0.9" />
-	  <PackageReference Include="Microsoft.Playwright" Version="1.57.0" />
+	  <PackageReference Include="Microsoft.Playwright" Version="1.56.0" />
 	  <PackageReference Include="SQLite" Version="3.13.0" />
 	</ItemGroup>
 

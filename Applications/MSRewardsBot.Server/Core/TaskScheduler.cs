@@ -144,9 +144,9 @@ namespace MSRewardsBot.Server.Core
 
                     Job job = todo.Value;
 
-                    if (!await _browser.CreateContext(job.Command.Data, false))
+                    if (!await _browser.CreateContext(job.Command.Data, job.Command is MobileSearchCommand))
                     {
-                        job.Status = JobStatus.CriticalFailure;
+                        job.Status = JobStatus.Failure;
                     }
                     else
                     {
