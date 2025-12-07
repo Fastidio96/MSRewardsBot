@@ -41,9 +41,9 @@ namespace MSRewardsBot.Server
             _ => ""
         };
 
-        private static readonly Regex AnsiRegex = new Regex(@"\u001b\[[0-9;]*m", RegexOptions.Compiled);
+        private static readonly Regex _ansiRegex = new Regex(@"\u001b\[[0-9;]*m", RegexOptions.Compiled);
 
-        const string ResetColor = "\u001b[0m";
+        private const string RESET_COLOR = "\u001b[0m";
 
         public CustomConsoleFormatter(IOptions<CustomConsoleOptions> options) : base(nameof(CustomConsoleFormatter))
         {
@@ -149,7 +149,7 @@ namespace MSRewardsBot.Server
                     }
                 }
 
-                message = AnsiFg(color) + message + ResetColor;
+                message = AnsiFg(color) + message + RESET_COLOR;
             }
 
             return message;
@@ -166,7 +166,7 @@ namespace MSRewardsBot.Server
 
             try
             {
-                log = AnsiRegex.Replace(log, "");
+                log = _ansiRegex.Replace(log, "");
 
                 using (FileStream fs = File.Open(path, FileMode.Append, FileAccess.Write, FileShare.ReadWrite))
                 using (StreamWriter sw = new StreamWriter(fs, Encoding.UTF8))
