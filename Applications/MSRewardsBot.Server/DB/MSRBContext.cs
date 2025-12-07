@@ -1,6 +1,4 @@
-﻿using System;
-using System.IO;
-using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.EntityFrameworkCore;
 using MSRewardsBot.Common.DataEntities.Accounting;
 
 namespace MSRewardsBot.Server.DB
@@ -14,9 +12,9 @@ namespace MSRewardsBot.Server.DB
 
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
         {
-            optionsBuilder.UseSqlite($"Data Source={Utils.GetDBFile()}");
+            optionsBuilder.UseSqlite($"Data Source={Utils.GetDBFile()};Cache=Shared");
 #if DEBUG
-            optionsBuilder.EnableSensitiveDataLogging();
+            //optionsBuilder.EnableSensitiveDataLogging();
 #endif
 
             base.OnConfiguring(optionsBuilder);

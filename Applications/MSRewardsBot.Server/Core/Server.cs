@@ -125,6 +125,8 @@ namespace MSRewardsBot.Server.Core
             _logger.LogInformation("Accounts thread started");
 
             DateTime now = DateTime.Now;
+            List<MSAccount> accounts;
+
             while (!_isDisposing)
             {
                 if (DateTimeUtilities.HasElapsed(DateTime.Now, _keywordStore.LastRefresh, Settings.KeywordsListRefresh))
@@ -149,7 +151,7 @@ namespace MSRewardsBot.Server.Core
                     }
                 }
 
-                List<MSAccount> accounts = _business.GetAllMSAccounts();
+                accounts = _business.GetAllMSAccounts();
                 foreach (MSAccount acc in accounts)
                 {
                     now = DateTime.Now;
