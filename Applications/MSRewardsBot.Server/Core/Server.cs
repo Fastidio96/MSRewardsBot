@@ -54,7 +54,6 @@ namespace MSRewardsBot.Server.Core
             _business = bl;
             _serviceProvider = service;
 
-
             _keywordStore = new KeywordStore();
             _keywordProvider = new KeywordProvider(_keywordStore);
         }
