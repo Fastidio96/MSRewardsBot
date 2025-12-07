@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
@@ -32,7 +33,7 @@ namespace MSRewardsBot.Server.Core
 
         private TaskScheduler _taskScheduler;
 
-        public Dictionary<int, MSAccountServerData> CacheMSAccStats;
+        public ConcurrentDictionary<int, MSAccountServerData> CacheMSAccStats;
 
         public Server
         (
@@ -51,7 +52,7 @@ namespace MSRewardsBot.Server.Core
             _business = bl;
             _serviceProvider = service;
 
-            CacheMSAccStats = new Dictionary<int, MSAccountServerData>();
+            CacheMSAccStats = new ConcurrentDictionary<int, MSAccountServerData>();
 
             _keywordStore = new KeywordStore();
             _keywordProvider = new KeywordProvider(_keywordStore);
@@ -173,7 +174,10 @@ namespace MSRewardsBot.Server.Core
                         acc.Stats.MSAccountId = acc.DbId;
                         acc.Stats.PropertyChanged += MsAccountStats_PropertyChanged;
 
-                        CacheMSAccStats.Add(acc.DbId, cache);
+                        if(!CacheMSAccStats.TryAdd(acc.DbId, cache))
+                        {
+                            _logger.LogError("Cannot add account {id} to the cache!", acc.DbId);
+                        }
                     }
 
                     if (DateTimeUtilities.HasElapsed(now, cache.Stats.LastDashboardCheck, Settings.DashboardCheck))
