@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
@@ -12,7 +11,6 @@ using MSRewardsBot.Server.Automation;
 using MSRewardsBot.Server.DataEntities;
 using MSRewardsBot.Server.DataEntities.Commands;
 using MSRewardsBot.Server.Network;
-using Windows.Graphics.Printing;
 
 namespace MSRewardsBot.Server.Core
 {
