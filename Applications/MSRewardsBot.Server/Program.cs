@@ -19,7 +19,7 @@ namespace MSRewardsBot.Server
         {
             WebApplicationBuilder builder = WebApplication.CreateBuilder(args);
 
-            Utils.EnableANSI();
+            Utils.EnableConsoleANSI();
 
             builder.Services.AddLogging(logbuilder =>
             {

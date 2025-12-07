@@ -103,7 +103,7 @@ namespace MSRewardsBot.Server
         [DllImport("kernel32.dll")]
         static extern bool SetConsoleMode(IntPtr hConsoleHandle, uint dwMode);
 
-        public static void EnableANSI()
+        public static void EnableConsoleANSI()
         {
             nint handle = GetStdHandle(STD_OUTPUT_HANDLE);
             GetConsoleMode(handle, out uint mode);
