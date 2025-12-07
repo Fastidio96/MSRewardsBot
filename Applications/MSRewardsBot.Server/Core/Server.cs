@@ -141,9 +141,10 @@ namespace MSRewardsBot.Server.Core
                     _taskScheduler.RemoveAllJobs(); // Reset all jobs queued
                     foreach(KeyValuePair<int, MSAccountServerData> cache in CacheMSAccStats) // Force to update stats
                     {
+                        cache.Value.IsFirstTimeUpdateStats = true;
                         cache.Value.Stats.LastDashboardCheck = DateTime.MinValue;
                         cache.Value.Stats.LastDashboardUpdate = DateTime.MinValue;
-                        cache.Value.IsFirstTimeUpdateStats = true;
+                        cache.Value.Stats.LastSearchesCheck = DateTime.MinValue;
                     }
                 }
 
