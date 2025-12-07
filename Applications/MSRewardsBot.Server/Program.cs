@@ -41,6 +41,7 @@ namespace MSRewardsBot.Server
 
             // Add services to the container.
             builder.Services.AddAuthorization();
+            builder.Services.AddSingleton<RealTimeData>();
             builder.Services.AddSingleton<IConnectionManager, ConnectionManager>();
             builder.Services.AddSingleton<Core.Server>();
             builder.Services.AddSingleton<CommandHubProxy>();

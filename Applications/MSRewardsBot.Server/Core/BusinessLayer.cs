@@ -15,17 +15,16 @@ namespace MSRewardsBot.Server.Core
         private const string PWD_SALT = @"C3tn5yrPYPiAv9Pm59L4Y1tArw6eEjYK";
 
         private readonly ILogger<BusinessLayer> _logger;
+        private readonly RealTimeData _rt;
         private readonly IServiceProvider _services;
         private readonly DataLayer _data;
 
-        private Server _server => _serverInternal ??= _services.GetRequiredService<Server>();
-        private Server? _serverInternal;
-
-        public BusinessLayer(ILogger<BusinessLayer> logger, IServiceProvider services)
+        public BusinessLayer(ILogger<BusinessLayer> logger, RealTimeData rt, IServiceProvider services)
         {
             _logger = logger;
+            _rt = rt;
             _services = services;
-            
+
             _data = new DataLayer(_services.GetRequiredService<ILogger<DataLayer>>());
         }
 
@@ -126,7 +125,7 @@ namespace MSRewardsBot.Server.Core
 
             foreach (MSAccount acc in user.MSAccounts)
             {
-                if (!_server.CacheMSAccStats.TryGetValue(acc.DbId, out MSAccountServerData data))
+                if (!_rt.CacheMSAccStats.TryGetValue(acc.DbId, out MSAccountServerData data))
                 {
                     _logger.LogTrace("Cannot retrieve from server the account instance msaccount id {id}", acc.DbId);
                     continue;

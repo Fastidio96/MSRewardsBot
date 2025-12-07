@@ -12,12 +12,14 @@ using MSRewardsBot.Server.Automation;
 using MSRewardsBot.Server.DataEntities;
 using MSRewardsBot.Server.DataEntities.Commands;
 using MSRewardsBot.Server.Network;
+using Windows.Graphics.Printing;
 
 namespace MSRewardsBot.Server.Core
 {
     public class Server : IDisposable
     {
         private readonly ILogger<Server> _logger;
+        private readonly RealTimeData _rt;
         private readonly IConnectionManager _connectionManager;
         private readonly CommandHubProxy _commandHubProxy;
         private readonly BrowserManager _browser;
@@ -33,11 +35,10 @@ namespace MSRewardsBot.Server.Core
 
         private TaskScheduler _taskScheduler;
 
-        public ConcurrentDictionary<int, MSAccountServerData> CacheMSAccStats;
-
         public Server
         (
             ILogger<Server> logger,
+            RealTimeData rt,
             IConnectionManager connectionManager,
             CommandHubProxy commandHubProxy,
             BrowserManager browser,
@@ -46,13 +47,13 @@ namespace MSRewardsBot.Server.Core
         )
         {
             _logger = logger;
+            _rt = rt;
             _connectionManager = connectionManager;
             _commandHubProxy = commandHubProxy;
             _browser = browser;
             _business = bl;
             _serviceProvider = service;
 
-            CacheMSAccStats = new ConcurrentDictionary<int, MSAccountServerData>();
 
             _keywordStore = new KeywordStore();
             _keywordProvider = new KeywordProvider(_keywordStore);
@@ -140,7 +141,7 @@ namespace MSRewardsBot.Server.Core
                     _logger.LogWarning("Next day occurred. Removing all jobs and resetting stats..");
 
                     _taskScheduler.RemoveAllJobs(); // Reset all jobs queued
-                    foreach(KeyValuePair<int, MSAccountServerData> cache in CacheMSAccStats) // Force to update stats
+                    foreach(KeyValuePair<int, MSAccountServerData> cache in _rt.CacheMSAccStats) // Force to update stats
                     {
                         cache.Value.IsFirstTimeUpdateStats = true;
                         cache.Value.Stats.LastDashboardCheck = DateTime.MinValue;
@@ -161,7 +162,7 @@ namespace MSRewardsBot.Server.Core
                         continue;
                     }
 
-                    if (!CacheMSAccStats.TryGetValue(acc.DbId, out MSAccountServerData cache))
+                    if (!_rt.CacheMSAccStats.TryGetValue(acc.DbId, out MSAccountServerData cache))
                     {
                         cache = new MSAccountServerData()
                         {
@@ -174,7 +175,7 @@ namespace MSRewardsBot.Server.Core
                         acc.Stats.MSAccountId = acc.DbId;
                         acc.Stats.PropertyChanged += MsAccountStats_PropertyChanged;
 
-                        if(!CacheMSAccStats.TryAdd(acc.DbId, cache))
+                        if(!_rt.CacheMSAccStats.TryAdd(acc.DbId, cache))
                         {
                             _logger.LogError("Cannot add account {id} to the cache!", acc.DbId);
                         }
@@ -313,14 +314,6 @@ namespace MSRewardsBot.Server.Core
 
                 Thread.Sleep(1000);
             }
-
-            foreach (KeyValuePair<int, MSAccountServerData> acc in CacheMSAccStats)
-            {
-                acc.Value.Account.Stats.PropertyChanged -= MsAccountStats_PropertyChanged;
-            }
-
-            CacheMSAccStats.Clear();
-            CacheMSAccStats = null;
         }
 
         private void AddJobDashboardUpdate(MSAccountServerData data)
@@ -385,6 +378,14 @@ namespace MSRewardsBot.Server.Core
                 }
 
                 _mainThread = null;
+            }
+
+            if (_rt?.CacheMSAccStats != null)
+            {
+                foreach (KeyValuePair<int, MSAccountServerData> acc in _rt.CacheMSAccStats)
+                {
+                    acc.Value.Account.Stats.PropertyChanged -= MsAccountStats_PropertyChanged;
+                }
             }
 
             if (Settings.IsClientUpdaterEnabled)
