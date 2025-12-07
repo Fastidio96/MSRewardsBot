@@ -35,7 +35,13 @@ namespace MSRewardsBot.Server
                     cco.WriteOnFile = true;
                     cco.GroupedCategories = true;
                 });
+
+                logbuilder.SetMinimumLevel(LogLevel.Debug);
             });
+
+            builder.Logging.AddFilter("Microsoft.AspNetCore", LogLevel.Warning);
+            builder.Logging.AddFilter("Microsoft.AspNetCore.SignalR", LogLevel.Information);
+            builder.Logging.AddFilter("Microsoft.AspNetCore.Http.Connections", LogLevel.Information);
 
             builder.WebHost.UseUrls(Env.GetServerConnection());
 
