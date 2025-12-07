@@ -13,7 +13,7 @@
 		<!-- Fix: Disable implicit content items -->
 		<EnableDefaultContentItems>false</EnableDefaultContentItems>
 		<!-- Fix RID warning -->
-		<RuntimeIdentifier>win-x64</RuntimeIdentifier>
+		<RuntimeIdentifiers>win-x64;linux-x64</RuntimeIdentifiers>
 	</PropertyGroup>
 
 	<PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">
