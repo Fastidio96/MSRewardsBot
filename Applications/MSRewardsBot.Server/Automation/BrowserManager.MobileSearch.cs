@@ -56,7 +56,7 @@ namespace MSRewardsBot.Server.Automation
                 await Task.Delay(Random.Shared.Next(1000, 3000));
 
                 LogDebugAction("Resetting start page for next request");
-                await NavigateToURL(data, "about:blank");
+                await NavigateToURL(data, BrowserConstants.URL_BLANK_PAGE);
 
                 return true;
             }

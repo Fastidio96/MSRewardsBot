@@ -9,6 +9,7 @@ namespace MSRewardsBot.Server.Automation
         public const string URL_SEARCHES_HOMEPAGE = "https://www.bing.com/";
         public const string URL_SEARCHES = "https://www.bing.com/search?q=";
         public const string URL_EXPIRED_COOKIES = "https://login.live.com/";
+        public const string URL_BLANK_PAGE = "about:blank";
 
         #region URL_DASHBOARD_PTS_BREAKDOWN
         public const string SELECTOR_EMAIL = @"document.querySelector('#mectrl_currentAccount_secondary').innerHTML.trim();";

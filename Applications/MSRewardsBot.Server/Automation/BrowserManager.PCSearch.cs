@@ -67,7 +67,7 @@ namespace MSRewardsBot.Server.Automation
                 }
 
                 LogDebugAction("Resetting start page for next request");
-                await NavigateToURL(data, "about:blank");
+                await NavigateToURL(data, BrowserConstants.URL_BLANK_PAGE);
 
                 return true;
             }

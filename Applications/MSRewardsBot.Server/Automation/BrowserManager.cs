@@ -38,7 +38,7 @@ namespace MSRewardsBot.Server.Automation
             (new BrowserTypeLaunchOptions()
             {
 #if DEBUG
-                //Headless = false,
+                Headless = false,
 #endif
                 Args =
                     [
@@ -151,10 +151,13 @@ namespace MSRewardsBot.Server.Automation
                         WaitUntil = WaitUntilState.Load,
                         Timeout = 15000
                     });
-                    if (response == null || !response.Ok)
+                    if (url != BrowserConstants.URL_BLANK_PAGE)
                     {
-                        _logger.LogWarning("Failed to navigate to {url} - response: {res}", url, response?.StatusText);
-                        return false;
+                        if (response == null || !response.Ok)
+                        {
+                            _logger.LogWarning("Failed to navigate to {url}", url);
+                            return false;
+                        }
                     }
 
                     await Task.Delay(GetRandomMsTimes(3500, 5000));
