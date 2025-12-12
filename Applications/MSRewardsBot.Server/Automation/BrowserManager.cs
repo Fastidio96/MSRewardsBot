@@ -34,25 +34,42 @@ namespace MSRewardsBot.Server.Automation
             }
 
             _playwright = await Playwright.CreateAsync();
-            _browser = await _playwright.Firefox.LaunchAsync
-            (new BrowserTypeLaunchOptions()
+
+            if (Settings.UseFirefox)
             {
+                _browser = await _playwright.Firefox.LaunchAsync(new BrowserTypeLaunchOptions()
+                {
 #if DEBUG
-                //Headless = false,
+                    //Headless = false,
 #endif
-                Args =
+                    Args =
                     [
-                        //"--disable-blink-features=AutomationControlled",
                         "--disable-infobars",
                         "--no-default-browser-check",
                         "--disable-extensions"
                     ],
-                FirefoxUserPrefs = new Dictionary<string, object>()
-                {
-                    ["network.http.http3.enabled"] = false,
-                }
+                    FirefoxUserPrefs = new Dictionary<string, object>()
+                    {
+                        ["network.http.http3.enabled"] = false,
+                    }
+                });
             }
-            );
+            else
+            {
+                _browser = await _playwright.Chromium.LaunchAsync(new BrowserTypeLaunchOptions()
+                {
+#if DEBUG
+                    //Headless = false,
+#endif
+                    Args =
+                    [
+                        "--disable-blink-features=AutomationControlled",
+                        "--disable-infobars",
+                        "--no-default-browser-check",
+                        "--disable-extensions"
+                    ]
+                });
+            }
 
             _logger.Log(LogLevel.Information, "BrowserManager init completed");
         }
@@ -61,7 +78,14 @@ namespace MSRewardsBot.Server.Automation
         {
             _logger.LogDebug("Creating new context for {Data} | {User}", data.Account.Email, data.Account.User.Username);
 
-            await CreateFirefoxStealthContext(data, isMobile);
+            if (Settings.UseFirefox)
+            {
+                await CreateFirefoxStealthContext(data, isMobile);
+            }
+            else
+            {
+                await CreateChromeStealthContext(data, isMobile);
+            }
 
             data.Page = await data.Context.NewPageAsync();
 
