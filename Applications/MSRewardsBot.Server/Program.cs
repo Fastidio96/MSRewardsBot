@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.ResponseCompression;
 using Microsoft.AspNetCore.SignalR;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using MSRewardsBot.Common;
 using MSRewardsBot.Server.Automation;
@@ -42,6 +43,12 @@ namespace MSRewardsBot.Server
             builder.Logging.AddFilter("Microsoft.AspNetCore", LogLevel.Warning);
             builder.Logging.AddFilter("Microsoft.AspNetCore.SignalR", LogLevel.Information);
             builder.Logging.AddFilter("Microsoft.AspNetCore.Http.Connections", LogLevel.Information);
+
+            // Enable Windows Service only on Windows
+            if (OperatingSystem.IsWindows() && !Environment.UserInteractive)
+            {
+                builder.Services.AddWindowsService();
+            }
 
             builder.WebHost.UseUrls(Env.GetServerConnection());
 
