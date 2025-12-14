@@ -28,6 +28,9 @@ sc.exe create $serviceName `
     start= auto `
     DisplayName= "`"$displayName`""
 
+# Configure recovery: restart after 30 minutes (1800 seconds) on failure
+sc.exe failure $serviceName reset= 86400 actions= restart/1800000/restart/1800000/restart/1800000
+
 # Start service
 Start-Service -Name $serviceName
 
