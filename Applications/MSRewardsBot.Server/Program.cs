@@ -18,9 +18,14 @@ namespace MSRewardsBot.Server
     {
         public static void Main(string[] args)
         {
+            bool startedAsWinService = OperatingSystem.IsWindows() && !Environment.UserInteractive;
+
             WebApplicationBuilder builder = WebApplication.CreateBuilder(args);
 
-            Utils.EnableConsoleANSI();
+            if (!startedAsWinService)
+            {
+                Utils.EnableConsoleANSI();
+            }
 
             builder.Services.AddLogging(logbuilder =>
             {
@@ -32,7 +37,7 @@ namespace MSRewardsBot.Server
 
                 logbuilder.AddConsoleFormatter<CustomConsoleFormatter, CustomConsoleOptions>(cco =>
                 {
-                    cco.UseColors = true;
+                    cco.UseColors = !startedAsWinService;
                     cco.WriteOnFile = true;
                     cco.GroupedCategories = true;
                 });
@@ -45,7 +50,7 @@ namespace MSRewardsBot.Server
             builder.Logging.AddFilter("Microsoft.AspNetCore.Http.Connections", LogLevel.Information);
 
             // Enable Windows Service only on Windows
-            if (OperatingSystem.IsWindows() && !Environment.UserInteractive)
+            if (startedAsWinService)
             {
                 builder.Services.AddWindowsService();
             }
@@ -107,7 +112,7 @@ namespace MSRewardsBot.Server
 
             app.MapHub<CommandHub>($"/{Env.SERVER_HUB_NAME}");
 
-            //            // Configure the HTTP request pipeline.
+            // Configure the HTTP request pipeline.
             //            if (Env.IS_HTTPS_ENABLED)
             //            {
             //#pragma warning disable CS0162 // Unreachable code detected

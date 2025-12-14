@@ -46,4 +46,10 @@
 	  <ProjectReference Include="..\..\Libraries\MSRewardsBot.Common\MSRewardsBot.Common.csproj" />
 	</ItemGroup>
 
+	<ItemGroup>
+	  <None Update="install_as_windows_service.ps1">
+	    <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+	  </None>
+	</ItemGroup>
+
 </Project>
