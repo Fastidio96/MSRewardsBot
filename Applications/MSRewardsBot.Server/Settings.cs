@@ -9,7 +9,7 @@ namespace MSRewardsBot.Server
         /// </summary>
         public static bool IsClientUpdaterEnabled = false;
 
-        public static bool UseFirefox = false;
+        public static bool UseFirefox = true;
 
         public static TimeSpan DashboardCheck = new TimeSpan(1, 0, 0);
         public static TimeSpan DashboardUpdate = new TimeSpan(0, 15, 0);
