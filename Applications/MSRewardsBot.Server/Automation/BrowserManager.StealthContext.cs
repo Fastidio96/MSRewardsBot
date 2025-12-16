@@ -1,4 +1,5 @@
-﻿using System.Threading.Tasks;
+﻿using System.Globalization;
+using System.Threading.Tasks;
 using Microsoft.Playwright;
 using MSRewardsBot.Server.DataEntities;
 
@@ -10,9 +11,9 @@ namespace MSRewardsBot.Server.Automation
         {
             data.Context = await _browser.NewContextAsync(new BrowserNewContextOptions
             {
-                UserAgent = useUAforPC ? BrowserConstants.UA_PC_EDGE : BrowserConstants.UA_MOBILE_FIREFOX,
+                UserAgent = useUAforPC ? BrowserConstants.UA_PC_CHROME : BrowserConstants.UA_MOBILE_CHROME,
                 ViewportSize = new() { Width = 1366, Height = 768 },
-                Locale = "it-IT"
+                Locale = CultureInfo.CurrentCulture.Name
             });
 
             // 1) Remove navigator.webdriver and related automation flags
@@ -214,9 +215,8 @@ Object.defineProperty(navigator,'userAgent',{get:()=>${JSON.stringify(ua)}});
                     UserAgent = BrowserConstants.UA_MOBILE_FIREFOX,
                     ViewportSize = new ViewportSize() { Width = 915, Height = 412 },
                     DeviceScaleFactor = 2.625f,
-                    //IsMobile = true,
                     HasTouch = true,
-                    Locale = "it-IT"
+                    Locale = CultureInfo.CurrentCulture.Name
                 });
             }
             else
@@ -225,7 +225,7 @@ Object.defineProperty(navigator,'userAgent',{get:()=>${JSON.stringify(ua)}});
                 {
                     UserAgent = BrowserConstants.UA_PC_FIREFOX,
                     ViewportSize = new ViewportSize() { Width = 1366, Height = 768 },
-                    Locale = "it-IT"
+                    Locale = CultureInfo.CurrentCulture.Name
                 });
             }
 
