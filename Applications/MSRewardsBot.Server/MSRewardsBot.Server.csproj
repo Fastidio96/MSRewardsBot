@@ -47,7 +47,7 @@
 	</ItemGroup>
 
 	<ItemGroup>
-	  <None Update="install_as_windows_service.ps1">
+	  <None Update="Scripts\install_as_windows_service.ps1">
 	    <CopyToOutputDirectory>Always</CopyToOutputDirectory>
 	  </None>
 	</ItemGroup>
