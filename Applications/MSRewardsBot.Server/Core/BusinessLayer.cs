@@ -2,7 +2,6 @@
 using System.Collections.Generic;
 using System.Security.Cryptography;
 using System.Text;
-using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using MSRewardsBot.Common.DataEntities.Accounting;
 using MSRewardsBot.Server.DataEntities;
@@ -10,22 +9,19 @@ using MSRewardsBot.Server.DB;
 
 namespace MSRewardsBot.Server.Core
 {
-    public partial class BusinessLayer : IDisposable
+    public partial class BusinessLayer
     {
         private const string PWD_SALT = @"C3tn5yrPYPiAv9Pm59L4Y1tArw6eEjYK";
 
         private readonly ILogger<BusinessLayer> _logger;
         private readonly RealTimeData _rt;
-        private readonly IServiceProvider _services;
         private readonly DataLayer _data;
 
-        public BusinessLayer(ILogger<BusinessLayer> logger, RealTimeData rt, IServiceProvider services)
+        public BusinessLayer(ILogger<BusinessLayer> logger, DataLayer dl, RealTimeData rt)
         {
             _logger = logger;
+            _data = dl;
             _rt = rt;
-            _services = services;
-
-            _data = new DataLayer(_services.GetRequiredService<ILogger<DataLayer>>());
         }
 
         public bool Login(Guid token)
@@ -167,11 +163,6 @@ namespace MSRewardsBot.Server.Core
         public bool Logout(Guid token)
         {
             return _data.InvalidateUserAuthToken(token);
-        }
-
-        public void Dispose()
-        {
-            _data?.Dispose();
         }
     }
 }

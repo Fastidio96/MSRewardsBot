@@ -10,6 +10,8 @@ using Microsoft.Extensions.Logging;
 using MSRewardsBot.Common;
 using MSRewardsBot.Server.Automation;
 using MSRewardsBot.Server.Core;
+using MSRewardsBot.Server.Core.Factories;
+using MSRewardsBot.Server.DB;
 using MSRewardsBot.Server.Network;
 
 namespace MSRewardsBot.Server
@@ -62,8 +64,12 @@ namespace MSRewardsBot.Server
             builder.Services.AddSingleton<RealTimeData>();
             builder.Services.AddSingleton<IConnectionManager, ConnectionManager>();
             builder.Services.AddSingleton<Core.Server>();
-            builder.Services.AddSingleton<CommandHubProxy>();
-            builder.Services.AddSingleton<BusinessLayer>();
+            builder.Services.AddSingleton<TaskScheduler>();
+            builder.Services.AddTransient<CommandHubProxy>();
+            builder.Services.AddSingleton<BusinessFactory>();
+            builder.Services.AddScoped<BusinessLayer>();
+            builder.Services.AddScoped<DataLayer>();
+            builder.Services.AddDbContext<MSRBContext>();
             builder.Services.AddSingleton<BrowserManager>();
             builder.Services.AddSignalR()
                 .AddHubOptions<CommandHub>(options =>
@@ -87,18 +93,7 @@ namespace MSRewardsBot.Server
 
             ILogger<Program> logger = app.Services.GetRequiredService<ILogger<Program>>();
 
-            app.Use(async (context, next) =>
-            {
-                try
-                {
-                    await next.Invoke();
-                }
-                catch (Exception ex)
-                {
-                    logger.Log(LogLevel.Critical, ex, "Error");
-                }
-            });
-
+            TaskScheduler taskScheduler = app.Services.GetRequiredService<TaskScheduler>();
             Core.Server server = app.Services.GetRequiredService<Core.Server>();
             BrowserManager browser = app.Services.GetRequiredService<BrowserManager>();
 
@@ -126,6 +121,7 @@ namespace MSRewardsBot.Server
 
             app.Lifetime.ApplicationStopping.Register(() =>
             {
+                taskScheduler.Dispose();
                 server.Dispose();
                 browser.Dispose();
             });

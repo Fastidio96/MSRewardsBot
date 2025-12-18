@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Threading;
 using Microsoft.Extensions.Logging;
 using MSRewardsBot.Server.Automation;
+using MSRewardsBot.Server.Core.Factories;
 using MSRewardsBot.Server.DataEntities;
 using MSRewardsBot.Server.DataEntities.Commands;
 
@@ -14,19 +15,19 @@ namespace MSRewardsBot.Server.Core
         private Thread _threadScheduler;
 
         private readonly BrowserManager _browser;
-        private readonly BusinessLayer _business;
-        private readonly ILogger _logger;
+        private readonly BusinessFactory _businessFactory;
+        private readonly ILogger<TaskScheduler> _logger;
 
         private bool _isDisposing = false;
-        private Lock _lock = new Lock();
+        private readonly Lock _lock = new Lock();
 
-        public TaskScheduler(BrowserManager browser, BusinessLayer bl, ILogger<TaskScheduler> logger)
+        public TaskScheduler(ILogger<TaskScheduler> logger, BrowserManager browser, BusinessFactory businessFactory)
         {
-            _todo = new SortedList<DateTime, Job>();
-
-            _browser = browser;
-            _business = bl;
             _logger = logger;
+            _browser = browser;
+            _businessFactory = businessFactory;
+
+            _todo = new SortedList<DateTime, Job>();
 
             Init();
         }
@@ -158,10 +159,13 @@ namespace MSRewardsBot.Server.Core
                             if (job.Status == JobStatus.Success)
                             {
                                 dashCMD.Data.Stats.LastDashboardUpdate = DateTime.Now;
-                                if (!_business.UpdateMSAccount(dashCMD.Data.Account))
+                                using (ScopedBusiness scope = _businessFactory.Create())
                                 {
-                                    dashCMD.Data.Stats.LastDashboardUpdate = DateTime.MinValue;
-                                    job.Status = JobStatus.Failure;
+                                    if (!scope.Business.UpdateMSAccount(dashCMD.Data.Account))
+                                    {
+                                        dashCMD.Data.Stats.LastDashboardUpdate = DateTime.MinValue;
+                                        job.Status = JobStatus.Failure;
+                                    }
                                 }
                             }
                         }

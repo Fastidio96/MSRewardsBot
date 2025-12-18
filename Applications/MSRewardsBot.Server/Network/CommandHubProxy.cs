@@ -4,51 +4,69 @@ using Microsoft.AspNetCore.SignalR;
 using MSRewardsBot.Common.DataEntities.Accounting;
 using MSRewardsBot.Common.DataEntities.Interfaces;
 using MSRewardsBot.Common.DataEntities.Stats;
-using MSRewardsBot.Server.Core;
+using MSRewardsBot.Server.Core.Factories;
 using MSRewardsBot.Server.DataEntities;
 
 namespace MSRewardsBot.Server.Network
 {
     public class CommandHubProxy : IBotAPI
     {
-        private readonly BusinessLayer _business;
+        private readonly BusinessFactory _businessFactory;
         private readonly IHubContext<CommandHub> _hubContext;
         private readonly IConnectionManager _connectionManager;
 
-        public CommandHubProxy(BusinessLayer bl, IHubContext<CommandHub> hubContext, IConnectionManager connectionManager)
+        public CommandHubProxy(BusinessFactory businessFactory, IHubContext<CommandHub> hubContext, IConnectionManager connectionManager)
         {
-            _business = bl;
+            _businessFactory = businessFactory;
             _hubContext = hubContext;
             _connectionManager = connectionManager;
         }
 
         public Task<bool> LoginWithToken(Guid token)
         {
-            return Task.FromResult(_business.Login(token));
+            using (ScopedBusiness scope = _businessFactory.Create())
+            {
+                return Task.FromResult(scope.Business.Login(token));
+            }
         }
         public Task<Guid> Login(User user)
         {
-            return Task.FromResult(_business.Login(user));
+            using (ScopedBusiness scope = _businessFactory.Create())
+            {
+                return Task.FromResult(scope.Business.Login(user));
+            }
         }
 
         public Task<Guid> Register(User user)
         {
-            return Task.FromResult(_business.Register(user));
+            using (ScopedBusiness scope = _businessFactory.Create())
+            {
+                return Task.FromResult(scope.Business.Register(user));
+            }
         }
 
         public Task<User> GetUserInfo(Guid token)
         {
-            return Task.FromResult(_business.GetUserInfo(token));
+            using (ScopedBusiness scope = _businessFactory.Create())
+            {
+                return Task.FromResult(scope.Business.GetUserInfo(token));
+            }
         }
 
         public Task<bool> InsertMSAccount(Guid token, MSAccount account)
         {
-            return Task.FromResult(_business.InsertMSAccount(token, account));
+            using (ScopedBusiness scope = _businessFactory.Create())
+            {
+                return Task.FromResult(scope.Business.InsertMSAccount(token, account));
+            }
         }
 
         public Task<bool> Logout(Guid token)
         {
-            return Task.FromResult(_business.Logout(token));
+            using (ScopedBusiness scope = _businessFactory.Create())
+            {
+                return Task.FromResult(scope.Business.Logout(token));
+            }
         }
 
         internal Task SendUpdateMSAccountStats(string connectionId, MSAccountStats accountStat, string propertyName)

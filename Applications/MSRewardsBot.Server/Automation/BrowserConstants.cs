@@ -41,6 +41,11 @@ namespace MSRewardsBot.Server.Automation
         public const string ADDITIONAL_PTS_CLAIM_PTS = @"document.querySelector('#user-pointclaim > button.button.ng-binding')?.click();";
         #endregion
 
+        #region Double points Dashboard
+        public const string DOUBLE_PTS_IMAGE_CLICK = @"document.querySelector(""img[src='https://rewards.bing.com/rewardscdn/images/rewards/membercenter/missions/Animated-Icons/2X_Points_dashboard_NE_125x125.png']"")?.click();";
+        public const string DOUBLE_PTS_CONFIRM_BTN_CLICK = @"document.querySelector('#legalTextBox > div > div > div.actionLink > a > span')?.click();";
+        #endregion
+
         #region Timespans delay (milliseconds)
         public const int HUMAN_WRITING_MIN = 300;
         public const int HUMAN_WRITING_MAX = 700;

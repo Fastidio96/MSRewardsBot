@@ -40,7 +40,7 @@ namespace MSRewardsBot.Server.Automation
                 _browser = await _playwright.Firefox.LaunchAsync(new BrowserTypeLaunchOptions()
                 {
 #if DEBUG
-                    //Headless = false,
+                    Headless = false,
 #endif
                     Args =
                     [

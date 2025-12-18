@@ -5,9 +5,7 @@ using System.Threading.Tasks;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.SignalR;
 using Microsoft.Extensions.Logging;
-using MSRewardsBot.Common.DataEntities.Accounting;
-using MSRewardsBot.Common.DataEntities.Interfaces;
-using MSRewardsBot.Server.Core;
+using MSRewardsBot.Server.Core.Factories;
 using MSRewardsBot.Server.DataEntities;
 using MSRewardsBot.Server.DataEntities.Attributes;
 
@@ -17,15 +15,13 @@ namespace MSRewardsBot.Server.Network
     {
         private readonly ILogger _logger;
         private readonly IConnectionManager _connection;
-        private readonly CommandHubProxy _commandHub;
-        private readonly BusinessLayer _business;
+        private readonly BusinessFactory _businessFactory;
 
-        public HubMonitorMiddleware(ILogger<HubMonitorMiddleware> logger, CommandHubProxy commandHub, IConnectionManager connection, BusinessLayer bl)
+        public HubMonitorMiddleware(ILogger<HubMonitorMiddleware> logger, IConnectionManager connection, BusinessFactory businessFactory)
         {
             _logger = logger;
-            _commandHub = commandHub;
             _connection = connection;
-            _business = bl;
+            _businessFactory = businessFactory;
         }
 
         public async ValueTask<object?> InvokeMethodAsync(HubInvocationContext context, Func<HubInvocationContext, ValueTask<object?>> next)
@@ -121,8 +117,12 @@ namespace MSRewardsBot.Server.Network
         private void UpdateConnectionInfo(Guid token, string connectionId)
         {
             ClientInfo info = _connection.GetConnection(connectionId);
-            info.User = token != Guid.Empty ?
-                _business.GetUserInfo(token) : null;
+
+            using (ScopedBusiness scope = _businessFactory.Create())
+            {
+                info.User = token != Guid.Empty ?
+                    scope.Business.GetUserInfo(token) : null;
+            }
 
             _connection.UpdateConnection(connectionId, info);
         }

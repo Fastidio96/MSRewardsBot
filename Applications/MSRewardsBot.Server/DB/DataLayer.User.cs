@@ -9,61 +9,48 @@ namespace MSRewardsBot.Server.DB
     {
         public User GetUser(string username)
         {
-            using (MSRBContext context = new MSRBContext())
-            {
-                return context.Users
+            return _db.Users
                     .AsNoTracking()
                     .Include(u => u.AuthToken)
                     .Include(m => m.MSAccounts)
                         .ThenInclude(c => c.Cookies)
                     .FirstOrDefault(u => u.Username == username);
-            }
         }
 
         public User GetUser(Guid authToken)
         {
-            using (MSRBContext context = new MSRBContext())
-            {
-                return context.Users
+            return _db.Users
                     .AsNoTracking()
                     .Include(u => u.AuthToken)
                     .Include(m => m.MSAccounts)
                         .ThenInclude(c => c.Cookies)
                     .FirstOrDefault(u => u.AuthToken.Token == authToken);
-            }
         }
 
         public bool InvalidateUserAuthToken(Guid token)
         {
-            using (MSRBContext context = new MSRBContext())
-            {
-                UserAuthToken auth = context.UserAuthTokens
+            UserAuthToken auth = _db.UserAuthTokens
                     .AsNoTracking()
                     .FirstOrDefault(t => t.Token == token);
-                if (auth == null)
-                {
-                    return true;
-                }
-
-                context.UserAuthTokens.Remove(auth);
-
-                return context.SaveChanges() > 0;
+            if (auth == null)
+            {
+                return true;
             }
+
+            _db.UserAuthTokens.Remove(auth);
+
+            return _db.SaveChanges() > 0;
         }
 
         public Guid GetUserAuthToken(string username)
         {
-            User user;
-            using (MSRBContext context = new MSRBContext())
-            {
-                user = context.Users
+            User user = _db.Users
                     .AsNoTracking()
                     .Include(u => u.AuthToken)
                     .FirstOrDefault(u => u.Username == username);
-                if (user == null)
-                {
-                    return Guid.Empty;
-                }
+            if (user == null)
+            {
+                return Guid.Empty;
             }
 
             return CreateUserAuthToken(user).Token;
@@ -71,68 +58,56 @@ namespace MSRewardsBot.Server.DB
 
         private UserAuthToken CreateUserAuthToken(User user)
         {
-            using (MSRBContext context = new MSRBContext())
-            {
-                UserAuthToken token = context.UserAuthTokens
+            UserAuthToken token = _db.UserAuthTokens
                     .AsNoTracking()
                     .FirstOrDefault(t => t.User.Username == user.Username);
-                if (token == null)
+            if (token == null)
+            {
+                token = new UserAuthToken()
                 {
-                    token = new UserAuthToken()
-                    {
-                        CreatedAt = DateTime.Now,
-                        LastTimeUsed = DateTime.Now,
-                        Token = Guid.NewGuid(),
-                        UserId = user.DbId
-                    };
+                    CreatedAt = DateTime.Now,
+                    LastTimeUsed = DateTime.Now,
+                    Token = Guid.NewGuid(),
+                    UserId = user.DbId
+                };
 
-                    context.UserAuthTokens.Add(token);
+                _db.UserAuthTokens.Add(token);
 
-                    context.SaveChanges();
-                }
-                else
-                {
-                    token.LastTimeUsed = DateTime.Now;
-
-                    context.UserAuthTokens.Update(token);
-                    context.SaveChanges();
-                }
-
-                return token;
+                _db.SaveChanges();
             }
+            else
+            {
+                token.LastTimeUsed = DateTime.Now;
+
+                _db.UserAuthTokens.Update(token);
+                _db.SaveChanges();
+            }
+
+            return token;
         }
 
         public bool CreateUser(string username, string password)
         {
-            using (MSRBContext context = new MSRBContext())
+            _db.Users.Add(new User()
             {
-                context.Users.Add(new User()
-                {
-                    Username = username,
-                    Password = password
-                });
+                Username = username,
+                Password = password
+            });
 
-                return context.SaveChanges() > 0;
-            }
+            return _db.SaveChanges() > 0;
         }
 
         public bool IsUsernameAlreadyExists(string username)
         {
-            using (MSRBContext context = new MSRBContext())
-            {
-                return context.Users
+            return _db.Users
                     .AsNoTracking()
                     .Count(u => u.Username == username) > 0;
-            }
         }
 
         public bool UpdateUser(User user)
         {
-            using (MSRBContext context = new MSRBContext())
-            {
-                context.Users.Update(user);
-                return context.SaveChanges() > 0;
-            }
+            _db.Users.Update(user);
+            return _db.SaveChanges() > 0;
         }
     }
 }

@@ -10,6 +10,11 @@ namespace MSRewardsBot.Server.DB
         public DbSet<User> Users { get; set; }
         public DbSet<UserAuthToken> UserAuthTokens { get; set; }
 
+        public MSRBContext()
+        {
+            Database.EnsureCreated();
+        }
+
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
         {
             optionsBuilder.UseSqlite($"Data Source={Utils.GetDBFile()};Cache=Shared");

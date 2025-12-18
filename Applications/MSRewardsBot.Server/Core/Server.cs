@@ -8,6 +8,7 @@ using MSRewardsBot.Common.DataEntities.Accounting;
 using MSRewardsBot.Common.DataEntities.Stats;
 using MSRewardsBot.Common.Utilities;
 using MSRewardsBot.Server.Automation;
+using MSRewardsBot.Server.Core.Factories;
 using MSRewardsBot.Server.DataEntities;
 using MSRewardsBot.Server.DataEntities.Commands;
 using MSRewardsBot.Server.Network;
@@ -17,12 +18,12 @@ namespace MSRewardsBot.Server.Core
     public class Server : IDisposable
     {
         private readonly ILogger<Server> _logger;
+        private readonly BusinessFactory _businessFactory;
         private readonly RealTimeData _rt;
         private readonly IConnectionManager _connectionManager;
         private readonly CommandHubProxy _commandHubProxy;
         private readonly BrowserManager _browser;
-        private readonly BusinessLayer _business;
-        private readonly IServiceProvider _serviceProvider;
+        private readonly TaskScheduler _taskScheduler;
 
         private readonly IKeywordProvider _keywordProvider;
         private readonly KeywordStore _keywordStore;
@@ -31,26 +32,24 @@ namespace MSRewardsBot.Server.Core
         private Thread _clientsThread;
         private bool _isDisposing = false;
 
-        private TaskScheduler _taskScheduler;
-
         public Server
         (
             ILogger<Server> logger,
+            BusinessFactory businessFactory,
             RealTimeData rt,
             IConnectionManager connectionManager,
             CommandHubProxy commandHubProxy,
             BrowserManager browser,
-            BusinessLayer bl,
-            IServiceProvider service
+            TaskScheduler taskScheduler
         )
         {
             _logger = logger;
+            _businessFactory = businessFactory;
             _rt = rt;
             _connectionManager = connectionManager;
             _commandHubProxy = commandHubProxy;
             _browser = browser;
-            _business = bl;
-            _serviceProvider = service;
+            _taskScheduler = taskScheduler;
 
             _keywordStore = new KeywordStore();
             _keywordProvider = new KeywordProvider(_keywordStore);
@@ -59,8 +58,6 @@ namespace MSRewardsBot.Server.Core
         public void Start()
         {
             _browser.Init();
-
-            _taskScheduler = new TaskScheduler(_browser, _business, _serviceProvider.GetRequiredService<ILogger<TaskScheduler>>());
 
             _mainThread = new Thread(AccountLoop);
             _mainThread.Name = nameof(AccountLoop);
@@ -97,20 +94,24 @@ namespace MSRewardsBot.Server.Core
                             }
                         }
 
-                        if (_business.ClientNeedsToUpdate(client.Version))
+                        using (ScopedBusiness scope = _businessFactory.Create())
                         {
-                            _logger.LogInformation("The client {id} needs to update. Client version {ClientVersion} | Server version {ServerVersion}",
-                                client.ConnectionId, client.Version, _business.LatestClientVersion);
-
-                            if (DateTimeUtilities.HasElapsed(now, client.LastSendUpdateFile, new TimeSpan(0, 15, 0)))
+                            if (scope.Business.ClientNeedsToUpdate(client.Version))
                             {
-                                _logger.LogInformation("Sending to client {id} update {ServerVersion}",
-                                    client.ConnectionId, _business.LatestClientVersion);
+                                _logger.LogInformation("The client {id} needs to update. Client version {ClientVersion} | Server version {ServerVersion}",
+                                    client.ConnectionId, client.Version, scope.Business.LatestClientVersion);
 
-                                client.LastSendUpdateFile = now;
-                                await StartClientUpdate(client.ConnectionId);
+                                if (DateTimeUtilities.HasElapsed(now, client.LastSendUpdateFile, new TimeSpan(0, 15, 0)))
+                                {
+                                    _logger.LogInformation("Sending to client {id} update {ServerVersion}",
+                                        client.ConnectionId, scope.Business.LatestClientVersion);
+
+                                    client.LastSendUpdateFile = now;
+                                    await StartClientUpdate(client.ConnectionId);
+                                }
                             }
                         }
+
                     }
                 }
 
@@ -129,18 +130,18 @@ namespace MSRewardsBot.Server.Core
             {
                 if (DateTimeUtilities.HasElapsed(DateTime.Now, _keywordStore.LastRefresh, Settings.KeywordsListRefresh))
                 {
-                    if(await _keywordStore.RefreshList())
+                    if (await _keywordStore.RefreshList())
                     {
                         _logger.LogInformation("Keywords list refreshed");
                     }
                 }
 
-                if(DateTime.Now.Day > now.Day) // Triggered when the next day occurs
+                if (DateTime.Now.Day > now.Day) // Triggered when the next day occurs
                 {
                     _logger.LogWarning("Next day occurred. Removing all jobs and resetting stats..");
 
                     _taskScheduler.RemoveAllJobs(); // Reset all jobs queued
-                    foreach(KeyValuePair<int, MSAccountServerData> cache in _rt.CacheMSAccStats) // Force to update stats
+                    foreach (KeyValuePair<int, MSAccountServerData> cache in _rt.CacheMSAccStats) // Force to update stats
                     {
                         cache.Value.IsFirstTimeUpdateStats = true;
                         cache.Value.Stats.LastDashboardCheck = DateTime.MinValue;
@@ -149,14 +150,18 @@ namespace MSRewardsBot.Server.Core
                     }
                 }
 
-                accounts = _business.GetAllMSAccounts();
+                using (ScopedBusiness scopedBl = _businessFactory.Create())
+                {
+                    accounts = scopedBl.Business.GetAllMSAccounts();
+                }
+
                 foreach (MSAccount acc in accounts)
                 {
                     now = DateTime.Now;
 
                     if (acc.Cookies.Count == 0 || acc.IsCookiesExpired)
                     {
-                        _logger.LogWarning("No valid cookies found for account {Email} | {Username}. Skipping..", 
+                        _logger.LogWarning("No valid cookies found for account {Email} | {Username}. Skipping..",
                             acc.Email, acc.User.Username);
                         continue;
                     }
@@ -174,7 +179,7 @@ namespace MSRewardsBot.Server.Core
                         acc.Stats.MSAccountId = acc.DbId;
                         acc.Stats.PropertyChanged += MsAccountStats_PropertyChanged;
 
-                        if(!_rt.CacheMSAccStats.TryAdd(acc.DbId, cache))
+                        if (!_rt.CacheMSAccStats.TryAdd(acc.DbId, cache))
                         {
                             _logger.LogError("Cannot add account {id} to the cache!", acc.DbId);
                         }
@@ -224,7 +229,7 @@ namespace MSRewardsBot.Server.Core
                                 start = start.AddSeconds(Random.Shared.Next(180, 600));
 
                                 string keyword = await _keywordProvider.GetKeyword();
-                                if(keyword == null)
+                                if (keyword == null)
                                 {
                                     break;
                                 }
@@ -295,7 +300,7 @@ namespace MSRewardsBot.Server.Core
                                         },
                                         OnFail = delegate ()
                                         {
-                                            _logger.LogWarning("Job {name} failed for {user}", 
+                                            _logger.LogWarning("Job {name} failed for {user}",
                                                 nameof(MobileSearchCommand), acc.Email);
 
                                             cache.Stats.MobileSearchFailed();
@@ -355,7 +360,12 @@ namespace MSRewardsBot.Server.Core
 
         private async Task<bool> StartClientUpdate(string connectionId)
         {
-            byte[] file = _business.GetClientUpdateFile();
+            byte[] file;
+            using (ScopedBusiness scope = _businessFactory.Create())
+            {
+                file = scope.Business.GetClientUpdateFile();
+            }
+                
             if (file == null || file.Length == 0)
             {
                 return false;
@@ -398,17 +408,6 @@ namespace MSRewardsBot.Server.Core
 
                     _clientsThread = null;
                 }
-            }
-
-            if (_taskScheduler != null)
-            {
-                _taskScheduler.Dispose();
-                _taskScheduler = null;
-            }
-
-            if (_browser != null)
-            {
-                _browser.Dispose();
             }
         }
     }

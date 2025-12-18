@@ -9,16 +9,14 @@ namespace MSRewardsBot.Server.DB
 {
     public partial class DataLayer : IDisposable
     {
-        private ILogger<DataLayer> _logger;
-        private MSRBContext _db { get; set; }
+        private readonly ILogger<DataLayer> _logger;
+        private readonly MSRBContext _db;
 
 
-        public DataLayer(ILogger<DataLayer> logger)
+        public DataLayer(ILogger<DataLayer> logger, MSRBContext db)
         {
             _logger = logger;
-
-            _db = new MSRBContext();
-            _db.Database.EnsureCreated();
+            _db = db;
 
             if (Settings.IsClientUpdaterEnabled)
             {
@@ -28,38 +26,29 @@ namespace MSRewardsBot.Server.DB
 
         public List<MSAccount> GetAllMSAccounts()
         {
-            using (MSRBContext context = new MSRBContext())
-            {
-                return context.Accounts
+            return _db.Accounts
                     .AsNoTracking()
                     .Include(m => m.User)
                     .Include(m => m.Cookies)
                     .ToList();
-            }
         }
 
         public bool InsertMSAccount(MSAccount msAccount)
         {
-            using (MSRBContext context = new MSRBContext())
-            {
-                context.Accounts.Add(msAccount);
-                return context.SaveChanges() > 0;
-            }
+            _db.Accounts.Add(msAccount);
+            return _db.SaveChanges() > 0;
         }
 
         public bool UpdateMSAccount(MSAccount account)
         {
-            using (MSRBContext context = new MSRBContext())
+            MSAccount acc = _db.Accounts.AsNoTracking().FirstOrDefault(a => a.DbId == account.DbId);
+            if (acc == null)
             {
-                MSAccount acc = context.Accounts.AsNoTracking().FirstOrDefault(a => a.DbId == account.DbId);
-                if (acc == null)
-                {
-                    return false;
-                }
-
-                context.Accounts.Update(account);
-                return context.SaveChanges() > 0;
+                return false;
             }
+
+            _db.Accounts.Update(account);
+            return _db.SaveChanges() > 0;
         }
 
 
