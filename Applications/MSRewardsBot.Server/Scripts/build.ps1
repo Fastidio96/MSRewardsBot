@@ -22,5 +22,12 @@ foreach ($rid in $RIDs) {
     dotnet publish -c Release -r $rid -o (Join-Path $ProjectPath "publish\$rid") --self-contained false
 }
 
+# Delete publish folder if it exists
+$PublishFolder = Join-Path $ProjectPath "publish"
+if (Test-Path $PublishFolder) {
+    Remove-Item $PublishFolder -Recurse -Force
+    Write-Host "Deleted folder: $PublishFolder"
+}
+
 Write-Host "`nPublish completed successfully. Press Enter to exit..."
 Read-Host
