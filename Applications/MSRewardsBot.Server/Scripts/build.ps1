@@ -6,7 +6,12 @@ If (-not ([Security.Principal.WindowsPrincipal] [Security.Principal.WindowsIdent
     Exit
 }
 
-$ProjectPath = Split-Path -Parent $MyInvocation.MyCommand.Path
+# Current script directory
+$ScriptDir = Split-Path -Parent $MyInvocation.MyCommand.Path
+
+# Project root directory (parent of Scripts)
+$ProjectPath = Split-Path -Parent $ScriptDir
+
 Set-Location $ProjectPath
 
 # Multi-RID publish
