@@ -150,9 +150,9 @@ namespace MSRewardsBot.Server.Core
                     }
                 }
 
-                using (ScopedBusiness scopedBl = _businessFactory.Create())
+                using (ScopedBusiness scope = _businessFactory.Create())
                 {
-                    accounts = scopedBl.Business.GetAllMSAccounts();
+                    accounts = scope.Business.GetAllMSAccounts();
                 }
 
                 foreach (MSAccount acc in accounts)
@@ -226,7 +226,10 @@ namespace MSRewardsBot.Server.Core
 
                             for (int i = 0; i < cache.Stats.PCSearchesToDo; i++)
                             {
-                                start = start.AddSeconds(Random.Shared.Next(180, 600));
+                                start = start.AddSeconds
+                                    (
+                                        Random.Shared.Next(Settings.MinSecsWaitBetweenSearches, Settings.MaxSecsWaitBetweenSearches)
+                                    );
 
                                 string keyword = await _keywordProvider.GetKeyword();
                                 if (keyword == null)

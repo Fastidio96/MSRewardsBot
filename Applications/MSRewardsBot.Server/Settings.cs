@@ -11,6 +11,9 @@ namespace MSRewardsBot.Server
 
         public static bool UseFirefox = true;
 
+        public static int MinSecsWaitBetweenSearches = 180;
+        public static int MaxSecsWaitBetweenSearches = 600;
+
         public static TimeSpan DashboardCheck = new TimeSpan(1, 0, 0);
         public static TimeSpan DashboardUpdate = new TimeSpan(0, 15, 0);
         public static TimeSpan SearchesCheck = new TimeSpan(12, 0, 0);
