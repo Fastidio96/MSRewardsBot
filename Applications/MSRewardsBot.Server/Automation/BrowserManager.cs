@@ -160,7 +160,7 @@ namespace MSRewardsBot.Server.Automation
                     return false;
                 }
             }
-            catch 
+            catch
             {
                 await DeleteContext(data);
                 await CloseBrowser();
@@ -175,11 +175,17 @@ namespace MSRewardsBot.Server.Automation
         {
             _logger.LogDebug("Deleting context for {Email} | {User}", data.Account.Email, data.Account.User.Username);
 
-            await data.Context.CloseAsync();
-            await data.Context.DisposeAsync();
+            if (data.Page != null)
+            {
+                await data.Context.DisposeAsync();
+                data.Page = null;
+            }
 
-            data.Page = null;
-            data.Context = null;
+            if (data.Context != null)
+            {
+                await data.Context.CloseAsync();
+                data.Context = null;
+            }
         }
 
         private async Task<bool> StartLoggedSession(MSAccountServerData data)
