@@ -2,7 +2,7 @@
 using System.IO;
 using System.Runtime.InteropServices;
 
-namespace MSRewardsBot.Server
+namespace MSRewardsBot.Server.Helpers
 {
     public class Utils
     {
@@ -95,13 +95,13 @@ namespace MSRewardsBot.Server
         const uint ENABLE_VIRTUAL_TERMINAL_PROCESSING = 0x0004;
 
         [DllImport("kernel32.dll", SetLastError = true)]
-        static extern IntPtr GetStdHandle(int nStdHandle);
+        static extern nint GetStdHandle(int nStdHandle);
 
         [DllImport("kernel32.dll")]
-        static extern bool GetConsoleMode(IntPtr hConsoleHandle, out uint lpMode);
+        static extern bool GetConsoleMode(nint hConsoleHandle, out uint lpMode);
 
         [DllImport("kernel32.dll")]
-        static extern bool SetConsoleMode(IntPtr hConsoleHandle, uint dwMode);
+        static extern bool SetConsoleMode(nint hConsoleHandle, uint dwMode);
 
         public static void EnableConsoleANSI()
         {

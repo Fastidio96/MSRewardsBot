@@ -8,7 +8,7 @@ using Microsoft.Extensions.Logging.Console;
 using Microsoft.Extensions.Options;
 
 
-namespace MSRewardsBot.Server
+namespace MSRewardsBot.Server.Helpers
 {
     public sealed class CustomConsoleFormatter : ConsoleFormatter
     {

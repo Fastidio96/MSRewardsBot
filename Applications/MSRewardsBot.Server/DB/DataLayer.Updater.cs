@@ -2,6 +2,7 @@
 using System.IO;
 using System.Timers;
 using Microsoft.Extensions.Logging;
+using MSRewardsBot.Server.Helpers;
 
 namespace MSRewardsBot.Server.DB
 {

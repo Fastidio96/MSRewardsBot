@@ -1,5 +1,6 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using MSRewardsBot.Common.DataEntities.Accounting;
+using MSRewardsBot.Server.Helpers;
 
 namespace MSRewardsBot.Server.DB
 {

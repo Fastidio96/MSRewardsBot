@@ -6,6 +6,7 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Xml.Serialization;
 using MSRewardsBot.Server.DataEntities;
+using MSRewardsBot.Server.Helpers;
 
 namespace MSRewardsBot.Server.Automation
 {
