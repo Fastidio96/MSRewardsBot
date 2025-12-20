@@ -92,8 +92,6 @@ namespace MSRewardsBot.Server
             WebApplication app = builder.Build();
             app.UseResponseCompression();
 
-            ILogger<Program> logger = app.Services.GetRequiredService<ILogger<Program>>();
-
             TaskScheduler taskScheduler = app.Services.GetRequiredService<TaskScheduler>();
             Core.Server server = app.Services.GetRequiredService<Core.Server>();
             BrowserManager browser = app.Services.GetRequiredService<BrowserManager>();
@@ -101,9 +99,9 @@ namespace MSRewardsBot.Server
             AppDomain.CurrentDomain.UnhandledException += delegate (object sender, UnhandledExceptionEventArgs e)
             {
                 Exception ex = (Exception)e.ExceptionObject;
-                logger.Log(LogLevel.Critical, ex, "Unhandled exception on CurrentDomain | IsTerminating: {IsTerminating}", e.IsTerminating);
-                logger.Log(LogLevel.Critical, "Source: {source}", ex.Source);
-                logger.Log(LogLevel.Critical, "StackTrace: {stack}", ex.StackTrace);
+                app.Logger.Log(LogLevel.Critical, ex, "Unhandled exception on CurrentDomain | IsTerminating: {IsTerminating}", e.IsTerminating);
+                app.Logger.Log(LogLevel.Critical, "Source: {source}", ex.Source);
+                app.Logger.Log(LogLevel.Critical, "StackTrace: {stack}", ex.StackTrace);
             };
 
             app.MapHub<CommandHub>($"/{Env.SERVER_HUB_NAME}");
