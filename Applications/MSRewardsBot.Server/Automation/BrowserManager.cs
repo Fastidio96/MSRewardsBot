@@ -1,9 +1,11 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
 using Microsoft.Playwright;
 using MSRewardsBot.Common.DataEntities.Accounting;
+using MSRewardsBot.Server.Core;
 using MSRewardsBot.Server.DataEntities;
 
 namespace MSRewardsBot.Server.Automation
@@ -11,12 +13,20 @@ namespace MSRewardsBot.Server.Automation
     public partial class BrowserManager : IDisposable
     {
         private readonly ILogger<BrowserManager> _logger;
+        private readonly RealTimeData _rt;
+
         private IPlaywright _playwright;
         private IBrowser _browser;
 
-        public BrowserManager(ILogger<BrowserManager> logger)
+        private DateTime _lastUsed;
+        private Thread _idleCheckThread;
+
+        private bool _isDisposing = false;
+
+        public BrowserManager(ILogger<BrowserManager> logger, RealTimeData rt)
         {
             _logger = logger;
+            _rt = rt;
         }
 
         public async void Init()
@@ -33,65 +43,127 @@ namespace MSRewardsBot.Server.Automation
                 _logger.LogCritical("Cannot install dependencies");
             }
 
-            _playwright = await Playwright.CreateAsync();
+            await CreateBrowser();
 
-            if (Settings.UseFirefox)
-            {
-                _browser = await _playwright.Firefox.LaunchAsync(new BrowserTypeLaunchOptions()
-                {
-#if DEBUG
-                    Headless = false,
-#endif
-                    Args =
-                    [
-                        "--disable-infobars",
-                        "--no-default-browser-check",
-                        "--disable-extensions"
-                    ],
-                    FirefoxUserPrefs = new Dictionary<string, object>()
-                    {
-                        ["network.http.http3.enabled"] = false,
-                    }
-                });
-            }
-            else
-            {
-                _browser = await _playwright.Chromium.LaunchAsync(new BrowserTypeLaunchOptions()
-                {
-#if DEBUG
-                    //Headless = false,
-#endif
-                    Args =
-                    [
-                        "--disable-blink-features=AutomationControlled",
-                        "--disable-infobars",
-                        "--no-default-browser-check",
-                        "--disable-extensions"
-                    ]
-                });
-            }
+            _lastUsed = DateTime.Now;
+
+            _idleCheckThread = new Thread(IdleCheckLoop);
+            _idleCheckThread.Name = nameof(IdleCheckLoop);
+            _idleCheckThread.Start();
 
             _logger.Log(LogLevel.Information, "BrowserManager init completed");
+        }
+
+        private async Task CreateBrowser()
+        {
+            if (_playwright == null)
+            {
+                _playwright = await Playwright.CreateAsync();
+            }
+
+            if (_browser == null)
+            {
+                if (Settings.UseFirefox)
+                {
+                    _browser = await _playwright.Firefox.LaunchAsync(new BrowserTypeLaunchOptions()
+                    {
+#if DEBUG
+                        //Headless = false,
+#endif
+                        Args =
+                        [
+                            "--disable-infobars",
+                            "--no-default-browser-check",
+                            "--disable-extensions"
+                        ],
+                        FirefoxUserPrefs = new Dictionary<string, object>()
+                        {
+                            ["network.http.http3.enabled"] = false,
+                        }
+                    });
+                }
+                else
+                {
+                    _browser = await _playwright.Chromium.LaunchAsync(new BrowserTypeLaunchOptions()
+                    {
+#if DEBUG
+                        //Headless = false,
+#endif
+                        Args =
+                        [
+                            "--disable-blink-features=AutomationControlled",
+                            "--disable-infobars",
+                            "--no-default-browser-check",
+                            "--disable-extensions"
+                        ]
+                    });
+                }
+            }
+        }
+
+        private async Task CloseBrowser()
+        {
+            foreach (KeyValuePair<int, MSAccountServerData> data in _rt.CacheMSAccStats) // Delete refs before disposing
+            {
+                await DeleteContext(data.Value);
+            }
+
+            if (_browser != null)
+            {
+                await _browser.CloseAsync();
+                _browser = null;
+            }
+
+            _playwright?.Dispose();
+            _playwright = null;
+        }
+
+        private async void IdleCheckLoop()
+        {
+            _logger.LogDebug("Idle check thread started");
+
+            while (!_isDisposing)
+            {
+                if (_browser != null && DateTime.Now - _lastUsed > new TimeSpan(0, 0, Settings.MaxSecsWaitBetweenSearches + 60))
+                {
+                    _logger.LogInformation("Browser idle timeout reached, closing...");
+                    await CloseBrowser();
+                }
+
+                Thread.Sleep(1000);
+            }
         }
 
         public async Task<bool> CreateContext(MSAccountServerData data, bool isMobile)
         {
             _logger.LogDebug("Creating new context for {Data} | {User}", data.Account.Email, data.Account.User.Username);
 
-            if (Settings.UseFirefox)
+            _lastUsed = DateTime.Now;
+            try
             {
-                await CreateFirefoxStealthContext(data, isMobile);
-            }
-            else
-            {
-                await CreateChromeStealthContext(data, isMobile);
-            }
+                await CreateBrowser();
 
-            data.Page = await data.Context.NewPageAsync();
+                if (Settings.UseFirefox)
+                {
+                    await CreateFirefoxStealthContext(data, isMobile);
+                }
+                else
+                {
+                    await CreateChromeStealthContext(data, isMobile);
+                }
 
-            if (!await StartLoggedSession(data))
+                data.Page = await data.Context.NewPageAsync();
+
+                if (!await StartLoggedSession(data))
+                {
+                    _logger.LogWarning("Cannot install cookies for {Email} | {User}", data.Account.Email, data.Account.User.Username);
+                    return false;
+                }
+            }
+            catch 
             {
-                _logger.LogWarning("Cannot install cookies for {Email} | {User}", data.Account.Email, data.Account.User.Username);
+                await DeleteContext(data);
+                await CloseBrowser();
                 return false;
             }
 
@@ -202,7 +274,7 @@ namespace MSRewardsBot.Server.Automation
 
         private void LogDebugAction(string actionName)
         {
-            _logger.LogTrace("Logged action {time} {action} ", DateTime.Now.ToString("mm:ss:fff"), actionName.ToUpper());
+            //_logger.LogTrace("Logged action {time} {action} ", DateTime.Now.ToString("mm:ss:fff"), actionName.ToUpper());
         }
         private TimeSpan GetRandomMsTimes(int min, int max)
         {
@@ -267,6 +339,8 @@ namespace MSRewardsBot.Server.Automation
 
         public async void Dispose()
         {
+            _isDisposing = true;
+
             try
             {
                 foreach (IBrowserContext ctx in _browser.Contexts)
@@ -280,6 +354,16 @@ namespace MSRewardsBot.Server.Automation
             catch (Exception ex)
             {
                 _logger.Log(LogLevel.Error, ex, "Error while disposing browser");
+            }
+
+            if (_idleCheckThread != null)
+            {
+                if (_idleCheckThread.IsAlive)
+                {
+                    _idleCheckThread.Join(5000);
+                }
+
+                _idleCheckThread = null;
             }
         }
     }
