@@ -60,8 +60,6 @@ namespace MSRewardsBot.Server.DB
                 _timer.Enabled = false;
                 _timer.Dispose();
             }
-
-            _db?.Dispose();
         }
     }
 }
