@@ -160,8 +160,10 @@ namespace MSRewardsBot.Server.Automation
                     return false;
                 }
             }
-            catch
+            catch (Exception ex)
             {
+                _logger.Log(LogLevel.Critical, ex, "Error on CreateContext");
+
                 await DeleteContext(data);
                 await CloseBrowser();
                 return false;
