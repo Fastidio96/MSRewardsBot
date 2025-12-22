@@ -103,6 +103,7 @@ namespace MSRewardsBot.Server.Automation
 
         private async Task CloseBrowser()
         {
+            _logger.LogDebug("Deleting context references..");
             foreach (KeyValuePair<int, MSAccountServerData> data in _rt.CacheMSAccStats) // Delete refs before disposing
             {
                 await DeleteContext(data.Value);
@@ -111,11 +112,16 @@ namespace MSRewardsBot.Server.Automation
             if (_browser != null)
             {
                 await _browser.CloseAsync();
+                await _browser.DisposeAsync();
                 _browser = null;
+
+                _logger.LogDebug("Browser disposed");
             }
 
             _playwright?.Dispose();
             _playwright = null;
+
+            _logger.LogDebug("Playwright disposed");
         }
 
         private async void IdleCheckLoop()
@@ -165,7 +171,12 @@ namespace MSRewardsBot.Server.Automation
                 _logger.Log(LogLevel.Critical, ex, "Error on CreateContext");
 
                 await DeleteContext(data);
-                await CloseBrowser();
+
+                if (_browser == null || !_browser.IsConnected)
+                {
+                    await CloseBrowser();
+                }
+
                 return false;
             }
 
