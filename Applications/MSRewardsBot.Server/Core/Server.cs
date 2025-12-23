@@ -73,7 +73,7 @@ namespace MSRewardsBot.Server.Core
 
         private async void ClientLoop()
         {
-            _logger.LogInformation("Clients thread started");
+            _logger.LogDebug("Clients thread started");
 
             while (!_isDisposing)
             {
@@ -121,7 +121,7 @@ namespace MSRewardsBot.Server.Core
 
         private async void AccountLoop()
         {
-            _logger.LogInformation("Accounts thread started");
+            _logger.LogDebug("Accounts thread started");
 
             DateTime now = DateTime.Now;
             List<MSAccount> accounts;
@@ -181,7 +181,7 @@ namespace MSRewardsBot.Server.Core
 
                         if (!_rt.CacheMSAccStats.TryAdd(acc.DbId, cache))
                         {
-                            _logger.LogError("Cannot add account {id} to the cache!", acc.DbId);
+                            _logger.LogWarning("Cannot add account {id} to the cache!", acc.DbId);
                         }
                     }
 
@@ -208,7 +208,7 @@ namespace MSRewardsBot.Server.Core
                             Data = cache,
                             OnSuccess = delegate ()
                             {
-                                _logger.LogDebug("Job {name} succeded for {user}",
+                                _logger.LogInformation("Job {name} succeded for {user}",
                                     nameof(AdditionalPointsCommand), acc.Email);
                             },
                             OnFail = delegate ()
@@ -244,7 +244,7 @@ namespace MSRewardsBot.Server.Core
                                         Keyword = keyword,
                                         OnSuccess = delegate ()
                                         {
-                                            _logger.LogDebug("Job {name} succeded (with keyword {keyword}) for {user}",
+                                            _logger.LogInformation("Job {name} succeded (with keyword {keyword}) for {user}",
                                                 nameof(PCSearchCommand), keyword, acc.Email);
 
                                             cache.Stats.PCSearchCompleted();
@@ -291,7 +291,7 @@ namespace MSRewardsBot.Server.Core
                                         Keyword = keyword,
                                         OnSuccess = delegate ()
                                         {
-                                            _logger.LogDebug("Job {name} succeded (with keyword {keyword}) for {user}",
+                                            _logger.LogInformation("Job {name} succeded (with keyword {keyword}) for {user}",
                                                 nameof(MobileSearchCommand), keyword, acc.Email);
 
                                             cache.Stats.MobileSearchCompleted();
@@ -331,7 +331,7 @@ namespace MSRewardsBot.Server.Core
                                     Data = data,
                                     OnSuccess = delegate ()
                                     {
-                                        _logger.LogDebug("Job {name} succeded for {user}",
+                                        _logger.LogInformation("Job {name} succeded for {user}",
                                                 nameof(DashboardUpdateCommand), data.Account.Email);
 
                                         data.IsFirstTimeUpdateStats = false;
