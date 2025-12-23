@@ -20,34 +20,34 @@ namespace MSRewardsBot.Server.Automation
 
             try
             {
-                LogDebugAction("MOBILE_CLICK_SEARCHBAR_TEXTAREA");
+                LogTraceAction("MOBILE_CLICK_SEARCHBAR_TEXTAREA");
                 await Task.Delay(GetRandomMsTimes(BrowserConstants.HUMAN_CLICK_BTN_MIN, BrowserConstants.HUMAN_CLICK_BTN_MAX));
                 await data.Page.EvaluateAsync(BrowserConstants.MOBILE_CLICK_SEARCHBAR_TEXTAREA);
 
-                LogDebugAction("WRITE_KEYWORD_HOMEPAGE_TEXTAREA");
+                LogTraceAction("WRITE_KEYWORD_HOMEPAGE_TEXTAREA");
                 if (!await WriteAsHuman(data.Page, keyword, BrowserConstants.MOBILE_APPEND_KEYWORD_SEARCHBAR_TEXTAREA))
                 {
                     return false;
                 }
 
-                LogDebugAction("SUBMIT WITH ENTER SEARCHBAR_TEXTAREA");
+                LogTraceAction("SUBMIT WITH ENTER SEARCHBAR_TEXTAREA");
                 await data.Page.Keyboard.PressAsync("Enter", new KeyboardPressOptions()
                 {
                     Delay = Random.Shared.Next(BrowserConstants.HUMAN_CLICK_BTN_MIN, BrowserConstants.HUMAN_CLICK_BTN_MAX)
                 });
 
-                LogDebugAction("SUBMIT SENT SUCCESSFULLY");
+                LogTraceAction("SUBMIT SENT SUCCESSFULLY");
                 if (!data.Page.Url.StartsWith(BrowserConstants.URL_SEARCHES))
                 {
                     _logger.LogError("Submit not working");
                     return false;
                 }
 
-                LogDebugAction("MOBILE_CLICK_YES_GDPR_BTN");
+                LogTraceAction("MOBILE_CLICK_YES_GDPR_BTN");
                 await Task.Delay(GetRandomMsTimes(BrowserConstants.HUMAN_CLICK_BTN_MIN, BrowserConstants.HUMAN_CLICK_BTN_MAX));
                 await data.Page.EvaluateAsync(BrowserConstants.MOBILE_CLICK_YES_GDPR_BTN);
 
-                LogDebugAction("Viewing page content & scrolling");
+                LogTraceAction("Viewing page content & scrolling");
                 for (int i = 0; i < 5; i++)
                 {
                     await data.Page.Mouse.WheelAsync(0, Random.Shared.Next(500, 900));
@@ -55,7 +55,7 @@ namespace MSRewardsBot.Server.Automation
                 }
                 await Task.Delay(Random.Shared.Next(1000, 3000));
 
-                LogDebugAction("Resetting start page for next request");
+                LogTraceAction("Resetting start page for next request");
                 await NavigateToURL(data, BrowserConstants.URL_BLANK_PAGE);
 
                 return true;
