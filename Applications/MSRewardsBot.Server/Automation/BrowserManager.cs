@@ -162,14 +162,14 @@ namespace MSRewardsBot.Server.Automation
 
                 data.Page = await data.Context.NewPageAsync();
 
-                    if (!await StartLoggedSession(data))
-                    {
-                        _logger.LogWarning("Cannot install cookies for {Email} | {User}", data.Account.Email, data.Account.User.Username);
-                        return false;
-                    }
-                }
-                catch (Exception ex)
+                if (!await StartLoggedSession(data))
                 {
+                    _logger.LogWarning("Cannot install cookies for {Email} | {User}", data.Account.Email, data.Account.User.Username);
+                    return false;
+                }
+            }
+            catch (Exception ex)
+            {
                 _logger.Log(LogLevel.Critical, ex, "Error on CreateContext");
 
                 await DeleteContext(data);
