@@ -41,6 +41,7 @@ namespace MSRewardsBot.Server.Automation
             else
             {
                 _logger.LogCritical("Cannot install dependencies");
+                throw new Exception("Cannot install PW dependecies!");
             }
 
             await CreateBrowser();
@@ -79,6 +80,7 @@ namespace MSRewardsBot.Server.Automation
                         FirefoxUserPrefs = new Dictionary<string, object>()
                         {
                             ["network.http.http3.enabled"] = false,
+                            ["security.webauth.webauthn"] = false,
                         }
                     });
                 }
@@ -126,13 +128,13 @@ namespace MSRewardsBot.Server.Automation
 
         private async void IdleCheckLoop()
         {
-            _logger.LogDebug("Idle check thread started");
+            _logger.LogDebug("BrowserManager idle check thread started");
 
             while (!_isDisposing)
             {
                 if (_browser != null && DateTime.Now - _lastUsed > new TimeSpan(0, 0, Settings.MaxSecsWaitBetweenSearches + 60))
                 {
-                    _logger.LogInformation("Browser idle timeout reached, closing...");
+                    _logger.LogDebug("Browser idle timeout reached, closing...");
                     await CloseBrowser();
                 }
 
@@ -160,14 +162,14 @@ namespace MSRewardsBot.Server.Automation
 
                 data.Page = await data.Context.NewPageAsync();
 
-                if (!await StartLoggedSession(data))
-                {
-                    _logger.LogWarning("Cannot install cookies for {Email} | {User}", data.Account.Email, data.Account.User.Username);
-                    return false;
+                    if (!await StartLoggedSession(data))
+                    {
+                        _logger.LogWarning("Cannot install cookies for {Email} | {User}", data.Account.Email, data.Account.User.Username);
+                        return false;
+                    }
                 }
-            }
-            catch (Exception ex)
-            {
+                catch (Exception ex)
+                {
                 _logger.Log(LogLevel.Critical, ex, "Error on CreateContext");
 
                 await DeleteContext(data);
@@ -252,11 +254,6 @@ namespace MSRewardsBot.Server.Automation
 
         private async Task<bool> NavigateToURL(MSAccountServerData data, string url)
         {
-            if (data.Page == null)
-            {
-                return false;
-            }
-
             try
             {
                 if (data.Page.Url != url)
@@ -291,9 +288,9 @@ namespace MSRewardsBot.Server.Automation
             }
         }
 
-        private void LogDebugAction(string actionName)
+        private void LogTraceAction(string actionName)
         {
-            //_logger.LogTrace("Logged action {time} {action} ", DateTime.Now.ToString("mm:ss:fff"), actionName.ToUpper());
+            _logger.LogTrace("Logged action {time} {action} ", DateTime.Now.ToString("mm:ss:fff"), actionName.ToUpper());
         }
         private TimeSpan GetRandomMsTimes(int min, int max)
         {
