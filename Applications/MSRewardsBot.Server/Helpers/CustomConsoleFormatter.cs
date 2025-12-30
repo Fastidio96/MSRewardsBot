@@ -86,7 +86,7 @@ namespace MSRewardsBot.Server.Helpers
             {
                 consoleMsg = $"{timestamp} ";
                 consoleMsg += ApplyColor(logLevel, $"[{logLevel}]: {message}");
-                consoleMsg = consoleMsg.PadLeft(consoleMsg.Length + 3);
+                consoleMsg = PadLeft(consoleMsg, 3);
 
                 if (!_isSameCategory)
                 {
@@ -105,6 +105,19 @@ namespace MSRewardsBot.Server.Helpers
                 _writer.WriteLine(toWrite);
                 WriteOnFile(toWrite);
             }
+        }
+
+        /// <summary>
+        /// The PadLeft from .NET is not compatible with Ansi strings and it throws
+        /// </summary>
+        private string PadLeft(string text, int padWidth)
+        {
+            for (int i = 0; i < padWidth; i++)
+            {
+                text = " " + text;
+            }
+
+            return text;
         }
 
         private string FormatCategory(string category)
