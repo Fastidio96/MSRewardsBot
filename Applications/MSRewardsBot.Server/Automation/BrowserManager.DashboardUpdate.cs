@@ -25,6 +25,23 @@ namespace MSRewardsBot.Server.Automation
 
             try
             {
+                string selector = await data.Page.EvaluateAsync<string>(BrowserConstants.SELECTOR_ACCOUNT_BANNED);
+                if(selector != null)
+                {
+                    _logger.LogWarning("Account {Data} is banned!", data.Account.Email);
+                    data.Account.IsAccountBanned = true;
+
+                    return true;
+                }
+            }
+            catch (Exception e)
+            {
+                _logger.LogError("Error: {e}", e.Message);
+                res = false;
+            }
+
+            try
+            {
                 if (string.IsNullOrEmpty(data.Account.Email))
                 {
                     data.Account.Email = await data.Page.EvaluateAsync<string>(BrowserConstants.SELECTOR_EMAIL);

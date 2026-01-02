@@ -13,6 +13,7 @@ namespace MSRewardsBot.Common.DataEntities.Accounting
             Cookies = new List<AccountCookie>();
             Stats = new MSAccountStats();
             IsCookiesExpired = false;
+            IsAccountBanned = false;
         }
 
         [JsonIgnore]
@@ -28,6 +29,9 @@ namespace MSRewardsBot.Common.DataEntities.Accounting
 
         [NotMapped]
         public bool IsCookiesExpired { get; set; }
+
+        [NotMapped]
+        public bool IsAccountBanned { get; set; }
 
         [NotMapped]
         public MSAccountStats Stats { get; set; }

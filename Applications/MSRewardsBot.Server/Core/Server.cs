@@ -159,6 +159,11 @@ namespace MSRewardsBot.Server.Core
                 {
                     now = DateTime.Now;
 
+                    if (acc.IsAccountBanned)
+                    {
+                        continue;
+                    }
+
                     if (acc.Cookies.Count == 0 || acc.IsCookiesExpired)
                     {
                         _logger.LogWarning("No valid cookies found for account {Email} | {Username}. Skipping..",

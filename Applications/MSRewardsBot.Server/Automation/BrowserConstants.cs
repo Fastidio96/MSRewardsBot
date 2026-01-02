@@ -18,6 +18,7 @@ namespace MSRewardsBot.Server.Automation
         public const string SELECTOR_BREAKDOWN_MOBILE_POINTS = @"document.querySelector('#userPointsBreakdown > div > div:nth-child(2) > div > div:nth-child(2) > div > div.pointsDetail > mee-rewards-user-points-details > div > div > div > div > p.pointsDetail.c-subheading-3.ng-binding').innerText;";
         public const string SELECTOR_ACCOUNT_LEVEL = @"document.querySelector('#meeGradientBanner > div > div > div > p').innerText;";
         public const string SELECTOR_ACCOUNT_LEVEL_POINTS = @"document.querySelector('#earningreport-level-heading > p.pointsDetail.c-subheading-3.ng-binding.ng-scope').innerText;";
+        public const string SELECTOR_ACCOUNT_BANNED = @"document.querySelector('#fraudErrorBody');";
         #endregion
 
         #region URL_SEARCHES_HOMEPAGE_PC
