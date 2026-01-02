@@ -190,17 +190,14 @@ namespace MSRewardsBot.Server.Automation
         {
             _logger.LogDebug("Deleting context for {Email} | {User}", data.Account.Email, data.Account.User.Username);
 
-            if (data.Page != null)
-            {
-                await data.Context.DisposeAsync();
-                data.Page = null;
-            }
-
             if (data.Context != null)
             {
                 await data.Context.CloseAsync();
-                data.Context = null;
+                await data.Context.DisposeAsync();
             }
+
+            data.Context = null;
+            data.Page = null;
         }
 
         private async Task<bool> StartLoggedSession(MSAccountServerData data)
