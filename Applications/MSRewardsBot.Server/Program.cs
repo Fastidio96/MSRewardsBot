@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Linq;
+using System.Threading.Tasks;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.ResponseCompression;
@@ -14,6 +15,7 @@ using MSRewardsBot.Server.Core.Factories;
 using MSRewardsBot.Server.DB;
 using MSRewardsBot.Server.Helpers;
 using MSRewardsBot.Server.Network;
+using TaskScheduler = MSRewardsBot.Server.Core.TaskScheduler;
 
 namespace MSRewardsBot.Server
 {
@@ -79,8 +81,6 @@ namespace MSRewardsBot.Server
                     options.EnableDetailedErrors = true;
 #endif
                     options.AddFilter<HubMonitorMiddleware>();
-                    //options.ClientTimeoutInterval = new TimeSpan(0, 0, 10);
-                    //options.KeepAliveInterval = new TimeSpan(0, 0, 5);
                 });
 
             builder.Services.AddResponseCompression(opts =>
@@ -99,10 +99,15 @@ namespace MSRewardsBot.Server
             AppDomain.CurrentDomain.UnhandledException += delegate (object sender, UnhandledExceptionEventArgs e)
             {
                 Exception ex = (Exception)e.ExceptionObject;
-                app.Logger.Log(LogLevel.Critical, ex, "Unhandled exception on CurrentDomain");
-                app.Logger.Log(LogLevel.Critical, "Source: {source}", ex.Source);
-                app.Logger.Log(LogLevel.Critical, "StackTrace: {stack}", ex.StackTrace);
+                CustomConsoleFormatter.WriteOnFile("Unhandled exception caused app to crash");
+                CustomConsoleFormatter.WriteOnFile(ex.Message);
+                CustomConsoleFormatter.WriteOnFile(ex.Source);
+                CustomConsoleFormatter.WriteOnFile(ex.StackTrace);
+
+                Console.Error.WriteLine(e.ExceptionObject);
             };
+
+            System.Threading.Tasks.TaskScheduler.UnobservedTaskException += TaskScheduler_UnobservedTaskException;
 
             app.MapHub<CommandHub>($"/{Env.SERVER_HUB_NAME}");
 
@@ -120,12 +125,26 @@ namespace MSRewardsBot.Server
 
             app.Lifetime.ApplicationStopping.Register(() =>
             {
+                System.Threading.Tasks.TaskScheduler.UnobservedTaskException -= TaskScheduler_UnobservedTaskException;
+
                 taskScheduler.Dispose();
                 server.Dispose();
                 browser.Dispose();
             });
 
             app.Run();
+        }
+
+        private static void TaskScheduler_UnobservedTaskException(object? sender, UnobservedTaskExceptionEventArgs e)
+        {
+            try
+            {
+                string text = $"[{DateTime.Now:O}] UNOBSERVED TASK\n" + e.Exception.ToString();
+                CustomConsoleFormatter.WriteOnFile(text + Environment.NewLine);
+
+                e.SetObserved();
+            }
+            catch { }
         }
     }
 }

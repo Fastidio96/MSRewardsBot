@@ -92,18 +92,18 @@ namespace MSRewardsBot.Server.Helpers
                 {
                     string toWrite = ApplyColor(null, $"[{category}]");
                     _writer.WriteLine(toWrite);
-                    WriteOnFile(toWrite);
+                    WriteOnFileInternal(toWrite);
                 }
             }
 
             _writer.WriteLine(consoleMsg);
-            WriteOnFile(consoleMsg);
+            WriteOnFileInternal(consoleMsg);
 
             if (logEntry.Exception != null)
             {
                 string toWrite = ApplyColor(logLevel, logEntry.Exception.Message);
                 _writer.WriteLine(toWrite);
-                WriteOnFile(toWrite);
+                WriteOnFileInternal(toWrite);
             }
         }
 
@@ -168,7 +168,7 @@ namespace MSRewardsBot.Server.Helpers
             return message;
         }
 
-        private bool WriteOnFile(string log)
+        private bool WriteOnFileInternal(string log)
         {
             if (!_options.WriteOnFile)
             {
@@ -192,6 +192,28 @@ namespace MSRewardsBot.Server.Helpers
             catch (Exception e)
             {
                 Console.WriteLine(ApplyColor(LogLevel.Critical, e.Message));
+                return false;
+            }
+        }
+
+        /// <summary>
+        /// Log on file when the logger is not available
+        /// </summary>
+        public static bool WriteOnFile(string log)
+        {
+            try
+            {
+                using (FileStream fs = File.Open(Utils.GetLogFile(), FileMode.Append, FileAccess.Write, FileShare.ReadWrite))
+                using (StreamWriter sw = new StreamWriter(fs, Encoding.UTF8))
+                {
+                    sw.WriteLine(log);
+                }
+
+                return true;
+            }
+            catch (Exception e)
+            {
+                Console.Error.WriteLine(e);
                 return false;
             }
         }

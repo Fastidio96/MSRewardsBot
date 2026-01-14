@@ -5,6 +5,7 @@ using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
 using Microsoft.Playwright;
 using MSRewardsBot.Common.DataEntities.Accounting;
+using MSRewardsBot.Common.Utilities;
 using MSRewardsBot.Server.Core;
 using MSRewardsBot.Server.DataEntities;
 
@@ -66,21 +67,30 @@ namespace MSRewardsBot.Server.Automation
             {
                 if (Settings.UseFirefox)
                 {
+                    List<string> args =
+                    [
+                        "--no-default-browser-check",
+                        "--disable-extensions"
+                    ];
+
+                    if (RuntimeEnvironment.IsDocker())
+                    {
+                        args.Add("--no-sandbox");
+                        args.Add("--disable-dev-shm-usage");
+                    }
+
                     _browser = await _playwright.Firefox.LaunchAsync(new BrowserTypeLaunchOptions()
                     {
 #if DEBUG
                         //Headless = false,
 #endif
-                        Args =
-                        [
-                            "--disable-infobars",
-                            "--no-default-browser-check",
-                            "--disable-extensions"
-                        ],
+                        Args = args.ToArray(),
                         FirefoxUserPrefs = new Dictionary<string, object>()
                         {
                             ["network.http.http3.enabled"] = false,
                             ["security.webauth.webauthn"] = false,
+                            ["media.autoplay.default"] = 0,
+                            ["media.autoplay.blocking_policy"] = 0
                         }
                     });
                 }
