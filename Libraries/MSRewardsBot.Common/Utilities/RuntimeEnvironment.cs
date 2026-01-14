@@ -9,6 +9,8 @@ namespace MSRewardsBot.Common.Utilities
 
         public static bool IsWindows() => OperatingSystem.IsWindows();
 
+        public static bool IsWindowsService() => OperatingSystem.IsWindows() && !Environment.UserInteractive;
+
         public static bool IsDocker()
         {
             if (!OperatingSystem.IsLinux())

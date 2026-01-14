@@ -9,6 +9,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using MSRewardsBot.Common;
+using MSRewardsBot.Common.Utilities;
 using MSRewardsBot.Server.Automation;
 using MSRewardsBot.Server.Core;
 using MSRewardsBot.Server.Core.Factories;
@@ -23,11 +24,9 @@ namespace MSRewardsBot.Server
     {
         public static void Main(string[] args)
         {
-            bool startedAsWinService = OperatingSystem.IsWindows() && !Environment.UserInteractive;
-
             WebApplicationBuilder builder = WebApplication.CreateBuilder(args);
 
-            if (!startedAsWinService)
+            if (!RuntimeEnvironment.IsWindowsService())
             {
                 Utils.EnableConsoleANSI();
             }
@@ -42,7 +41,7 @@ namespace MSRewardsBot.Server
 
                 logbuilder.AddConsoleFormatter<CustomConsoleFormatter, CustomConsoleOptions>(cco =>
                 {
-                    cco.UseColors = !startedAsWinService;
+                    cco.UseColors = !RuntimeEnvironment.IsWindowsService();
                     cco.WriteOnFile = true;
                     cco.GroupedCategories = true;
                 });
@@ -55,7 +54,7 @@ namespace MSRewardsBot.Server
             builder.Logging.AddFilter("Microsoft.AspNetCore.Http.Connections", LogLevel.Information);
 
             // Enable Windows Service only on Windows
-            if (startedAsWinService)
+            if (RuntimeEnvironment.IsWindows())
             {
                 builder.Services.AddWindowsService();
             }
