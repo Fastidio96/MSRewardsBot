@@ -26,7 +26,7 @@ namespace MSRewardsBot.Client.Windows
             this.Loaded += MainWindow_Loaded;
             this.Closing += MainWindow_Closing;
 
-            if (!Env.IS_PRODUCTION)
+            if (!AppConstants.IS_PRODUCTION)
             {
 #pragma warning disable CS0162 // Unreachable code detected
                 Title += " - DEBUG";

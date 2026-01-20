@@ -43,12 +43,12 @@ namespace MSRewardsBot.Client.Windows
             webview.CoreWebView2.CookieManager.DeleteAllCookies();
 
             webview.NavigationCompleted += WebView_NavigationCompleted;
-            webview.CoreWebView2.Navigate(Costants.URL_LOGIN);
+            webview.CoreWebView2.Navigate(AppConstants.URL_LOGIN);
         }
 
         private void WebView_NavigationCompleted(object? sender, CoreWebView2NavigationCompletedEventArgs e)
         {
-            if (e.IsSuccess && (webview.Source.Host == Costants.URL_HOST_LOGGED))
+            if (e.IsSuccess && (webview.Source.Host == AppConstants.URL_HOST_LOGGED))
             {
                 webview.NavigationCompleted -= WebView_NavigationCompleted;
                 GatherCookies();
@@ -57,7 +57,7 @@ namespace MSRewardsBot.Client.Windows
 
         private async void GatherCookies()
         {
-            List<CoreWebView2Cookie> webviewCoookies = await webview.CoreWebView2.CookieManager.GetCookiesAsync(Costants.URL_LOGIN);
+            List<CoreWebView2Cookie> webviewCoookies = await webview.CoreWebView2.CookieManager.GetCookiesAsync(AppConstants.URL_LOGIN);
             if (webviewCoookies == null || webviewCoookies.Count == 0)
             {
                 return;

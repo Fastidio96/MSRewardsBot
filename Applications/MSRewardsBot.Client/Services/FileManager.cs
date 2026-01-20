@@ -3,7 +3,6 @@ using System.IO;
 using System.Text;
 using System.Xml.Serialization;
 using MSRewardsBot.Client.DataEntities;
-using MSRewardsBot.Common;
 
 namespace MSRewardsBot.Client.Services
 {
@@ -12,7 +11,7 @@ namespace MSRewardsBot.Client.Services
         public static string GetFolderApp => new Uri(AppDomain.CurrentDomain.BaseDirectory).LocalPath;
 
         private static string _filePath => Path.Combine(_folderPath, "data.xml");
-        private static string _folderPath => Env.IS_PRODUCTION ?
+        private static string _folderPath => AppConstants.IS_PRODUCTION ?
             Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "MSRB") :
             Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "MSRB", "Debug");
 

@@ -1,7 +1,13 @@
 ﻿namespace MSRewardsBot.Client.DataEntities
 {
-    public class Costants
+    public class AppConstants
     {
+#if DEBUG
+        public const bool IS_PRODUCTION = false;
+#else
+        public const bool IS_PRODUCTION = true;
+#endif
+
         public const string URL_LOGIN = "https://login.live.com/";
         public const string URL_HOST_LOGGED = "account.microsoft.com";
         public const string URL_POINTS_INFOS = "https://rewards.bing.com/pointsbreakdown";
