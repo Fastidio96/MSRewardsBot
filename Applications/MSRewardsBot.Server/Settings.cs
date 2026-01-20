@@ -4,6 +4,10 @@ namespace MSRewardsBot.Server
 {
     public class Settings
     {
+        public bool IsHttpsEnabled { get; set; } = false;
+        public string ServerHost { get; set; } = "localhost";
+        public string ServerPort { get; set; } = "10500";
+
         /// <summary>
         /// Disable this for saving performances
         /// </summary>

@@ -5,10 +5,11 @@ using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.ResponseCompression;
 using Microsoft.AspNetCore.SignalR;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
-using MSRewardsBot.Common;
+using Microsoft.Extensions.Options;
 using MSRewardsBot.Common.Utilities;
 using MSRewardsBot.Server.Automation;
 using MSRewardsBot.Server.Core;
@@ -60,7 +61,10 @@ namespace MSRewardsBot.Server
                 builder.Services.AddWindowsService();
             }
 
-            builder.WebHost.UseUrls(Env.GetServerConnection());
+            Settings settings = builder.Configuration.Get<Settings>();
+            builder.WebHost.UseUrls(NetworkUtilities.GetConnectionString(
+                settings.IsHttpsEnabled, settings.ServerHost, settings.ServerPort
+            ));
 
             // Add services to the container.
             builder.Services.AddAuthorization();
@@ -95,6 +99,7 @@ namespace MSRewardsBot.Server
             TaskScheduler taskScheduler = app.Services.GetRequiredService<TaskScheduler>();
             Core.Server server = app.Services.GetRequiredService<Core.Server>();
             BrowserManager browser = app.Services.GetRequiredService<BrowserManager>();
+            settings = app.Services.GetService<IOptions<Settings>>().Value;
 
             AppDomain.CurrentDomain.UnhandledException += delegate (object sender, UnhandledExceptionEventArgs e)
             {
@@ -112,11 +117,9 @@ namespace MSRewardsBot.Server
             app.MapHub<CommandHub>("/cmdhub");
 
             // Configure the HTTP request pipeline.
-            if (Env.IS_HTTPS_ENABLED)
+            if (settings.IsHttpsEnabled)
             {
-#pragma warning disable CS0162 // Unreachable code detected
                 app.UseHttpsRedirection();
-#pragma warning restore CS0162 // Unreachable code detected
             }
 
             app.UseAuthorization();
