@@ -39,15 +39,15 @@ namespace MSRewardsBot.Client
             if (!validData)
             {
                 _appInfo.IsUserLogged = false;
-                EditSettings(_appData);
+                EditSettings();
             }
             else
             {
+                _splashScreenWindow = new SplashScreenWindow(this, _appInfo);
+                _splashScreenWindow.Show();
+
                 _connection = new ConnectionService(_appInfo, _appData);
                 await _connection.ConnectAsync();
-
-                _splashScreenWindow = new SplashScreenWindow(_appInfo);
-                _splashScreenWindow.Show();
 
                 _appInfo.IsUserLogged = _token != Guid.Empty &&
                     await _connection.LoginWithToken(_token);
@@ -157,7 +157,7 @@ namespace MSRewardsBot.Client
 
             ProcessStartInfo psi = new ProcessStartInfo
             {
-                Arguments = "/C choice /C Y /N /D Y /T 1 & START \"\" \"" + Environment.ProcessPath + "\"",
+                Arguments = "choice /C Y /N /D Y /T 1 & START \"\" \"" + Environment.ProcessPath + "\"",
                 WindowStyle = ProcessWindowStyle.Hidden,
                 CreateNoWindow = true,
                 FileName = "cmd.exe"
@@ -166,14 +166,14 @@ namespace MSRewardsBot.Client
             Environment.Exit(0);
         }
 
-        public void EditSettings(AppData data)
+        public void EditSettings()
         {
             if (_settingsWindow != null && _settingsWindow.IsVisible)
             {
                 return;
             }
 
-            _settingsWindow = new SettingsWindow(this, data);
+            _settingsWindow = new SettingsWindow(this, _appData);
             _settingsWindow.Show();
         }
 
@@ -240,7 +240,6 @@ namespace MSRewardsBot.Client
             }
 
             Utils.KillWebViewProcess(); // Clean any garbage process made by web view (thanks microsoft)
-            Environment.Exit(0);
         }
     }
 }

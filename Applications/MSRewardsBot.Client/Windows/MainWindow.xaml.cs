@@ -1,4 +1,6 @@
-﻿using System.Windows;
+﻿using System;
+using System.Diagnostics;
+using System.Windows;
 using MSRewardsBot.Client.DataEntities;
 
 namespace MSRewardsBot.Client.Windows
@@ -27,9 +29,7 @@ namespace MSRewardsBot.Client.Windows
 
             if (!AppConstants.IS_PRODUCTION)
             {
-#pragma warning disable CS0162 // Unreachable code detected
                 Title += " - DEBUG";
-#pragma warning restore CS0162 // Unreachable code detected
             }
         }
 
@@ -76,6 +76,22 @@ namespace MSRewardsBot.Client.Windows
             this.Closing -= MainWindow_Closing;
 
             _vm.Dispose();
+            Environment.Exit(0);
+        }
+
+        private void BtnSettings_Click(object sender, RoutedEventArgs e)
+        {
+            _vm.EditSettings();
+        }
+
+        private void Hyperlink_RequestNavigate(object sender, System.Windows.Navigation.RequestNavigateEventArgs e)
+        {
+            Process.Start(new ProcessStartInfo(e.Uri.AbsoluteUri)
+            {
+                UseShellExecute = true
+            });
+
+            e.Handled = true;
         }
     }
 }

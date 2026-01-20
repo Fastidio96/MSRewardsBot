@@ -28,8 +28,6 @@
                    BasedOn="{StaticResource {x:Type Button}}">
                 <Setter Property="VerticalAlignment"
                         Value="Center" />
-                <Setter Property="MaxWidth"
-                        Value="75" />
             </Style>
         </ResourceDictionary>
     </Window.Resources>
@@ -53,11 +51,10 @@
                        Grid.Column="1"
                        Grid.ColumnSpan="2"
                        Name="lblTitle"
-                       Text="Settings"
+                       Text="Edit settings"
                        VerticalAlignment="Center"
                        FontSize="18"
                        FontWeight="DemiBold"
-                       
                        HorizontalAlignment="Center" />
 
             <Label Grid.Row="1"
@@ -90,7 +87,7 @@
             <Button Grid.Row="4"
                     Grid.Column="1"
                     Grid.ColumnSpan="2"
-                    Content="Save"
+                    Content="Save and disconnect from this server"
                     Name="btnSubmit"
                     Click="btnSubmit_Click" />
         </Grid>

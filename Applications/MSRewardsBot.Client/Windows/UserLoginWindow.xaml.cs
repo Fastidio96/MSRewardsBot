@@ -41,6 +41,7 @@ namespace MSRewardsBot.Client.Windows
             else
             {
                 _viewModel.Dispose();
+                Environment.Exit(0);
             }
         }
 
