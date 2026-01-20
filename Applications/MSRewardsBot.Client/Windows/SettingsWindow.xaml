@@ -1,0 +1,98 @@
+﻿<Window x:Class="MSRewardsBot.Client.Windows.SettingsWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:MSRewardsBot.Client.Windows"
+        mc:Ignorable="d"
+        Title="MS Rewards Bot Client"
+        Height="275"
+        Width="400"
+        ResizeMode="CanMinimize"
+        WindowStartupLocation="CenterScreen"
+        WindowStyle="SingleBorderWindow"
+        Background="LightGray">
+    <Window.Resources>
+        <ResourceDictionary>
+            <Style TargetType="Label"
+                   BasedOn="{StaticResource {x:Type Label}}">
+                <Setter Property="VerticalAlignment"
+                        Value="Center" />
+            </Style>
+            <Style TargetType="TextBox"
+                   BasedOn="{StaticResource {x:Type TextBox}}">
+                <Setter Property="VerticalAlignment"
+                        Value="Center" />
+            </Style>
+            <Style TargetType="Button"
+                   BasedOn="{StaticResource {x:Type Button}}">
+                <Setter Property="VerticalAlignment"
+                        Value="Center" />
+                <Setter Property="MaxWidth"
+                        Value="75" />
+            </Style>
+        </ResourceDictionary>
+    </Window.Resources>
+    <Grid>
+        <Grid>
+            <Grid.RowDefinitions>
+                <RowDefinition Height="*" />
+                <RowDefinition Height="*" />
+                <RowDefinition Height="*" />
+                <RowDefinition Height="*" />
+                <RowDefinition Height="*" />
+            </Grid.RowDefinitions>
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="60" />
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="2*" />
+                <ColumnDefinition Width="60" />
+            </Grid.ColumnDefinitions>
+
+            <TextBlock Grid.Row="0"
+                       Grid.Column="1"
+                       Grid.ColumnSpan="2"
+                       Name="lblTitle"
+                       Text="Settings"
+                       VerticalAlignment="Center"
+                       FontSize="18"
+                       FontWeight="DemiBold"
+                       
+                       HorizontalAlignment="Center" />
+
+            <Label Grid.Row="1"
+                   Grid.Column="1">Server Host</Label>
+            <TextBox Grid.Row="1"
+                     Grid.Column="2"
+                     TabIndex="0"
+                     Name="txtSrvHost"
+                     MaxLength="64"
+                     Text="{Binding ServerHost}"
+                     TextChanged="txtSrvHost_TextChanged" />
+
+            <Label Grid.Row="2"
+                   Grid.Column="1">Server Port</Label>
+            <TextBox Grid.Row="2"
+                     Grid.Column="2"
+                     TabIndex="1"
+                     Name="txtSrvPort"
+                     MaxLength="5"
+                     Text="{Binding ServerPort}"
+                     TextChanged="txtSrvPort_TextChanged" />
+
+            <Label Grid.Row="3"
+                   Grid.Column="1">HTTPS</Label>
+            <CheckBox Grid.Row="3"
+                      Grid.Column="2"
+                      Name="chkProtocol"
+                      IsChecked="{Binding IsHttpsEnabled}" />
+
+            <Button Grid.Row="4"
+                    Grid.Column="1"
+                    Grid.ColumnSpan="2"
+                    Content="Save"
+                    Name="btnSubmit"
+                    Click="btnSubmit_Click" />
+        </Grid>
+    </Grid>
+</Window>

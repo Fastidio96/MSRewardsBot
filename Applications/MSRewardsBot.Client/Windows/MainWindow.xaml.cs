@@ -1,6 +1,5 @@
 ﻿using System.Windows;
 using MSRewardsBot.Client.DataEntities;
-using MSRewardsBot.Common;
 
 namespace MSRewardsBot.Client.Windows
 {

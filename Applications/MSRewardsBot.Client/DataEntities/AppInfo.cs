@@ -10,9 +10,6 @@ using MSRewardsBot.Common.DataEntities.Stats;
 
 namespace MSRewardsBot.Client.DataEntities
 {
-    /// <summary>
-    /// Stored into RAM
-    /// </summary>
     public class AppInfo : INotifyPropertyChanged
     {
         public event PropertyChangedEventHandler? PropertyChanged;

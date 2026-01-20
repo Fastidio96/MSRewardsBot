@@ -11,20 +11,23 @@ using MSRewardsBot.Common;
 using MSRewardsBot.Common.DataEntities.Accounting;
 using MSRewardsBot.Common.DataEntities.Interfaces;
 using MSRewardsBot.Common.DataEntities.Stats;
+using MSRewardsBot.Common.Utilities;
 
 namespace MSRewardsBot.Client.Services
 {
     public class ConnectionService
     {
         private HubConnection _connection { get; set; }
-        private AppInfo _appInfo;
+        private readonly AppInfo _appInfo;
+        private readonly AppData _appData;
 
-        private List<IDisposable> _disposables = new List<IDisposable>();
+        private readonly List<IDisposable> _disposables = new List<IDisposable>();
         private bool _isDisposing = false;
 
-        public ConnectionService(AppInfo info)
+        public ConnectionService(AppInfo info, AppData data)
         {
             _appInfo = info;
+            _appData = data;
         }
 
         public async Task ConnectAsync()
@@ -40,7 +43,9 @@ namespace MSRewardsBot.Client.Services
                 }
 
                 _connection = new HubConnectionBuilder()
-                    .WithUrl(Env.GetClientConnection())
+                    .WithUrl(NetworkUtilities.GetConnectionString(
+                        _appData.IsHttpsEnabled, _appData.ServerHost, _appData.ServerPort, true
+                    ))
                     .WithAutomaticReconnect()
                     .Build();
 
@@ -103,7 +108,7 @@ namespace MSRewardsBot.Client.Services
                 return;
             }
 
-            if(_connection.State == HubConnectionState.Connected)
+            if (_connection.State == HubConnectionState.Connected)
             {
                 await _connection.StopAsync();
             }

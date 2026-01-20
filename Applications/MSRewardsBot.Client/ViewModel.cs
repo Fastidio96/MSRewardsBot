@@ -2,8 +2,8 @@
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
+using System.Net;
 using System.Threading.Tasks;
-using System.Windows;
 using MSRewardsBot.Client.DataEntities;
 using MSRewardsBot.Client.Services;
 using MSRewardsBot.Client.Windows;
@@ -25,6 +25,7 @@ namespace MSRewardsBot.Client
         private SplashScreenWindow _splashScreenWindow;
         private MSLoginWindow _msLoginWindow;
         private UserLoginWindow _userLoginWindow;
+        private SettingsWindow _settingsWindow;
 
         public ViewModel()
         {
@@ -33,18 +34,21 @@ namespace MSRewardsBot.Client
         public async void Init()
         {
             _appInfo = new AppInfo();
-            _connection = new ConnectionService(_appInfo);
 
-            _splashScreenWindow = new SplashScreenWindow(_appInfo);
-            _splashScreenWindow.Show();
-
-            await _connection.ConnectAsync();
-            if (!FileManager.LoadData(out _appData))
+            bool validData = FileManager.LoadData(out _appData) && IsValidConnectionSettings(_appData);
+            if (!validData)
             {
                 _appInfo.IsUserLogged = false;
+                EditSettings(_appData);
             }
             else
             {
+                _connection = new ConnectionService(_appInfo, _appData);
+                await _connection.ConnectAsync();
+
+                _splashScreenWindow = new SplashScreenWindow(_appInfo);
+                _splashScreenWindow.Show();
+
                 _appInfo.IsUserLogged = _token != Guid.Empty &&
                     await _connection.LoginWithToken(_token);
             }
@@ -52,15 +56,18 @@ namespace MSRewardsBot.Client
             _mainWindow = new MainWindow(this, _splashScreenWindow, _appInfo);
             App.Current.MainWindow = _mainWindow;
 
-            if (_appInfo.IsUserLogged)
+            if (validData)
             {
-                _mainWindow.Show();
-                await GetUserInfo();
-            }
-            else
-            {
-                _userLoginWindow = new UserLoginWindow(this, _splashScreenWindow);
-                _userLoginWindow.Show();
+                if (_appInfo.IsUserLogged)
+                {
+                    _mainWindow.Show();
+                    await GetUserInfo();
+                }
+                else
+                {
+                    _userLoginWindow = new UserLoginWindow(this, _splashScreenWindow);
+                    _userLoginWindow.Show();
+                }
             }
         }
 
@@ -134,14 +141,18 @@ namespace MSRewardsBot.Client
             return true;
         }
 
-        public async Task Logout()
+        public async Task Logout(bool deleteData = true)
         {
             if (_token != Guid.Empty)
             {
                 await _connection.Logout(_token);
             }
 
-            FileManager.SaveData(new AppData());
+            if (deleteData)
+            {
+                FileManager.SaveData(new AppData());
+            }
+
             Dispose();
 
             ProcessStartInfo psi = new ProcessStartInfo
@@ -153,6 +164,50 @@ namespace MSRewardsBot.Client
             };
             Process.Start(psi);
             Environment.Exit(0);
+        }
+
+        public void EditSettings(AppData data)
+        {
+            if (_settingsWindow != null && _settingsWindow.IsVisible)
+            {
+                return;
+            }
+
+            _settingsWindow = new SettingsWindow(this, data);
+            _settingsWindow.Show();
+        }
+
+        public bool IsValidConnectionSettings(AppData data)
+        {
+            return IsValidConnectionSettings(data.ServerHost, data.ServerPort);
+        }
+
+        public bool IsValidConnectionSettings(string host, string port)
+        {
+            if (string.IsNullOrEmpty(host) || Uri.CheckHostName(host) == UriHostNameType.Unknown)
+            {
+                return false;
+            }
+
+            if (port.Length != 5 || !int.TryParse(port, out _))
+            {
+                return false;
+            }
+
+            return true;
+        }
+
+        public async Task<bool> SaveSettings()
+        {
+            if (!FileManager.SaveData(_appData))
+            {
+                return false;
+            }
+
+            _appData.AuthToken = null;
+
+            await Logout(false);
+            return true;
         }
 
         public void AddMSAccount()
@@ -179,7 +234,11 @@ namespace MSRewardsBot.Client
 
         public async void Dispose()
         {
-            await _connection?.DisconnectAsync(); // Closes connection gracefully with the server
+            if(_connection != null)
+            {
+                await _connection.DisconnectAsync(); // Closes connection gracefully with the server
+            }
+
             Utils.KillWebViewProcess(); // Clean any garbage process made by web view (thanks microsoft)
             Environment.Exit(0);
         }
