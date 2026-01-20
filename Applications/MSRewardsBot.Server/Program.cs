@@ -55,12 +55,12 @@ namespace MSRewardsBot.Server
             builder.Logging.AddFilter("Microsoft.AspNetCore.Http.Connections", LogLevel.Information);
 
             // Enable Windows Service only on Windows
-            if (RuntimeEnvironment.IsWindows())
+            if (RuntimeEnvironment.IsWindowsService())
             {
                 builder.Services.AddWindowsService();
             }
 
-            builder.WebHost.UseUrls($"{Env.GetServerConnection()}/cmdhub");
+            builder.WebHost.UseUrls(Env.GetServerConnection());
 
             // Add services to the container.
             builder.Services.AddAuthorization();
