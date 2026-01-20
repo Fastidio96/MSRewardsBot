@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 using Microsoft.Playwright;
 using MSRewardsBot.Common.DataEntities.Accounting;
 using MSRewardsBot.Common.Utilities;
@@ -14,6 +15,7 @@ namespace MSRewardsBot.Server.Automation
     public partial class BrowserManager : IDisposable
     {
         private readonly ILogger<BrowserManager> _logger;
+        private readonly IOptions<Settings> _settings;
         private readonly RealTimeData _rt;
 
         private IPlaywright _playwright;
@@ -24,9 +26,10 @@ namespace MSRewardsBot.Server.Automation
 
         private bool _isDisposing = false;
 
-        public BrowserManager(ILogger<BrowserManager> logger, RealTimeData rt)
+        public BrowserManager(ILogger<BrowserManager> logger, IOptions<Settings> settings, RealTimeData rt)
         {
             _logger = logger;
+            _settings = settings;
             _rt = rt;
         }
 
@@ -65,7 +68,7 @@ namespace MSRewardsBot.Server.Automation
 
             if (_browser == null)
             {
-                if (Settings.UseFirefox)
+                if (_settings.Value.UseFirefox)
                 {
                     List<string> args =
                     [
@@ -142,7 +145,7 @@ namespace MSRewardsBot.Server.Automation
 
             while (!_isDisposing)
             {
-                if (_browser != null && DateTime.Now - _lastUsed > new TimeSpan(0, 0, Settings.MaxSecsWaitBetweenSearches + 60))
+                if (_browser != null && DateTime.Now - _lastUsed > new TimeSpan(0, 0, _settings.Value.MaxSecsWaitBetweenSearches + 60))
                 {
                     _logger.LogDebug("Browser idle timeout reached, closing...");
                     await CloseBrowser();
@@ -161,7 +164,7 @@ namespace MSRewardsBot.Server.Automation
             {
                 await CreateBrowser();
 
-                if (Settings.UseFirefox)
+                if (_settings.Value.UseFirefox)
                 {
                     await CreateFirefoxStealthContext(data, isMobile);
                 }

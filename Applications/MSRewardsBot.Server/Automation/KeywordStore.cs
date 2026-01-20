@@ -13,14 +13,15 @@ namespace MSRewardsBot.Server.Automation
     public class KeywordStore
     {
         private const string URL_BASE = "https://trends.google.com/trending/rss?geo=";
-        private readonly string[] _countries = ["IT", "US", "GB", "DE", "FR", "ES"];
+        private readonly string[] _countries;
 
         private string _filePath;
 
         public DateTime LastRefresh { get; private set; }
 
-        public KeywordStore()
+        public KeywordStore(string[] countries)
         {
+            _countries = countries;
             _filePath = Utils.GetKeywordsFile();
         }
 

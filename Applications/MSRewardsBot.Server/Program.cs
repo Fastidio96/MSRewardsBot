@@ -25,6 +25,7 @@ namespace MSRewardsBot.Server
         public static void Main(string[] args)
         {
             WebApplicationBuilder builder = WebApplication.CreateBuilder(args);
+            builder.Services.Configure<Settings>(builder.Configuration);
 
             if (!RuntimeEnvironment.IsWindowsService())
             {
@@ -59,7 +60,7 @@ namespace MSRewardsBot.Server
                 builder.Services.AddWindowsService();
             }
 
-            builder.WebHost.UseUrls(Env.GetServerConnection());
+            builder.WebHost.UseUrls($"{Env.GetServerConnection()}/cmdhub");
 
             // Add services to the container.
             builder.Services.AddAuthorization();
@@ -108,7 +109,7 @@ namespace MSRewardsBot.Server
 
             System.Threading.Tasks.TaskScheduler.UnobservedTaskException += TaskScheduler_UnobservedTaskException;
 
-            app.MapHub<CommandHub>($"/{Env.SERVER_HUB_NAME}");
+            app.MapHub<CommandHub>("/cmdhub");
 
             // Configure the HTTP request pipeline.
             //            if (Env.IS_HTTPS_ENABLED)

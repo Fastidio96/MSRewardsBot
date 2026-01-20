@@ -2,8 +2,8 @@
 using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
-using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 using MSRewardsBot.Common.DataEntities.Accounting;
 using MSRewardsBot.Common.DataEntities.Stats;
 using MSRewardsBot.Common.Utilities;
@@ -18,6 +18,7 @@ namespace MSRewardsBot.Server.Core
     public class Server : IDisposable
     {
         private readonly ILogger<Server> _logger;
+        private readonly IOptions<Settings> _settings;
         private readonly BusinessFactory _businessFactory;
         private readonly RealTimeData _rt;
         private readonly IConnectionManager _connectionManager;
@@ -35,6 +36,7 @@ namespace MSRewardsBot.Server.Core
         public Server
         (
             ILogger<Server> logger,
+            IOptions<Settings> settings,
             BusinessFactory businessFactory,
             RealTimeData rt,
             IConnectionManager connectionManager,
@@ -44,6 +46,7 @@ namespace MSRewardsBot.Server.Core
         )
         {
             _logger = logger;
+            _settings = settings;
             _businessFactory = businessFactory;
             _rt = rt;
             _connectionManager = connectionManager;
@@ -51,7 +54,7 @@ namespace MSRewardsBot.Server.Core
             _browser = browser;
             _taskScheduler = taskScheduler;
 
-            _keywordStore = new KeywordStore();
+            _keywordStore = new KeywordStore(_settings.Value.KeywordsListCountries);
             _keywordProvider = new KeywordProvider(_keywordStore);
         }
 
@@ -63,7 +66,7 @@ namespace MSRewardsBot.Server.Core
             _mainThread.Name = nameof(AccountLoop);
             _mainThread.Start();
 
-            if (Settings.IsClientUpdaterEnabled)
+            if (_settings.Value.IsClientUpdaterEnabled)
             {
                 _clientsThread = new Thread(ClientLoop);
                 _clientsThread.Name = nameof(ClientLoop);
@@ -128,7 +131,7 @@ namespace MSRewardsBot.Server.Core
 
             while (!_isDisposing)
             {
-                if (DateTimeUtilities.HasElapsed(DateTime.Now, _keywordStore.LastRefresh, Settings.KeywordsListRefresh))
+                if (DateTimeUtilities.HasElapsed(DateTime.Now, _keywordStore.LastRefresh, _settings.Value.KeywordsListRefresh))
                 {
                     if (await _keywordStore.RefreshList())
                     {
@@ -190,10 +193,10 @@ namespace MSRewardsBot.Server.Core
                         }
                     }
 
-                    if (DateTimeUtilities.HasElapsed(now, cache.Stats.LastDashboardCheck, Settings.DashboardCheck))
+                    if (DateTimeUtilities.HasElapsed(now, cache.Stats.LastDashboardCheck, _settings.Value.DashboardCheck))
                     {
                         cache.Stats.LastDashboardCheck = now; //Fix for not queueing the same job while we wait for the job's completion
-                        if (DateTimeUtilities.HasElapsed(now, cache.Stats.LastDashboardUpdate, Settings.DashboardUpdate))
+                        if (DateTimeUtilities.HasElapsed(now, cache.Stats.LastDashboardUpdate, _settings.Value.DashboardUpdate))
                         {
                             AddJobDashboardUpdate(cache);
                         }
@@ -204,7 +207,7 @@ namespace MSRewardsBot.Server.Core
                         continue;
                     }
 
-                    if (DateTimeUtilities.HasElapsed(now, cache.Stats.LastSearchesCheck, Settings.SearchesCheck))
+                    if (DateTimeUtilities.HasElapsed(now, cache.Stats.LastSearchesCheck, _settings.Value.SearchesCheck))
                     {
                         cache.Stats.LastSearchesCheck = now;
 
@@ -233,7 +236,7 @@ namespace MSRewardsBot.Server.Core
                             {
                                 start = start.AddSeconds
                                     (
-                                        Random.Shared.Next(Settings.MinSecsWaitBetweenSearches, Settings.MaxSecsWaitBetweenSearches)
+                                        Random.Shared.Next(_settings.Value.MinSecsWaitBetweenSearches, _settings.Value.MaxSecsWaitBetweenSearches)
                                     );
 
                                 string keyword = await _keywordProvider.GetKeyword();
@@ -405,7 +408,7 @@ namespace MSRewardsBot.Server.Core
                 }
             }
 
-            if (Settings.IsClientUpdaterEnabled)
+            if (_settings.Value.IsClientUpdaterEnabled)
             {
                 if (_clientsThread != null)
                 {

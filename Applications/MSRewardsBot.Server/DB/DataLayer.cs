@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 using MSRewardsBot.Common.DataEntities.Accounting;
 
 namespace MSRewardsBot.Server.DB
@@ -10,15 +11,17 @@ namespace MSRewardsBot.Server.DB
     public partial class DataLayer : IDisposable
     {
         private readonly ILogger<DataLayer> _logger;
+        private readonly IOptions<Settings> _settings;
         private readonly MSRBContext _db;
 
 
-        public DataLayer(ILogger<DataLayer> logger, MSRBContext db)
+        public DataLayer(ILogger<DataLayer> logger, IOptions<Settings> settings, MSRBContext db)
         {
             _logger = logger;
+            _settings = settings;
             _db = db;
 
-            if (Settings.IsClientUpdaterEnabled)
+            if (_settings.Value.IsClientUpdaterEnabled)
             {
                 InitUpdater();
             }
@@ -54,7 +57,7 @@ namespace MSRewardsBot.Server.DB
 
         public void Dispose()
         {
-            if(_timer != null)
+            if (_timer != null)
             {
                 _timer.Elapsed -= PollingFileVersion_Elapsed;
                 _timer.Enabled = false;
