@@ -367,19 +367,22 @@ namespace MSRewardsBot.Server.Automation
         {
             _isDisposing = true;
 
-            try
+            if(_browser != null)
             {
-                foreach (IBrowserContext ctx in _browser.Contexts)
+                try
                 {
-                    await ctx.CloseAsync();
-                    await ctx.DisposeAsync();
-                }
+                    foreach (IBrowserContext ctx in _browser.Contexts)
+                    {
+                        await ctx.CloseAsync();
+                        await ctx.DisposeAsync();
+                    }
 
-                await _browser.CloseAsync();
-            }
-            catch (Exception ex)
-            {
-                _logger.Log(LogLevel.Error, ex, "Error while disposing browser");
+                    await _browser.CloseAsync();
+                }
+                catch (Exception ex)
+                {
+                    _logger.Log(LogLevel.Error, ex, "Error while disposing browser");
+                }
             }
 
             if (_idleCheckThread != null)
