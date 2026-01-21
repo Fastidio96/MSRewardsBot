@@ -26,7 +26,9 @@ namespace MSRewardsBot.Server
         public static void Main(string[] args)
         {
             WebApplicationBuilder builder = WebApplication.CreateBuilder(args);
+            
             builder.Services.Configure<Settings>(builder.Configuration);
+            Settings settings = builder.Configuration.Get<Settings>();
 
             if (!RuntimeEnvironment.IsWindowsService())
             {
@@ -44,11 +46,11 @@ namespace MSRewardsBot.Server
                 logbuilder.AddConsoleFormatter<CustomConsoleFormatter, CustomConsoleOptions>(cco =>
                 {
                     cco.UseColors = !RuntimeEnvironment.IsWindowsService();
-                    cco.WriteOnFile = true;
-                    cco.GroupedCategories = true;
+                    cco.WriteOnFile = settings.WriteLogsOnFile;
+                    cco.GroupedCategories = settings.LogsGroupedCategories;
                 });
 
-                logbuilder.SetMinimumLevel(LogLevel.Debug);
+                logbuilder.SetMinimumLevel(settings.MinimumLogLevel);
             });
 
             builder.Logging.AddFilter("Microsoft.AspNetCore", LogLevel.Warning);
@@ -61,7 +63,6 @@ namespace MSRewardsBot.Server
                 builder.Services.AddWindowsService();
             }
 
-            Settings settings = builder.Configuration.Get<Settings>();
             builder.WebHost.UseUrls(NetworkUtilities.GetConnectionString(
                 settings.IsHttpsEnabled, settings.ServerHost, settings.ServerPort
             ));

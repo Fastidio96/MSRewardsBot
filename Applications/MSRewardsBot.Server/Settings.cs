@@ -1,15 +1,22 @@
 ﻿using System;
+using Microsoft.Extensions.Logging;
 
 namespace MSRewardsBot.Server
 {
     public class Settings
     {
+        #region Connection
+
         public bool IsHttpsEnabled { get; set; } = false;
         public string ServerHost { get; set; } = "localhost";
         public string ServerPort { get; set; } = "10500";
 
+        #endregion
+
+        #region Common
+
         /// <summary>
-        /// Disable this for saving performances
+        /// Disable this if you don't need it. It saves performances
         /// </summary>
         public bool IsClientUpdaterEnabled { get; set; } = false;
 
@@ -55,5 +62,15 @@ namespace MSRewardsBot.Server
         /// The intended behavior, however, is that once a keyword is consumed, it should never be reused.
         /// </summary>
         public string[] KeywordsListCountries { get; set; } = ["IT", "US", "GB", "DE", "FR", "ES"];
+
+        #endregion
+
+        #region Logs
+
+        public bool WriteLogsOnFile { get; set; } = true;
+        public bool LogsGroupedCategories { get; set; } = true;
+        public LogLevel MinimumLogLevel { get; set; } = LogLevel.Debug;
+
+        #endregion
     }
 }
