@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Security.Principal;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.SignalR;
 using MSRewardsBot.Common.DataEntities.Accounting;

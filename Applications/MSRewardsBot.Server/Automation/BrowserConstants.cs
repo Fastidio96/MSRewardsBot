@@ -53,7 +53,6 @@ namespace MSRewardsBot.Server.Automation
         public const int DELAY_CLICK = 2000;
         public const int HUMAN_CLICK_BTN_MIN = 200 + DELAY_CLICK;
         public const int HUMAN_CLICK_BTN_MAX = 500 + DELAY_CLICK;
-
         #endregion
 
         public const string UA_PC_FIREFOX = @"Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:138.0) Gecko/20100101 Firefox/138.0";
