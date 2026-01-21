@@ -30,7 +30,7 @@ namespace MSRewardsBot.Server
             builder.Services.Configure<Settings>(builder.Configuration);
             Settings settings = builder.Configuration.Get<Settings>();
 
-            if (!RuntimeEnvironment.IsWindowsService())
+            if (RuntimeEnvironment.IsWindows() && !RuntimeEnvironment.IsWindowsService())
             {
                 Utils.EnableConsoleANSI();
             }
