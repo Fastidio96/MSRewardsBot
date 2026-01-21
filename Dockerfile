@@ -1,17 +1,16 @@
 # =========================
 # Stage 1: Build
 # =========================
-FROM mcr.microsoft.com/dotnet/sdk:9.0-bookworm-slim AS build
+FROM mcr.microsoft.com/dotnet/sdk:9.0-noble AS build
 
 ARG BUILD_CONFIGURATION=Release
 
-# Install git and tools first
-RUN apt-get update \
-    && apt-get install -y --no-install-recommends git wget ca-certificates \
+# Install git (needed for dotnet restore) and minimal tools
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    git \
+    wget \
+    ca-certificates \
     && rm -rf /var/lib/apt/lists/*
-
-# Verify git is available
-RUN git --version
 
 # Set working directory inside container
 WORKDIR /src
@@ -27,6 +26,13 @@ RUN dotnet restore Applications/MSRewardsBot.Server/MSRewardsBot.Server.csproj
 COPY Applications/MSRewardsBot.Server/ Applications/MSRewardsBot.Server/
 COPY Libraries/MSRewardsBot.Common/ Libraries/MSRewardsBot.Common/
 
+# Install Node.js for Playwright only for build stage
+RUN curl -fsSL https://deb.nodesource.com/setup_lts.x | bash - \
+    && apt-get install -y nodejs
+
+# Install Playwright browsers
+RUN npx playwright install --with-deps
+
 # Build and publish
 WORKDIR /src/Applications/MSRewardsBot.Server
 RUN dotnet publish MSRewardsBot.Server.csproj -c $BUILD_CONFIGURATION -o /app/publish /p:UseAppHost=false
@@ -34,15 +40,33 @@ RUN dotnet publish MSRewardsBot.Server.csproj -c $BUILD_CONFIGURATION -o /app/pu
 # =========================
 # Stage 2: Runtime
 # =========================
-FROM mcr.microsoft.com/dotnet/aspnet:9.0-bookworm-slim AS runtime
+FROM mcr.microsoft.com/dotnet/aspnet:9.0-noble AS runtime
+
+# Environment variables
+ENV IsHttpsEnabled=false
+ENV ServerHost=0.0.0.0
+ENV ServerPort=10500
+ENV IsClientUpdaterEnabled=false
+ENV UseFirefox=true
+ENV MinSecsWaitBetweenSearches=180
+ENV MaxSecsWaitBetweenSearches=180
+ENV DashboardCheck="12:00:00"
+ENV SearchesCheck="06:00:00"
+ENV KeywordsListRefresh="03:00:00"
+ENV KeywordsListCountries="IT,US,GB,DE,FR,ES"
+ENV WriteLogsOnFile=true
+ENV LogsGroupedCategories=true
+ENV MinimumLogLevel="Debug"
+
 
 WORKDIR /app
 
-# Install minimal dependencies for Playwright browsers
+# Install Playwright dependencies for Ubuntu 24.04
 RUN apt-get update && apt-get install -y --no-install-recommends \
     ca-certificates \
     fonts-liberation \
     wget \
+    git \
     libnss3 \
     libatk1.0-0 \
     libatk-bridge2.0-0 \
@@ -62,17 +86,25 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     libxcursor1 \
     libxi6 \
     libgbm1 \
-    libasound2 \
+    libasound2t64 \
     libpangocairo-1.0-0 \
     libpango-1.0-0 \
-    libgtk-3-0 \
-    libgdk-pixbuf-2.0-0 \
-    libglib2.0-0 \
-    libcairo2 \
-    libcairo-gobject2 \
-    libdbus-1-3 \
-    libfreetype6 \
-    libfontconfig1 \
+    libgtk-4-1 \
+    gstreamer1.0-plugins-base \
+    gstreamer1.0-plugins-good \
+    gstreamer1.0-plugins-bad \
+    gstreamer1.0-libav \
+    libsecret-1-0 \
+    libhyphen0 \
+    libnghttp2-14 \
+    woff2 \
+    libatomic1 \                      
+    libevent-2.1-7t64 \                           
+    libwebpdemux2 \                               
+    libavif16 \                                   
+    libharfbuzz-icu0 \                            
+    libenchant-2-2 \                              
+    libmanette-0.2-0 \     
     && rm -rf /var/lib/apt/lists/*
 
 # Copy published app from build stage
@@ -80,6 +112,9 @@ COPY --from=build /app/publish .
 
 # Create volume mount point for MSRB folder
 VOLUME ["/app/MSRB"]
+
+# Expose port
+EXPOSE 10500
 
 # Set entrypoint
 ENTRYPOINT ["dotnet", "MSRewardsBot.Server.dll"]
