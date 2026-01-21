@@ -78,7 +78,7 @@ namespace MSRewardsBot.Server.Automation
 
                     if (RuntimeEnvironment.IsDocker())
                     {
-                        args.Add("--no-sandbox");
+                        //args.Add("--no-sandbox");
                         args.Add("--disable-dev-shm-usage");
                     }
 
