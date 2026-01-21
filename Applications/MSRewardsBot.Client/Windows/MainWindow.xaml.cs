@@ -29,7 +29,9 @@ namespace MSRewardsBot.Client.Windows
 
             if (!AppConstants.IS_PRODUCTION)
             {
+#pragma warning disable CS0162 // Unreachable code detected
                 Title += " - DEBUG";
+#pragma warning restore CS0162 // Unreachable code detected
             }
         }
 
