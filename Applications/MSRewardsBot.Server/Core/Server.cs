@@ -147,7 +147,6 @@ namespace MSRewardsBot.Server.Core
                     foreach (KeyValuePair<int, MSAccountServerData> cache in _rt.CacheMSAccStats) // Force to update stats
                     {
                         cache.Value.IsFirstTimeUpdateStats = true;
-                        cache.Value.Stats.LastDashboardCheck = DateTime.MinValue;
                         cache.Value.Stats.LastDashboardUpdate = DateTime.MinValue;
                         cache.Value.Stats.LastSearchesCheck = DateTime.MinValue;
                     }
@@ -193,13 +192,10 @@ namespace MSRewardsBot.Server.Core
                         }
                     }
 
-                    if (DateTimeUtilities.HasElapsed(now, cache.Stats.LastDashboardCheck, _settings.Value.DashboardCheck))
+                    if (DateTimeUtilities.HasElapsed(now, cache.Stats.LastDashboardUpdate, _settings.Value.DashboardCheck))
                     {
-                        cache.Stats.LastDashboardCheck = now; //Fix for not queueing the same job while we wait for the job's completion
-                        if (DateTimeUtilities.HasElapsed(now, cache.Stats.LastDashboardUpdate, _settings.Value.DashboardUpdate))
-                        {
-                            AddJobDashboardUpdate(cache);
-                        }
+                        cache.Stats.LastDashboardUpdate = now;
+                        AddJobDashboardUpdate(cache);
                     }
 
                     if (cache.IsFirstTimeUpdateStats)
@@ -348,7 +344,7 @@ namespace MSRewardsBot.Server.Core
                                     {
                                         _logger.LogWarning("Job {name} failed", nameof(DashboardUpdateCommand));
 
-                                        data.Stats.LastDashboardCheck = DateTime.MinValue; // Retry again after failure
+                                        data.Stats.LastDashboardUpdate = DateTime.MinValue; // Retry again after failure
                                     }
                                 });
 

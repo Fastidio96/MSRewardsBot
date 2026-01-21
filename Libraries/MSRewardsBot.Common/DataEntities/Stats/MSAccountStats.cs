@@ -159,9 +159,6 @@ namespace MSRewardsBot.Common.DataEntities.Stats
         private DateTime _lastDashboardUpdate;
 
         [JsonIgnore]
-        public DateTime LastDashboardCheck { get; set; }
-
-        [JsonIgnore]
         public DateTime LastSearchesCheck { get; set; }
 
         public int MSAccountId { get; set; }

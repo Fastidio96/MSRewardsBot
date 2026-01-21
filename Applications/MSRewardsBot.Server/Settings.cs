@@ -36,14 +36,9 @@ namespace MSRewardsBot.Server
         public int MaxSecsWaitBetweenSearches { get; set; } = 600;
 
         /// <summary>
-        /// Define the amount of time the program check for the dashboard action
-        /// </summary>
-        public TimeSpan DashboardCheck { get; set; } = new TimeSpan(12, 0, 0);
-
-        /// <summary>
         /// Define the amount of time the program check if there any dashboard update(stats) job to do
         /// </summary>
-        public TimeSpan DashboardUpdate { get; set; } = new TimeSpan(0, 15, 0);
+        public TimeSpan DashboardCheck { get; set; } = new TimeSpan(12, 0, 0);
 
         /// <summary>
         /// Define the amount of time the program check if there any search job to do
