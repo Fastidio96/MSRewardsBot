@@ -50,7 +50,7 @@ namespace MSRewardsBot.Client.Windows
         {
             _appData.ServerHost = txtSrvHost.Text;
             _appData.ServerPort = txtSrvPort.Text;
-            _appData.IsHttpsEnabled = chkProtocol.IsEnabled;
+            _appData.IsHttpsEnabled = (bool)chkProtocol.IsChecked;
 
             if (!await _viewModel.SaveSettings())
             {
