@@ -1,0 +1,35 @@
+version: "3.9"
+
+services:
+  msrb:
+    image: msrb
+    container_name: msrb
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        BUILD_CONFIGURATION: Release
+
+    ports:
+      - "10500:10500"
+
+    environment:
+      IsHttpsEnabled: "false"
+      ServerHost: "0.0.0.0"
+      ServerPort: "10500"
+      IsClientUpdaterEnabled: "false"
+      UseFirefox: "true"
+      MinSecsWaitBetweenSearches: "180"
+      MaxSecsWaitBetweenSearches: "180"
+      DashboardCheck: "12:00:00"
+      SearchesCheck: "06:00:00"
+      KeywordsListRefresh: "03:00:00"
+      KeywordsListCountries: "IT,US,GB,DE,FR,ES"
+      WriteLogsOnFile: "true"
+      LogsGroupedCategories: "true"
+      MinimumLogLevel: "Debug"
+
+    volumes:
+      - msrb-data:/app/MSRB
+
+    restart: unless-stopped
