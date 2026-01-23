@@ -1,6 +1,8 @@
 # Microsoft Rewards Bot
 
 ![Platform](https://img.shields.io/badge/platform-Windows%20%7C%20Linux%20%7C%20Docker-blue)
+![Docker Image](https://img.shields.io/docker/v/fastidio96/msrb?label=docker%20image)
+![Docker Pulls](https://img.shields.io/docker/pulls/fastidio96/msrb)
 ![Client](https://img.shields.io/badge/client-WPF%20(Windows%20only)-informational)
 ![Server](https://img.shields.io/badge/server-.NET-success)
 ![License](https://img.shields.io/badge/license-MIT-green)
