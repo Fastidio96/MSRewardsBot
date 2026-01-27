@@ -31,7 +31,7 @@ RUN curl -fsSL https://deb.nodesource.com/setup_lts.x | bash - \
     && apt-get install -y nodejs
 
 # Install Playwright browsers
-RUN npx playwright install --with-deps
+RUN npm install playwright@1.55.0
 
 # Build and publish
 WORKDIR /src/Applications/MSRewardsBot.Server
