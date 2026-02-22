@@ -20,7 +20,7 @@ services:
       IsClientUpdaterEnabled: "false"
       UseFirefox: "true"
       MinSecsWaitBetweenSearches: "180"
-      MaxSecsWaitBetweenSearches: "180"
+      MaxSecsWaitBetweenSearches: "300"
       DashboardCheck: "12:00:00"
       SearchesCheck: "06:00:00"
       KeywordsListRefresh: "03:00:00"

@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Runtime.Intrinsics.X86;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
@@ -78,14 +79,13 @@ namespace MSRewardsBot.Server.Automation
 
                     if (RuntimeEnvironment.IsDocker())
                     {
-                        //args.Add("--no-sandbox");
                         args.Add("--disable-dev-shm-usage");
                     }
 
                     _browser = await _playwright.Firefox.LaunchAsync(new BrowserTypeLaunchOptions()
                     {
 #if DEBUG
-                        //Headless = false,
+                        Headless = false,
 #endif
                         Args = args.ToArray(),
                         FirefoxUserPrefs = new Dictionary<string, object>()
@@ -180,6 +180,10 @@ namespace MSRewardsBot.Server.Automation
                     _logger.LogWarning("Cannot install cookies for {Email} | {User}", data.Account.Email, data.Account.User.Username);
                     return false;
                 }
+
+#if DEBUG
+                //await TestCommand(data);
+#endif
             }
             catch (Exception ex)
             {
@@ -236,7 +240,10 @@ namespace MSRewardsBot.Server.Automation
 
         private async Task<bool> CheckIsLogged(MSAccountServerData data)
         {
-            await NavigateToURL(data, BrowserConstants.URL_DASHBOARD);
+            if (!await NavigateToURL(data, BrowserConstants.URL_DASHBOARD))
+            {
+                return false;
+            }
 
             if (data.Page.Url.StartsWith(BrowserConstants.URL_EXPIRED_COOKIES))
             {
@@ -277,12 +284,12 @@ namespace MSRewardsBot.Server.Automation
                     {
                         if (response == null || !response.Ok)
                         {
-                            _logger.LogWarning("Failed to navigate to {url}", url);
+                            _logger.LogWarning("Failed to navigate to {url}. Request failed.", url);
                             return false;
                         }
                     }
 
-                    await Task.Delay(GetRandomMsTimes(3500, 5000));
+                    await WaitRandomMs(3500, 5000);
                 }
 
                 await data.Page.BringToFrontAsync();
@@ -298,29 +305,46 @@ namespace MSRewardsBot.Server.Automation
             }
         }
 
-        private void LogTraceAction(string actionName)
+        private Task WaitRandomMs(int min, int max)
         {
-            _logger.LogTrace("Logged action {time} {action} ", DateTime.Now.ToString("mm:ss:fff"), actionName.ToUpper());
-        }
-        private TimeSpan GetRandomMsTimes(int min, int max)
-        {
-            return new TimeSpan(0, 0, 0, 0, Random.Shared.Next(min, max));
+            return Task.Delay(new TimeSpan(0, 0, 0, 0, Random.Shared.Next(min, max)));
         }
 
-        private async Task<bool> WriteAsHuman(IPage page, string keyword, string selectorSearchbar)
+        private async Task HumanScroll(IPage page)
+        {
+            await page.BringToFrontAsync();
+
+            int diff = Random.Shared.Next(7, 12); //pixel difference
+            int delta = Random.Shared.Next(300, 1200) / diff; //how much time needs to be executed
+
+            for (int i = 0; i < delta; i++)
+            {
+                await page.Mouse.WheelAsync(0, diff);
+
+                if (Random.Shared.Next(0, 1) == 1)
+                {
+                    await Task.Delay(Random.Shared.Next(3, 8));
+                }
+            }
+        }
+
+        private async Task<bool> WriteSearchAsHuman(IPage page, string keyword)
         {
             //Wait for the animation to finish
-            await Task.Delay(GetRandomMsTimes(1000, 1600));
+            await WaitRandomMs(1000, 2000);
+
+            await WaitRandomMs(BrowserConstants.HUMAN_ACTION_MIN, BrowserConstants.HUMAN_ACTION_MAX);
 
             try
             {
-                char[] split = keyword.ToCharArray();
-                foreach (char cr in split)
-                {
-                    string js = selectorSearchbar.Replace("{keyword}", cr.ToString());
-                    await page.EvaluateAsync(js);
+                ILocator searchbar = page.Locator(BrowserConstants.SEARCHBAR_TEXTAREA);
+                await searchbar.WaitForAsync();
+                await searchbar.FocusAsync();
 
-                    await Task.Delay(GetRandomMsTimes(BrowserConstants.HUMAN_WRITING_MIN, BrowserConstants.HUMAN_WRITING_MAX));
+                foreach (char cr in keyword.ToCharArray())
+                {
+                    await page.Keyboard.TypeAsync(cr.ToString());
+                    await WaitRandomMs(BrowserConstants.HUMAN_WRITING_MIN, BrowserConstants.HUMAN_WRITING_MAX);
                 }
 
                 return true;
@@ -367,7 +391,7 @@ namespace MSRewardsBot.Server.Automation
         {
             _isDisposing = true;
 
-            if(_browser != null)
+            if (_browser != null)
             {
                 try
                 {

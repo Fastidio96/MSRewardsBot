@@ -31,7 +31,7 @@ RUN curl -fsSL https://deb.nodesource.com/setup_lts.x | bash - \
     && apt-get install -y nodejs
 
 # Install Playwright browsers
-RUN npm install playwright@1.55.0
+RUN npm install playwright@1.58.0
 
 # Build and publish
 WORKDIR /src/Applications/MSRewardsBot.Server
@@ -49,7 +49,7 @@ ENV ServerPort=10500
 ENV IsClientUpdaterEnabled=false
 ENV UseFirefox=true
 ENV MinSecsWaitBetweenSearches=180
-ENV MaxSecsWaitBetweenSearches=180
+ENV MaxSecsWaitBetweenSearches=300
 ENV DashboardCheck="12:00:00"
 ENV SearchesCheck="06:00:00"
 ENV KeywordsListRefresh="03:00:00"

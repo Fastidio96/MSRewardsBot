@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
+using Microsoft.Playwright;
 using MSRewardsBot.Common.DataEntities.Stats;
 using MSRewardsBot.Server.DataEntities;
 
@@ -13,20 +14,18 @@ namespace MSRewardsBot.Server.Automation
             _logger.LogInformation("Dashboard update started for {User} | {Data}", data.Account.User.Username, data.Account.Email);
 
             if (!await NavigateToURL(data, BrowserConstants.URL_DASHBOARD_PTS_BREAKDOWN))
-            //if (!await NavigateToURL(data, "https://deviceandbrowserinfo.com/are_you_a_bot"))
-            //if (!await NavigateToURL(data, "https://deviceandbrowserinfo.com/info_device"))
             {
                 return false;
             }
 
-            await Task.Delay(GetRandomMsTimes(5000, 10000));
+            await WaitRandomMs(5000, 10000);
 
             bool res = true;
 
             try
             {
-                string selector = await data.Page.EvaluateAsync<string>(BrowserConstants.SELECTOR_ACCOUNT_BANNED);
-                if(selector != null)
+                ILocator selector = data.Page.Locator(BrowserConstants.SELECTOR_ACCOUNT_BANNED);
+                if(await selector.CountAsync() > 0)
                 {
                     _logger.LogWarning("Account {Data} is banned!", data.Account.Email);
                     data.Account.IsAccountBanned = true;
@@ -44,7 +43,8 @@ namespace MSRewardsBot.Server.Automation
             {
                 if (string.IsNullOrEmpty(data.Account.Email))
                 {
-                    data.Account.Email = await data.Page.EvaluateAsync<string>(BrowserConstants.SELECTOR_EMAIL);
+                    data.Account.Email = await data.Page.Locator(BrowserConstants.SELECTOR_EMAIL).InnerHTMLAsync();
+                    data.Account.Email = data.Account.Email.Trim();
                     _logger.LogInformation("New account email found. {Email}", data.Account.Email);
                 }
             }
@@ -56,7 +56,7 @@ namespace MSRewardsBot.Server.Automation
 
             try
             {
-                string totPts = await data.Page.EvaluateAsync<string>(BrowserConstants.SELECTOR_ACCOUNT_TOTAL_POINTS);
+                string totPts = await data.Page.Locator(BrowserConstants.SELECTOR_ACCOUNT_TOTAL_POINTS).InnerTextAsync();
                 totPts = totPts.Trim();
 
                 if (int.TryParse(totPts, out int totalPts))
@@ -73,7 +73,7 @@ namespace MSRewardsBot.Server.Automation
 
             try
             {
-                string accLevel = await data.Page.EvaluateAsync<string>(BrowserConstants.SELECTOR_ACCOUNT_LEVEL);
+                string accLevel = await data.Page.Locator(BrowserConstants.SELECTOR_ACCOUNT_LEVEL).InnerTextAsync();
                 accLevel = accLevel.Trim();
                 string nLev = accLevel.Substring(accLevel.Length - 1, 1);
                 if (int.TryParse(nLev, out int accountLevel))
@@ -90,7 +90,7 @@ namespace MSRewardsBot.Server.Automation
 
             try
             {
-                string pcPoints = await data.Page.EvaluateAsync<string>(BrowserConstants.SELECTOR_BREAKDOWN_PC_POINTS);
+                string pcPoints = await data.Page.Locator(BrowserConstants.SELECTOR_BREAKDOWN_PC_POINTS).InnerTextAsync();
                 pcPoints = pcPoints.Trim();
                 string[] sub = pcPoints.Split('/');
 
@@ -118,7 +118,7 @@ namespace MSRewardsBot.Server.Automation
             {
                 try
                 {
-                    string accLevelRatioPts = await data.Page.EvaluateAsync<string>(BrowserConstants.SELECTOR_ACCOUNT_LEVEL_POINTS);
+                    string accLevelRatioPts = await data.Page.Locator(BrowserConstants.SELECTOR_ACCOUNT_LEVEL_POINTS).InnerTextAsync();
                     accLevelRatioPts = accLevelRatioPts.Trim();
                     string[] split = accLevelRatioPts.Split('/');
                     string nLevPts = split[0].Trim();
@@ -141,7 +141,7 @@ namespace MSRewardsBot.Server.Automation
 
                 try
                 {
-                    string mobilePoints = await data.Page.EvaluateAsync<string>(BrowserConstants.SELECTOR_BREAKDOWN_MOBILE_POINTS);
+                    string mobilePoints = await data.Page.Locator(BrowserConstants.SELECTOR_BREAKDOWN_MOBILE_POINTS).InnerTextAsync();
                     mobilePoints = mobilePoints.Trim();
                     string[] sub = mobilePoints.Split('/');
 

@@ -20,11 +20,9 @@ namespace MSRewardsBot.Server.Automation
 
             try
             {
-                LogTraceAction("PC_CLICK_BING_HOMEPAGE_LOGIN_BTN");
-                await Task.Delay(GetRandomMsTimes(BrowserConstants.HUMAN_CLICK_BTN_MIN + 2000, BrowserConstants.HUMAN_CLICK_BTN_MAX + 5000));
-                await data.Page.EvaluateAsync(BrowserConstants.PC_CLICK_BING_HOMEPAGE_LOGIN_BTN);
+                await WaitRandomMs(BrowserConstants.HUMAN_ACTION_MIN + 2000, BrowserConstants.HUMAN_ACTION_MAX + 5000);
+                await data.Page.Locator(BrowserConstants.PC_CLICK_BING_HOMEPAGE_LOGIN_BTN).ClickAsync();
 
-                LogTraceAction("PAGE RELOAD");
                 await Task.Delay(new TimeSpan(0, 0, Random.Shared.Next(3, 5)));
                 await data.Page.ReloadAsync(new PageReloadOptions()
                 {
@@ -32,41 +30,27 @@ namespace MSRewardsBot.Server.Automation
                     WaitUntil = WaitUntilState.Load
                 });
 
-                LogTraceAction("PC_CLICK_YES_GDPR_BTN");
-                await Task.Delay(GetRandomMsTimes(BrowserConstants.HUMAN_CLICK_BTN_MIN, BrowserConstants.HUMAN_CLICK_BTN_MAX));
-                await data.Page.EvaluateAsync(BrowserConstants.PC_CLICK_YES_GDPR_BTN);
+                await WaitRandomMs(BrowserConstants.HUMAN_ACTION_MIN, BrowserConstants.HUMAN_ACTION_MAX);
+                await data.Page.Locator(BrowserConstants.BTN_YES_GDPR).ClickAsync();
 
-                LogTraceAction("PC_CLICK_SEARCHBAR_TEXTAREA");
-                await Task.Delay(GetRandomMsTimes(BrowserConstants.HUMAN_CLICK_BTN_MIN, BrowserConstants.HUMAN_CLICK_BTN_MAX));
-                await data.Page.EvaluateAsync(BrowserConstants.PC_CLICK_SEARCHBAR_TEXTAREA);
-
-                LogTraceAction("WRITE_KEYWORD_HOMEPAGE_TEXTAREA");
-                if (!await WriteAsHuman(data.Page, keyword, BrowserConstants.PC_APPEND_KEYWORD_SEARCHBAR_TEXTAREA))
+                if (!await WriteSearchAsHuman(data.Page, keyword))
                 {
                     return false;
                 }
 
-                LogTraceAction("SUBMIT WITH ENTER SEARCHBAR_TEXTAREA");
                 await data.Page.Keyboard.PressAsync("Enter", new KeyboardPressOptions()
                 {
-                    Delay = Random.Shared.Next(BrowserConstants.HUMAN_CLICK_BTN_MIN, BrowserConstants.HUMAN_CLICK_BTN_MAX)
+                    Delay = Random.Shared.Next(BrowserConstants.HUMAN_ACTION_MIN, BrowserConstants.HUMAN_ACTION_MAX)
                 });
 
-                LogTraceAction("SUBMIT SENT SUCCESSFULLY");
                 if (!data.Page.Url.StartsWith(BrowserConstants.URL_SEARCHES))
                 {
                     _logger.LogError("Submit not working");
                     return false;
                 }
 
-                LogTraceAction("Viewing page content & scrolling");
-                for (int i = 0; i < 5; i++)
-                {
-                    await data.Page.Mouse.WheelAsync(0, Random.Shared.Next(200, 700));
-                    await Task.Delay(Random.Shared.Next(200, 500));
-                }
+                await HumanScroll(data.Page);
 
-                LogTraceAction("Resetting start page for next request");
                 await NavigateToURL(data, BrowserConstants.URL_BLANK_PAGE);
 
                 return true;

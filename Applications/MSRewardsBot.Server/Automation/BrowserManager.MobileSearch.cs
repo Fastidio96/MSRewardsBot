@@ -20,42 +20,30 @@ namespace MSRewardsBot.Server.Automation
 
             try
             {
-                LogTraceAction("MOBILE_CLICK_SEARCHBAR_TEXTAREA");
-                await Task.Delay(GetRandomMsTimes(BrowserConstants.HUMAN_CLICK_BTN_MIN, BrowserConstants.HUMAN_CLICK_BTN_MAX));
-                await data.Page.EvaluateAsync(BrowserConstants.MOBILE_CLICK_SEARCHBAR_TEXTAREA);
-
-                LogTraceAction("WRITE_KEYWORD_HOMEPAGE_TEXTAREA");
-                if (!await WriteAsHuman(data.Page, keyword, BrowserConstants.MOBILE_APPEND_KEYWORD_SEARCHBAR_TEXTAREA))
+                if (!await WriteSearchAsHuman(data.Page, keyword))
                 {
+                    _logger.LogError("Auto typing failed");
                     return false;
                 }
 
-                LogTraceAction("SUBMIT WITH ENTER SEARCHBAR_TEXTAREA");
                 await data.Page.Keyboard.PressAsync("Enter", new KeyboardPressOptions()
                 {
-                    Delay = Random.Shared.Next(BrowserConstants.HUMAN_CLICK_BTN_MIN, BrowserConstants.HUMAN_CLICK_BTN_MAX)
+                    Delay = Random.Shared.Next(BrowserConstants.HUMAN_ACTION_MIN, BrowserConstants.HUMAN_ACTION_MAX)
                 });
 
-                LogTraceAction("SUBMIT SENT SUCCESSFULLY");
                 if (!data.Page.Url.StartsWith(BrowserConstants.URL_SEARCHES))
                 {
                     _logger.LogError("Submit not working");
                     return false;
                 }
 
-                LogTraceAction("MOBILE_CLICK_YES_GDPR_BTN");
-                await Task.Delay(GetRandomMsTimes(BrowserConstants.HUMAN_CLICK_BTN_MIN, BrowserConstants.HUMAN_CLICK_BTN_MAX));
-                await data.Page.EvaluateAsync(BrowserConstants.MOBILE_CLICK_YES_GDPR_BTN);
+                await WaitRandomMs(BrowserConstants.HUMAN_ACTION_MIN, BrowserConstants.HUMAN_ACTION_MAX);
+                await data.Page.Locator(BrowserConstants.BTN_YES_GDPR).ClickAsync();
 
-                LogTraceAction("Viewing page content & scrolling");
-                for (int i = 0; i < 5; i++)
-                {
-                    await data.Page.Mouse.WheelAsync(0, Random.Shared.Next(500, 900));
-                    await Task.Delay(Random.Shared.Next(500, 1000));
-                }
+                await HumanScroll(data.Page);
+
                 await Task.Delay(Random.Shared.Next(1000, 3000));
 
-                LogTraceAction("Resetting start page for next request");
                 await NavigateToURL(data, BrowserConstants.URL_BLANK_PAGE);
 
                 return true;
