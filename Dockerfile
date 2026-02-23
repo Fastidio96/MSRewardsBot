@@ -58,6 +58,9 @@ ENV WriteLogsOnFile=true
 ENV LogsGroupedCategories=true
 ENV MinimumLogLevel="Debug"
 
+# Reset .NET environment variables
+ENV ASPNETCORE_HTTP_PORTS=
+ENV ASPNETCORE_HTTPS_PORTS=
 
 WORKDIR /app
 

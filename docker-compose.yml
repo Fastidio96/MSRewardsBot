@@ -28,6 +28,8 @@ services:
       WriteLogsOnFile: "true"
       LogsGroupedCategories: "true"
       MinimumLogLevel: "Debug"
+      ASPNETCORE_HTTP_PORTS: ""
+      ASPNETCORE_HTTPS_PORTS: ""
 
     volumes:
       - msrb-data:/app/MSRB
