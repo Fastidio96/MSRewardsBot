@@ -42,18 +42,30 @@ namespace MSRewardsBot.Server.Automation
                     IReadOnlyList<ILocator> locators = await data.Page.Locator(BrowserConstants.ADDITIONAL_PTS_IMAGE_LOCATOR).AllAsync();
                     foreach (ILocator loc in locators)
                     {
+                        if (!await loc.IsVisibleAsync())
+                        {
+                            continue;
+                        }
+
                         await loc.ScrollIntoViewIfNeededAsync();
                         await WaitRandomMs(1200, 2000);
 
-                        IPage newPage = await data.Page.Context.RunAndWaitForPageAsync(async () =>
+                        try
                         {
-                            await loc.ClickAsync();
-                        });
+                            IPage newPage = await data.Page.Context.RunAndWaitForPageAsync(async () =>
+                            {
+                                await loc.ClickAsync();
+                            });
 
-                        await WaitRandomMs(1500, 5000);
-                        await HumanScroll(newPage);
-                        await WaitRandomMs(3000, 4500);
-                        await newPage.CloseAsync();
+                            await WaitRandomMs(1500, 5000);
+                            await HumanScroll(newPage);
+                            await WaitRandomMs(3000, 4500);
+                            await newPage.CloseAsync();
+                        }
+                        catch
+                        {
+                            continue;
+                        }
                     }
                 }
                 catch (Exception ex)

@@ -37,14 +37,15 @@ namespace MSRewardsBot.Server.Automation
                     return false;
                 }
 
-                await WaitRandomMs(BrowserConstants.HUMAN_ACTION_MIN, BrowserConstants.HUMAN_ACTION_MAX);
-                await data.Page.Locator(BrowserConstants.BTN_YES_GDPR).ClickAsync();
+                if (await data.Page.Locator(BrowserConstants.BTN_YES_GDPR).IsVisibleAsync())
+                {
+                    await WaitRandomMs(BrowserConstants.HUMAN_ACTION_MIN, BrowserConstants.HUMAN_ACTION_MAX);
+                    await data.Page.Locator(BrowserConstants.BTN_YES_GDPR).ClickAsync();
+                }
 
                 await HumanScroll(data.Page);
 
-                await Task.Delay(Random.Shared.Next(1000, 3000));
-
-                await NavigateToURL(data, BrowserConstants.URL_BLANK_PAGE);
+                await WaitRandomMs(1000, 3000);
 
                 return true;
             }

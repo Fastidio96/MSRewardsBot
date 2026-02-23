@@ -21,20 +21,32 @@ namespace MSRewardsBot.Server.Automation
             try
             {
                 await WaitRandomMs(BrowserConstants.HUMAN_ACTION_MIN + 2000, BrowserConstants.HUMAN_ACTION_MAX + 5000);
-                await data.Page.Locator(BrowserConstants.PC_CLICK_BING_HOMEPAGE_LOGIN_BTN).ClickAsync();
 
-                await Task.Delay(new TimeSpan(0, 0, Random.Shared.Next(3, 5)));
+                if (await data.Page.Locator(BrowserConstants.PC_CLICK_BING_HOMEPAGE_LOGIN_BTN).IsVisibleAsync())
+                {
+                    await data.Page.Locator(BrowserConstants.PC_CLICK_BING_HOMEPAGE_LOGIN_BTN).ClickAsync();
+                }
+                else
+                {
+                    _logger.LogWarning("PC_CLICK_BING_HOMEPAGE_LOGIN_BTN not found!");
+                }
+
+                await WaitRandomMs(3000, 5000);
                 await data.Page.ReloadAsync(new PageReloadOptions()
                 {
                     Timeout = 15000,
                     WaitUntil = WaitUntilState.Load
                 });
 
-                await WaitRandomMs(BrowserConstants.HUMAN_ACTION_MIN, BrowserConstants.HUMAN_ACTION_MAX);
-                await data.Page.Locator(BrowserConstants.BTN_YES_GDPR).ClickAsync();
+                if (await data.Page.Locator(BrowserConstants.BTN_YES_GDPR).IsVisibleAsync())
+                {
+                    await WaitRandomMs(BrowserConstants.HUMAN_ACTION_MIN, BrowserConstants.HUMAN_ACTION_MAX);
+                    await data.Page.Locator(BrowserConstants.BTN_YES_GDPR).ClickAsync();
+                }
 
                 if (!await WriteSearchAsHuman(data.Page, keyword))
                 {
+                    _logger.LogError("Auto typing failed");
                     return false;
                 }
 
@@ -51,7 +63,7 @@ namespace MSRewardsBot.Server.Automation
 
                 await HumanScroll(data.Page);
 
-                await NavigateToURL(data, BrowserConstants.URL_BLANK_PAGE);
+                await WaitRandomMs(1000, 3000);
 
                 return true;
             }

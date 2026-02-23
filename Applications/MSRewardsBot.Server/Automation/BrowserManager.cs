@@ -71,8 +71,41 @@ namespace MSRewardsBot.Server.Automation
             {
                 if (_settings.Value.UseFirefox)
                 {
+                    Dictionary<string, object> args = new Dictionary<string, object>()
+                    {
+                        ["network.http.http3.enabled"] = false,
+                        ["security.webauth.webauthn"] = false,
+                        ["media.autoplay.default"] = 0,
+                        ["media.autoplay.blocking_policy"] = 0,
+                        ["browser.shell.checkDefaultBrowser"] = false,
+                        ["startup.homepage_welcome_url"] = BrowserConstants.URL_BLANK_PAGE,
+                        ["startup.homepage_welcome_url.additional"] = "",
+                        ["browser.startup.firstrunSkipsHomepage"] = false,
+                        ["extensions.autoDisableScopes"] = 15,
+                        ["extensions.systemAddon.update.enabled"] = false
+                    };
+
+                    if (RuntimeEnvironment.IsDocker())
+                    {
+                        args.Add("layers.gpu-process.enabled", false);
+                    }
+
+                    _browser = await _playwright.Firefox.LaunchAsync(new BrowserTypeLaunchOptions()
+                    {
+#if DEBUG
+                        //Headless = false,
+#endif
+                        FirefoxUserPrefs = args
+                    });
+                }
+                else
+                {
                     List<string> args =
                     [
+                        "--no-default-browser-check",
+                        "--disable-extensions",
+                        "--disable-blink-features=AutomationControlled",
+                        "--disable-infobars",
                         "--no-default-browser-check",
                         "--disable-extensions"
                     ];
@@ -82,35 +115,12 @@ namespace MSRewardsBot.Server.Automation
                         args.Add("--disable-dev-shm-usage");
                     }
 
-                    _browser = await _playwright.Firefox.LaunchAsync(new BrowserTypeLaunchOptions()
-                    {
-#if DEBUG
-                        Headless = false,
-#endif
-                        Args = args.ToArray(),
-                        FirefoxUserPrefs = new Dictionary<string, object>()
-                        {
-                            ["network.http.http3.enabled"] = false,
-                            ["security.webauth.webauthn"] = false,
-                            ["media.autoplay.default"] = 0,
-                            ["media.autoplay.blocking_policy"] = 0
-                        }
-                    });
-                }
-                else
-                {
                     _browser = await _playwright.Chromium.LaunchAsync(new BrowserTypeLaunchOptions()
                     {
 #if DEBUG
                         //Headless = false,
 #endif
-                        Args =
-                        [
-                            "--disable-blink-features=AutomationControlled",
-                            "--disable-infobars",
-                            "--no-default-browser-check",
-                            "--disable-extensions"
-                        ]
+                        Args = args
                     });
                 }
             }
@@ -230,7 +240,7 @@ namespace MSRewardsBot.Server.Automation
 
             if (!await CheckIsLogged(data))
             {
-                _logger.LogError("Cannot proceed. Expired cookies for {Email} | {User}.",
+                _logger.LogError("Cannot proceed. Redirect failed for {Email} | {User}.",
                     data.Account.Email, data.Account.User.Username);
                 return false;
             }
@@ -245,7 +255,19 @@ namespace MSRewardsBot.Server.Automation
                 return false;
             }
 
-            if (data.Page.Url.StartsWith(BrowserConstants.URL_EXPIRED_COOKIES))
+            int retries = 0;
+            while (data.Page.Url.StartsWith(BrowserConstants.URL_EXPIRED_COOKIES))
+            {
+                retries += 1;
+                if (retries > 5)
+                {
+                    break;
+                }
+
+                await Task.Delay(1000);
+            }
+
+            if (retries > 5)
             {
                 data.Account.IsCookiesExpired = true;
                 return false;
@@ -295,7 +317,7 @@ namespace MSRewardsBot.Server.Automation
                 await data.Page.BringToFrontAsync();
 
                 _logger.LogDebug("Navigated to {url} for {email} | {user}",
-                    url, data.Account.Email, data.Account.User.Username);
+                    data.Page.Url, data.Account.Email, data.Account.User.Username);
                 return true;
             }
             catch (Exception ex)
@@ -347,6 +369,7 @@ namespace MSRewardsBot.Server.Automation
                     await WaitRandomMs(BrowserConstants.HUMAN_WRITING_MIN, BrowserConstants.HUMAN_WRITING_MAX);
                 }
 
+                await WaitRandomMs(BrowserConstants.HUMAN_ACTION_MIN, BrowserConstants.HUMAN_ACTION_MAX);
                 return true;
             }
             catch (Exception ex)
