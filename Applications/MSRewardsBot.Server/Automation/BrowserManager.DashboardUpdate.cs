@@ -25,7 +25,7 @@ namespace MSRewardsBot.Server.Automation
             try
             {
                 ILocator selector = data.Page.Locator(BrowserConstants.SELECTOR_ACCOUNT_BANNED);
-                if(await selector.CountAsync() > 0)
+                if (await selector.CountAsync() > 0)
                 {
                     _logger.LogWarning("Account {Data} is banned!", data.Account.Email);
                     data.Account.IsAccountBanned = true;
@@ -56,13 +56,20 @@ namespace MSRewardsBot.Server.Automation
 
             try
             {
-                string totPts = await data.Page.Locator(BrowserConstants.SELECTOR_ACCOUNT_TOTAL_POINTS).InnerTextAsync();
-                totPts = totPts.Trim();
+                ILocator locTotPts = data.Page.Locator(BrowserConstants.SELECTOR_ACCOUNT_TOTAL_POINTS);
+                await locTotPts.WaitForAsync(new LocatorWaitForOptions() { State = WaitForSelectorState.Visible });
+
+                string totPts = await locTotPts.InnerTextAsync();
+                totPts = totPts.Trim().Replace(",", "");
 
                 if (int.TryParse(totPts, out int totalPts))
                 {
                     _logger.LogDebug("Found value for {stat}: {val}", nameof(MSAccountStats.TotalAccountPoints), totalPts);
                     data.Account.Stats.TotalAccountPoints = totalPts;
+                }
+                else
+                {
+                    _logger.LogWarning("Cannot parse {stat}", nameof(MSAccountStats.TotalAccountPoints));
                 }
             }
             catch (Exception e)
@@ -80,6 +87,10 @@ namespace MSRewardsBot.Server.Automation
                 {
                     _logger.LogDebug("Found value for {stat}: {val}", nameof(MSAccountStats.CurrentAccountLevel), accountLevel);
                     data.Account.Stats.CurrentAccountLevel = accountLevel;
+                }
+                else
+                {
+                    _logger.LogWarning("Cannot parse {stat}", nameof(MSAccountStats.CurrentAccountLevel));
                 }
             }
             catch (Exception e)
@@ -101,10 +112,19 @@ namespace MSRewardsBot.Server.Automation
                         _logger.LogDebug("Found value for {stat}: {val}", nameof(MSAccountStats.CurrentPointsPCSearches), currentPts);
                         data.Account.Stats.CurrentPointsPCSearches = currentPts;
                     }
+                    else
+                    {
+                        _logger.LogWarning("Cannot parse {stat}", nameof(MSAccountStats.CurrentPointsPCSearches));
+                    }
+
                     if (int.TryParse(sub[1], out int maxPts))
                     {
                         _logger.LogDebug("Found value for {stat}: {val}", nameof(MSAccountStats.MaxPointsPCSearches), maxPts);
                         data.Account.Stats.MaxPointsPCSearches = maxPts;
+                    }
+                    else
+                    {
+                        _logger.LogWarning("Cannot parse {stat}", nameof(MSAccountStats.MaxPointsPCSearches));
                     }
                 }
             }
@@ -127,6 +147,10 @@ namespace MSRewardsBot.Server.Automation
                     {
                         _logger.LogDebug("Found value for {stat}: {val}", nameof(MSAccountStats.CurrentAccountLevelPoints), accountPtsLevel);
                         data.Account.Stats.CurrentAccountLevelPoints = accountPtsLevel;
+                    }
+                    else
+                    {
+                        _logger.LogWarning("Cannot parse {stat}", nameof(MSAccountStats.CurrentAccountLevelPoints));
                     }
                 }
                 catch (Exception e)
@@ -152,10 +176,19 @@ namespace MSRewardsBot.Server.Automation
                             _logger.LogDebug("Found value for {stat}: {val}", nameof(MSAccountStats.CurrentPointsMobileSearches), currentPts);
                             data.Account.Stats.CurrentPointsMobileSearches = currentPts;
                         }
+                        else
+                        {
+                            _logger.LogWarning("Cannot parse {stat}", nameof(MSAccountStats.CurrentPointsMobileSearches));
+                        }
+
                         if (int.TryParse(sub[1], out int maxPts))
                         {
                             _logger.LogDebug("Found value for {stat}: {val}", nameof(MSAccountStats.MaxPointsMobileSearches), maxPts);
                             data.Account.Stats.MaxPointsMobileSearches = maxPts;
+                        }
+                        else
+                        {
+                            _logger.LogWarning("Cannot parse {stat}", nameof(MSAccountStats.MaxPointsMobileSearches));
                         }
                     }
                 }
