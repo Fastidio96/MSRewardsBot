@@ -372,7 +372,7 @@ namespace MSRewardsBot.Server.Core
             {
                 file = scope.Business.GetClientUpdateFile();
             }
-                
+
             if (file == null || file.Length == 0)
             {
                 return false;

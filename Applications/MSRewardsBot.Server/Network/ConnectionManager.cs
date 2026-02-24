@@ -45,7 +45,7 @@ namespace MSRewardsBot.Server.Network
             lock (_connections)
             {
                 ClientInfo client = _connections.FirstOrDefault(c => c.ConnectionId == connectionId);
-                if(client == null)
+                if (client == null)
                 {
                     return;
                 }

@@ -6,7 +6,7 @@ namespace MSRewardsBot.Server.DataEntities
 {
     public class MSAccountServerData
     {
-        public IBrowserContext Context {  get; set; }
+        public IBrowserContext Context { get; set; }
         public IPage Page { get; set; }
 
         public bool IsFirstTimeUpdateStats { get; set; }

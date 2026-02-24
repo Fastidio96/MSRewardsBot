@@ -2,7 +2,6 @@
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
-using System.Net;
 using System.Threading.Tasks;
 using MSRewardsBot.Client.DataEntities;
 using MSRewardsBot.Client.Services;
@@ -234,7 +233,7 @@ namespace MSRewardsBot.Client
 
         public async void Dispose()
         {
-            if(_connection != null)
+            if (_connection != null)
             {
                 await _connection.DisconnectAsync(); // Closes connection gracefully with the server
             }

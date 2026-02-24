@@ -7,7 +7,6 @@ using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.SignalR.Client;
 using MSRewardsBot.Client.DataEntities;
-using MSRewardsBot.Common;
 using MSRewardsBot.Common.DataEntities.Accounting;
 using MSRewardsBot.Common.DataEntities.Interfaces;
 using MSRewardsBot.Common.DataEntities.Stats;

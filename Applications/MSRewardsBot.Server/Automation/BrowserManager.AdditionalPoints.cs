@@ -85,17 +85,13 @@ namespace MSRewardsBot.Server.Automation
 
                 await WaitRandomMs(3000, 7000);
 
-                string totPts = await data.Page.Locator(BrowserConstants.SELECTOR_ACCOUNT_TOTAL_POINTS).InnerTextAsync();
-                totPts = totPts.Trim();
-
-                if (!int.TryParse(totPts, out int totalPts))
+                if (!await GetAccTotalPoints(data))
                 {
                     _logger.LogWarning("Cannot get total points from account for {Email} | {User}",
                         data.Account.Email, data.Account.User.Username);
                     return false;
                 }
 
-                data.Account.Stats.TotalAccountPoints = totalPts;
                 int gainedPts = data.Stats.TotalAccountPoints - previousPoints;
 
                 _logger.LogInformation("Gained {pts} points from the dashboard for {Email} | {User}",

@@ -5,7 +5,7 @@ namespace MSRewardsBot.Common.Utilities
 {
     public static class RuntimeEnvironment
     {
-        public static bool IsLinux()  => OperatingSystem.IsLinux() && !IsDocker();
+        public static bool IsLinux() => OperatingSystem.IsLinux() && !IsDocker();
 
         public static bool IsWindows() => OperatingSystem.IsWindows();
 

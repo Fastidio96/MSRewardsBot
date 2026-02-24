@@ -54,27 +54,8 @@ namespace MSRewardsBot.Server.Automation
                 res = false;
             }
 
-            try
+            if (!await GetAccTotalPoints(data))
             {
-                ILocator locTotPts = data.Page.Locator(BrowserConstants.SELECTOR_ACCOUNT_TOTAL_POINTS);
-                await locTotPts.WaitForAsync(new LocatorWaitForOptions() { State = WaitForSelectorState.Visible });
-
-                string totPts = await locTotPts.InnerTextAsync();
-                totPts = totPts.Trim().Replace(",", "");
-
-                if (int.TryParse(totPts, out int totalPts))
-                {
-                    _logger.LogDebug("Found value for {stat}: {val}", nameof(MSAccountStats.TotalAccountPoints), totalPts);
-                    data.Account.Stats.TotalAccountPoints = totalPts;
-                }
-                else
-                {
-                    _logger.LogWarning("Cannot parse {stat}", nameof(MSAccountStats.TotalAccountPoints));
-                }
-            }
-            catch (Exception e)
-            {
-                _logger.LogError("Error: {e}", e.Message);
                 res = false;
             }
 
@@ -200,6 +181,41 @@ namespace MSRewardsBot.Server.Automation
             }
 
             return res;
+        }
+
+        private async Task<bool> GetAccTotalPoints(MSAccountServerData data)
+        {
+            try
+            {
+                if (data.Page.Url != BrowserConstants.URL_DASHBOARD && data.Page.Url != BrowserConstants.URL_DASHBOARD_PTS_BREAKDOWN)
+                {
+                    await NavigateToURL(data, BrowserConstants.URL_DASHBOARD);
+                    await WaitRandomMs(2000, 3000); // Wait for the animation to finish
+                }
+
+                ILocator locTotPts = data.Page.Locator(BrowserConstants.SELECTOR_ACCOUNT_TOTAL_POINTS);
+                await locTotPts.WaitForAsync(new LocatorWaitForOptions() { State = WaitForSelectorState.Visible });
+
+                string totPts = await locTotPts.InnerTextAsync();
+                totPts = totPts.Trim().Replace(",", "");
+
+                if (int.TryParse(totPts, out int totalPts))
+                {
+                    _logger.LogDebug("Found value for {stat}: {val}", nameof(MSAccountStats.TotalAccountPoints), totalPts);
+                    data.Account.Stats.TotalAccountPoints = totalPts;
+                }
+                else
+                {
+                    _logger.LogWarning("Cannot parse {stat}", nameof(MSAccountStats.TotalAccountPoints));
+                }
+
+                return true;
+            }
+            catch (Exception e)
+            {
+                _logger.LogError("Error: {e}", e.Message);
+                return false;
+            }
         }
     }
 }
