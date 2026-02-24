@@ -108,6 +108,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     libharfbuzz-icu0 \                            
     libenchant-2-2 \                              
     libmanette-0.2-0 \     
+    libwayland-server0 \
     && rm -rf /var/lib/apt/lists/*
 
 # Copy published app from build stage
