@@ -1,6 +1,5 @@
 ﻿using Microsoft.Playwright;
 using MSRewardsBot.Common.DataEntities.Accounting;
-using MSRewardsBot.Common.DataEntities.Stats;
 
 namespace MSRewardsBot.Server.DataEntities
 {

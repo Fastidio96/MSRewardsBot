@@ -5,7 +5,6 @@ using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using MSRewardsBot.Common.DataEntities.Accounting;
-using MSRewardsBot.Common.DataEntities.Stats;
 using MSRewardsBot.Common.Utilities;
 using MSRewardsBot.Server.Automation;
 using MSRewardsBot.Server.Core.Factories;

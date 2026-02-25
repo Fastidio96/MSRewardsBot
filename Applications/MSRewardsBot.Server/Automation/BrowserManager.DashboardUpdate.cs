@@ -2,7 +2,7 @@
 using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
 using Microsoft.Playwright;
-using MSRewardsBot.Common.DataEntities.Stats;
+using MSRewardsBot.Common.DataEntities.Accounting;
 using MSRewardsBot.Server.DataEntities;
 
 namespace MSRewardsBot.Server.Automation

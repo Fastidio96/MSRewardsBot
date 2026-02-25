@@ -3,7 +3,7 @@ using System.ComponentModel;
 using System.Runtime.CompilerServices;
 using System.Text.Json.Serialization;
 
-namespace MSRewardsBot.Common.DataEntities.Stats
+namespace MSRewardsBot.Common.DataEntities.Accounting
 {
     public class MSAccountStats : INotifyPropertyChanged
     {

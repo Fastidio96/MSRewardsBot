@@ -13,4 +13,8 @@
 	  <DebugType>none</DebugType>
 	</PropertyGroup>
 
+	<ItemGroup>
+	  <Folder Include="DataEntities\Stats\" />
+	</ItemGroup>
+
 </Project>

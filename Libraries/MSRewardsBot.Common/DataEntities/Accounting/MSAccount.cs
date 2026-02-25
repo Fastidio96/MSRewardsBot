@@ -1,7 +1,6 @@
 ﻿using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations.Schema;
 using System.Text.Json.Serialization;
-using MSRewardsBot.Common.DataEntities.Stats;
 
 namespace MSRewardsBot.Common.DataEntities.Accounting
 {
