@@ -252,7 +252,7 @@ namespace MSRewardsBot.Server.Core
 
                                             cache.Stats.PCSearchCompleted();
 
-                                            if (i == cache.Stats.PCSearchesToDo - 1)
+                                            if (cache.Stats.PCSearchesToDo == cache.Stats.MaxPointsPCSearches)
                                             {
                                                 AddJobDashboardUpdate(cache);
                                             }
@@ -262,7 +262,6 @@ namespace MSRewardsBot.Server.Core
                                             _logger.LogWarning("Job {name} failed for {user}",
                                                 nameof(PCSearchCommand), acc.Email);
 
-                                            cache.Stats.PCSearchFailed();
                                             AddJobDashboardUpdate(cache);
                                         }
                                     });
@@ -299,7 +298,7 @@ namespace MSRewardsBot.Server.Core
 
                                             cache.Stats.MobileSearchCompleted();
 
-                                            if (i == cache.Stats.MobileSearchesToDo - 1)
+                                            if (cache.Stats.MobileSearchesToDo == cache.Stats.MaxPointsMobileSearches)
                                             {
                                                 AddJobDashboardUpdate(cache);
                                             }
@@ -309,7 +308,6 @@ namespace MSRewardsBot.Server.Core
                                             _logger.LogWarning("Job {name} failed for {user}",
                                                 nameof(MobileSearchCommand), acc.Email);
 
-                                            cache.Stats.MobileSearchFailed();
                                             AddJobDashboardUpdate(cache);
                                         }
                                     });

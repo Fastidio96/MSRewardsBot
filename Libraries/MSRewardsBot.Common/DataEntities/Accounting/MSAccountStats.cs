@@ -18,18 +18,10 @@ namespace MSRewardsBot.Common.DataEntities.Accounting
         {
             CurrentPointsPCSearches += _pointsPerSearch;
         }
-        public void PCSearchFailed()
-        {
-            CurrentPointsPCSearches -= _pointsPerSearch;
-        }
 
         public void MobileSearchCompleted()
         {
             CurrentPointsMobileSearches += _pointsPerSearch;
-        }
-        public void MobileSearchFailed()
-        {
-            CurrentPointsMobileSearches -= _pointsPerSearch;
         }
 
         public int TotalAccountPoints
