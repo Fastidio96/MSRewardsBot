@@ -1,7 +1,8 @@
 ﻿using System;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
-using MSRewardsBot.Common.DataEntities.Stats;
+using Microsoft.Playwright;
+using MSRewardsBot.Common.DataEntities.Accounting;
 using MSRewardsBot.Server.DataEntities;
 
 namespace MSRewardsBot.Server.Automation
@@ -13,20 +14,18 @@ namespace MSRewardsBot.Server.Automation
             _logger.LogInformation("Dashboard update started for {User} | {Data}", data.Account.User.Username, data.Account.Email);
 
             if (!await NavigateToURL(data, BrowserConstants.URL_DASHBOARD_PTS_BREAKDOWN))
-            //if (!await NavigateToURL(data, "https://deviceandbrowserinfo.com/are_you_a_bot"))
-            //if (!await NavigateToURL(data, "https://deviceandbrowserinfo.com/info_device"))
             {
                 return false;
             }
 
-            await Task.Delay(GetRandomMsTimes(5000, 10000));
+            await WaitRandomMs(5000, 10000);
 
             bool res = true;
 
             try
             {
-                string selector = await data.Page.EvaluateAsync<string>(BrowserConstants.SELECTOR_ACCOUNT_BANNED);
-                if(selector != null)
+                ILocator selector = data.Page.Locator(BrowserConstants.SELECTOR_ACCOUNT_BANNED);
+                if (await selector.CountAsync() > 0)
                 {
                     _logger.LogWarning("Account {Data} is banned!", data.Account.Email);
                     data.Account.IsAccountBanned = true;
@@ -44,7 +43,8 @@ namespace MSRewardsBot.Server.Automation
             {
                 if (string.IsNullOrEmpty(data.Account.Email))
                 {
-                    data.Account.Email = await data.Page.EvaluateAsync<string>(BrowserConstants.SELECTOR_EMAIL);
+                    data.Account.Email = await data.Page.Locator(BrowserConstants.SELECTOR_EMAIL).InnerHTMLAsync();
+                    data.Account.Email = data.Account.Email.Trim();
                     _logger.LogInformation("New account email found. {Email}", data.Account.Email);
                 }
             }
@@ -54,26 +54,14 @@ namespace MSRewardsBot.Server.Automation
                 res = false;
             }
 
-            try
+            if (!await GetAccTotalPoints(data))
             {
-                string totPts = await data.Page.EvaluateAsync<string>(BrowserConstants.SELECTOR_ACCOUNT_TOTAL_POINTS);
-                totPts = totPts.Trim();
-
-                if (int.TryParse(totPts, out int totalPts))
-                {
-                    _logger.LogDebug("Found value for {stat}: {val}", nameof(MSAccountStats.TotalAccountPoints), totalPts);
-                    data.Account.Stats.TotalAccountPoints = totalPts;
-                }
-            }
-            catch (Exception e)
-            {
-                _logger.LogError("Error: {e}", e.Message);
                 res = false;
             }
 
             try
             {
-                string accLevel = await data.Page.EvaluateAsync<string>(BrowserConstants.SELECTOR_ACCOUNT_LEVEL);
+                string accLevel = await data.Page.Locator(BrowserConstants.SELECTOR_ACCOUNT_LEVEL).InnerTextAsync();
                 accLevel = accLevel.Trim();
                 string nLev = accLevel.Substring(accLevel.Length - 1, 1);
                 if (int.TryParse(nLev, out int accountLevel))
@@ -81,6 +69,10 @@ namespace MSRewardsBot.Server.Automation
                     _logger.LogDebug("Found value for {stat}: {val}", nameof(MSAccountStats.CurrentAccountLevel), accountLevel);
                     data.Account.Stats.CurrentAccountLevel = accountLevel;
                 }
+                else
+                {
+                    _logger.LogWarning("Cannot parse {stat}", nameof(MSAccountStats.CurrentAccountLevel));
+                }
             }
             catch (Exception e)
             {
@@ -90,7 +82,7 @@ namespace MSRewardsBot.Server.Automation
 
             try
             {
-                string pcPoints = await data.Page.EvaluateAsync<string>(BrowserConstants.SELECTOR_BREAKDOWN_PC_POINTS);
+                string pcPoints = await data.Page.Locator(BrowserConstants.SELECTOR_BREAKDOWN_PC_POINTS).InnerTextAsync();
                 pcPoints = pcPoints.Trim();
                 string[] sub = pcPoints.Split('/');
 
@@ -101,10 +93,19 @@ namespace MSRewardsBot.Server.Automation
                         _logger.LogDebug("Found value for {stat}: {val}", nameof(MSAccountStats.CurrentPointsPCSearches), currentPts);
                         data.Account.Stats.CurrentPointsPCSearches = currentPts;
                     }
+                    else
+                    {
+                        _logger.LogWarning("Cannot parse {stat}", nameof(MSAccountStats.CurrentPointsPCSearches));
+                    }
+
                     if (int.TryParse(sub[1], out int maxPts))
                     {
                         _logger.LogDebug("Found value for {stat}: {val}", nameof(MSAccountStats.MaxPointsPCSearches), maxPts);
                         data.Account.Stats.MaxPointsPCSearches = maxPts;
+                    }
+                    else
+                    {
+                        _logger.LogWarning("Cannot parse {stat}", nameof(MSAccountStats.MaxPointsPCSearches));
                     }
                 }
             }
@@ -118,7 +119,7 @@ namespace MSRewardsBot.Server.Automation
             {
                 try
                 {
-                    string accLevelRatioPts = await data.Page.EvaluateAsync<string>(BrowserConstants.SELECTOR_ACCOUNT_LEVEL_POINTS);
+                    string accLevelRatioPts = await data.Page.Locator(BrowserConstants.SELECTOR_ACCOUNT_LEVEL_POINTS).InnerTextAsync();
                     accLevelRatioPts = accLevelRatioPts.Trim();
                     string[] split = accLevelRatioPts.Split('/');
                     string nLevPts = split[0].Trim();
@@ -127,6 +128,10 @@ namespace MSRewardsBot.Server.Automation
                     {
                         _logger.LogDebug("Found value for {stat}: {val}", nameof(MSAccountStats.CurrentAccountLevelPoints), accountPtsLevel);
                         data.Account.Stats.CurrentAccountLevelPoints = accountPtsLevel;
+                    }
+                    else
+                    {
+                        _logger.LogWarning("Cannot parse {stat}", nameof(MSAccountStats.CurrentAccountLevelPoints));
                     }
                 }
                 catch (Exception e)
@@ -141,7 +146,7 @@ namespace MSRewardsBot.Server.Automation
 
                 try
                 {
-                    string mobilePoints = await data.Page.EvaluateAsync<string>(BrowserConstants.SELECTOR_BREAKDOWN_MOBILE_POINTS);
+                    string mobilePoints = await data.Page.Locator(BrowserConstants.SELECTOR_BREAKDOWN_MOBILE_POINTS).InnerTextAsync();
                     mobilePoints = mobilePoints.Trim();
                     string[] sub = mobilePoints.Split('/');
 
@@ -152,10 +157,19 @@ namespace MSRewardsBot.Server.Automation
                             _logger.LogDebug("Found value for {stat}: {val}", nameof(MSAccountStats.CurrentPointsMobileSearches), currentPts);
                             data.Account.Stats.CurrentPointsMobileSearches = currentPts;
                         }
+                        else
+                        {
+                            _logger.LogWarning("Cannot parse {stat}", nameof(MSAccountStats.CurrentPointsMobileSearches));
+                        }
+
                         if (int.TryParse(sub[1], out int maxPts))
                         {
                             _logger.LogDebug("Found value for {stat}: {val}", nameof(MSAccountStats.MaxPointsMobileSearches), maxPts);
                             data.Account.Stats.MaxPointsMobileSearches = maxPts;
+                        }
+                        else
+                        {
+                            _logger.LogWarning("Cannot parse {stat}", nameof(MSAccountStats.MaxPointsMobileSearches));
                         }
                     }
                 }
@@ -167,6 +181,41 @@ namespace MSRewardsBot.Server.Automation
             }
 
             return res;
+        }
+
+        private async Task<bool> GetAccTotalPoints(MSAccountServerData data)
+        {
+            try
+            {
+                if (data.Page.Url != BrowserConstants.URL_DASHBOARD && data.Page.Url != BrowserConstants.URL_DASHBOARD_PTS_BREAKDOWN)
+                {
+                    await NavigateToURL(data, BrowserConstants.URL_DASHBOARD);
+                    await WaitRandomMs(2000, 3000); // Wait for the animation to finish
+                }
+
+                ILocator locTotPts = data.Page.Locator(BrowserConstants.SELECTOR_ACCOUNT_TOTAL_POINTS);
+                await locTotPts.WaitForAsync(new LocatorWaitForOptions() { State = WaitForSelectorState.Visible });
+
+                string totPts = await locTotPts.InnerTextAsync();
+                totPts = totPts.Trim().Replace(",", "");
+
+                if (int.TryParse(totPts, out int totalPts))
+                {
+                    _logger.LogDebug("Found value for {stat}: {val}", nameof(MSAccountStats.TotalAccountPoints), totalPts);
+                    data.Account.Stats.TotalAccountPoints = totalPts;
+                }
+                else
+                {
+                    _logger.LogWarning("Cannot parse {stat}", nameof(MSAccountStats.TotalAccountPoints));
+                }
+
+                return true;
+            }
+            catch (Exception e)
+            {
+                _logger.LogError("Error: {e}", e.Message);
+                return false;
+            }
         }
     }
 }

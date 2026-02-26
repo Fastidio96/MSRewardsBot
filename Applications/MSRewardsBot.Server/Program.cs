@@ -26,7 +26,7 @@ namespace MSRewardsBot.Server
         public static void Main(string[] args)
         {
             WebApplicationBuilder builder = WebApplication.CreateBuilder(args);
-            
+
             builder.Services.Configure<Settings>(builder.Configuration);
             Settings settings = builder.Configuration.Get<Settings>();
 

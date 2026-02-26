@@ -6,7 +6,6 @@ using System.Reflection;
 using System.Runtime.CompilerServices;
 using Microsoft.AspNetCore.SignalR.Client;
 using MSRewardsBot.Common.DataEntities.Accounting;
-using MSRewardsBot.Common.DataEntities.Stats;
 
 namespace MSRewardsBot.Client.DataEntities
 {

@@ -5,7 +5,6 @@ using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using MSRewardsBot.Common.DataEntities.Accounting;
-using MSRewardsBot.Common.DataEntities.Stats;
 using MSRewardsBot.Common.Utilities;
 using MSRewardsBot.Server.Automation;
 using MSRewardsBot.Server.Core.Factories;
@@ -253,7 +252,7 @@ namespace MSRewardsBot.Server.Core
 
                                             cache.Stats.PCSearchCompleted();
 
-                                            if (i == cache.Stats.PCSearchesToDo - 1)
+                                            if (cache.Stats.PCSearchesToDo == cache.Stats.MaxPointsPCSearches)
                                             {
                                                 AddJobDashboardUpdate(cache);
                                             }
@@ -263,7 +262,6 @@ namespace MSRewardsBot.Server.Core
                                             _logger.LogWarning("Job {name} failed for {user}",
                                                 nameof(PCSearchCommand), acc.Email);
 
-                                            cache.Stats.PCSearchFailed();
                                             AddJobDashboardUpdate(cache);
                                         }
                                     });
@@ -300,7 +298,7 @@ namespace MSRewardsBot.Server.Core
 
                                             cache.Stats.MobileSearchCompleted();
 
-                                            if (i == cache.Stats.MobileSearchesToDo - 1)
+                                            if (cache.Stats.MobileSearchesToDo == cache.Stats.MaxPointsMobileSearches)
                                             {
                                                 AddJobDashboardUpdate(cache);
                                             }
@@ -310,7 +308,6 @@ namespace MSRewardsBot.Server.Core
                                             _logger.LogWarning("Job {name} failed for {user}",
                                                 nameof(MobileSearchCommand), acc.Email);
 
-                                            cache.Stats.MobileSearchFailed();
                                             AddJobDashboardUpdate(cache);
                                         }
                                     });
@@ -372,7 +369,7 @@ namespace MSRewardsBot.Server.Core
             {
                 file = scope.Business.GetClientUpdateFile();
             }
-                
+
             if (file == null || file.Length == 0)
             {
                 return false;

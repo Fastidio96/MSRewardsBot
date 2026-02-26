@@ -11,7 +11,7 @@ namespace MSRewardsBot.Server.Helpers
         private static string _clientUpdatePath => Path.Combine(_serverPath, "updates");
 
         #region Folders
-        
+
         public static string GetFolderServerData()
         {
             if (!Directory.Exists(_serverPath))

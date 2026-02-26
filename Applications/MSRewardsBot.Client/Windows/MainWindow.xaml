@@ -4,7 +4,7 @@
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:window="clr-namespace:MSRewardsBot.Client.Windows"
-        xmlns:local="clr-namespace:MSRewardsBot.Common.DataEntities.Stats;assembly=MSRewardsBot.Common"
+        xmlns:local="clr-namespace:MSRewardsBot.Common.DataEntities.Accounting;assembly=MSRewardsBot.Common"
         mc:Ignorable="d"
         Title="MS Rewards Bot"
         Height="450"

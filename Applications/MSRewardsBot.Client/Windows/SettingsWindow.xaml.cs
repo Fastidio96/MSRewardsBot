@@ -26,7 +26,7 @@ namespace MSRewardsBot.Client.Windows
         private void SettingsWindow_Loaded(object sender, RoutedEventArgs e)
         {
             this.Loaded -= SettingsWindow_Loaded;
-            if(string.IsNullOrEmpty(txtSrvHost.Text) || string.IsNullOrEmpty(txtSrvPort.Text))
+            if (string.IsNullOrEmpty(txtSrvHost.Text) || string.IsNullOrEmpty(txtSrvPort.Text))
             {
                 btnSubmit.IsEnabled = false;
             }

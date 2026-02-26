@@ -70,16 +70,23 @@ namespace MSRewardsBot.Server.Automation
             {
                 if (_settings.Value.UseFirefox)
                 {
-                    List<string> args =
-                    [
-                        "--no-default-browser-check",
-                        "--disable-extensions"
-                    ];
+                    Dictionary<string, object> args = new Dictionary<string, object>()
+                    {
+                        ["network.http.http3.enabled"] = false,
+                        ["security.webauth.webauthn"] = false,
+                        ["media.autoplay.default"] = 0,
+                        ["media.autoplay.blocking_policy"] = 0,
+                        ["browser.shell.checkDefaultBrowser"] = false,
+                        ["startup.homepage_welcome_url"] = BrowserConstants.URL_BLANK_PAGE,
+                        ["startup.homepage_welcome_url.additional"] = "",
+                        ["browser.startup.firstrunSkipsHomepage"] = false,
+                        ["extensions.autoDisableScopes"] = 15,
+                        ["extensions.systemAddon.update.enabled"] = false
+                    };
 
                     if (RuntimeEnvironment.IsDocker())
                     {
-                        //args.Add("--no-sandbox");
-                        args.Add("--disable-dev-shm-usage");
+                        args.Add("layers.gpu-process.enabled", false);
                     }
 
                     _browser = await _playwright.Firefox.LaunchAsync(new BrowserTypeLaunchOptions()
@@ -87,30 +94,32 @@ namespace MSRewardsBot.Server.Automation
 #if DEBUG
                         //Headless = false,
 #endif
-                        Args = args.ToArray(),
-                        FirefoxUserPrefs = new Dictionary<string, object>()
-                        {
-                            ["network.http.http3.enabled"] = false,
-                            ["security.webauth.webauthn"] = false,
-                            ["media.autoplay.default"] = 0,
-                            ["media.autoplay.blocking_policy"] = 0
-                        }
+                        FirefoxUserPrefs = args
                     });
                 }
                 else
                 {
+                    List<string> args =
+                    [
+                        "--no-default-browser-check",
+                        "--disable-extensions",
+                        "--disable-blink-features=AutomationControlled",
+                        "--disable-infobars",
+                        "--no-default-browser-check",
+                        "--disable-extensions"
+                    ];
+
+                    if (RuntimeEnvironment.IsDocker())
+                    {
+                        args.Add("--disable-dev-shm-usage");
+                    }
+
                     _browser = await _playwright.Chromium.LaunchAsync(new BrowserTypeLaunchOptions()
                     {
 #if DEBUG
                         //Headless = false,
 #endif
-                        Args =
-                        [
-                            "--disable-blink-features=AutomationControlled",
-                            "--disable-infobars",
-                            "--no-default-browser-check",
-                            "--disable-extensions"
-                        ]
+                        Args = args
                     });
                 }
             }
@@ -180,6 +189,10 @@ namespace MSRewardsBot.Server.Automation
                     _logger.LogWarning("Cannot install cookies for {Email} | {User}", data.Account.Email, data.Account.User.Username);
                     return false;
                 }
+
+#if DEBUG
+                //await TestCommand(data);
+#endif
             }
             catch (Exception ex)
             {
@@ -226,7 +239,7 @@ namespace MSRewardsBot.Server.Automation
 
             if (!await CheckIsLogged(data))
             {
-                _logger.LogError("Cannot proceed. Expired cookies for {Email} | {User}.",
+                _logger.LogError("Cannot proceed. Redirect failed for {Email} | {User}.",
                     data.Account.Email, data.Account.User.Username);
                 return false;
             }
@@ -236,9 +249,24 @@ namespace MSRewardsBot.Server.Automation
 
         private async Task<bool> CheckIsLogged(MSAccountServerData data)
         {
-            await NavigateToURL(data, BrowserConstants.URL_DASHBOARD);
+            if (!await NavigateToURL(data, BrowserConstants.URL_DASHBOARD))
+            {
+                return false;
+            }
 
-            if (data.Page.Url.StartsWith(BrowserConstants.URL_EXPIRED_COOKIES))
+            int retries = 0;
+            while (data.Page.Url.StartsWith(BrowserConstants.URL_EXPIRED_COOKIES))
+            {
+                retries += 1;
+                if (retries > 5)
+                {
+                    break;
+                }
+
+                await Task.Delay(1000);
+            }
+
+            if (retries > 5)
             {
                 data.Account.IsCookiesExpired = true;
                 return false;
@@ -277,18 +305,18 @@ namespace MSRewardsBot.Server.Automation
                     {
                         if (response == null || !response.Ok)
                         {
-                            _logger.LogWarning("Failed to navigate to {url}", url);
+                            _logger.LogWarning("Failed to navigate to {url}. Request failed.", url);
                             return false;
                         }
                     }
 
-                    await Task.Delay(GetRandomMsTimes(3500, 5000));
+                    await WaitRandomMs(3500, 5000);
                 }
 
                 await data.Page.BringToFrontAsync();
 
                 _logger.LogDebug("Navigated to {url} for {email} | {user}",
-                    url, data.Account.Email, data.Account.User.Username);
+                    data.Page.Url, data.Account.Email, data.Account.User.Username);
                 return true;
             }
             catch (Exception ex)
@@ -298,31 +326,49 @@ namespace MSRewardsBot.Server.Automation
             }
         }
 
-        private void LogTraceAction(string actionName)
+        private Task WaitRandomMs(int min, int max)
         {
-            _logger.LogTrace("Logged action {time} {action} ", DateTime.Now.ToString("mm:ss:fff"), actionName.ToUpper());
-        }
-        private TimeSpan GetRandomMsTimes(int min, int max)
-        {
-            return new TimeSpan(0, 0, 0, 0, Random.Shared.Next(min, max));
+            return Task.Delay(new TimeSpan(0, 0, 0, 0, Random.Shared.Next(min, max)));
         }
 
-        private async Task<bool> WriteAsHuman(IPage page, string keyword, string selectorSearchbar)
+        private async Task HumanScroll(IPage page)
+        {
+            await page.BringToFrontAsync();
+
+            int diff = Random.Shared.Next(7, 12); //pixel difference
+            int delta = Random.Shared.Next(300, 1200) / diff; //how much time needs to be executed
+
+            for (int i = 0; i < delta; i++)
+            {
+                await page.Mouse.WheelAsync(0, diff);
+
+                if (Random.Shared.Next(0, 1) == 1)
+                {
+                    await Task.Delay(Random.Shared.Next(3, 8));
+                }
+            }
+        }
+
+        private async Task<bool> WriteSearchAsHuman(IPage page, string keyword)
         {
             //Wait for the animation to finish
-            await Task.Delay(GetRandomMsTimes(1000, 1600));
+            await WaitRandomMs(1000, 2000);
+
+            await WaitRandomMs(BrowserConstants.HUMAN_ACTION_MIN, BrowserConstants.HUMAN_ACTION_MAX);
 
             try
             {
-                char[] split = keyword.ToCharArray();
-                foreach (char cr in split)
-                {
-                    string js = selectorSearchbar.Replace("{keyword}", cr.ToString());
-                    await page.EvaluateAsync(js);
+                ILocator searchbar = page.Locator(BrowserConstants.SEARCHBAR_TEXTAREA);
+                await searchbar.WaitForAsync();
+                await searchbar.FocusAsync();
 
-                    await Task.Delay(GetRandomMsTimes(BrowserConstants.HUMAN_WRITING_MIN, BrowserConstants.HUMAN_WRITING_MAX));
+                foreach (char cr in keyword.ToCharArray())
+                {
+                    await page.Keyboard.TypeAsync(cr.ToString());
+                    await WaitRandomMs(BrowserConstants.HUMAN_WRITING_MIN, BrowserConstants.HUMAN_WRITING_MAX);
                 }
 
+                await WaitRandomMs(BrowserConstants.HUMAN_ACTION_MIN, BrowserConstants.HUMAN_ACTION_MAX);
                 return true;
             }
             catch (Exception ex)
@@ -367,7 +413,7 @@ namespace MSRewardsBot.Server.Automation
         {
             _isDisposing = true;
 
-            if(_browser != null)
+            if (_browser != null)
             {
                 try
                 {

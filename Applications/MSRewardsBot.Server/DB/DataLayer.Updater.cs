@@ -75,7 +75,7 @@ namespace MSRewardsBot.Server.DB
 
                 return File.ReadAllBytes(Utils.GetFileLatestUpdate());
             }
-            catch (Exception e) 
+            catch (Exception e)
             {
                 _logger.LogError("Error while reading client update file: {Err}", e);
                 return null;

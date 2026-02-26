@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
 using Microsoft.Playwright;
@@ -25,12 +26,9 @@ namespace MSRewardsBot.Server.Automation
             {
                 int previousPoints = data.Stats.TotalAccountPoints;
 
-                await Task.Delay(GetRandomMsTimes(BrowserConstants.HUMAN_CLICK_BTN_MIN, BrowserConstants.HUMAN_CLICK_BTN_MAX));
-                ILocator elements = data.Page.Locator(BrowserConstants.ADDITIONAL_PTS_IMAGE_LOCATOR);
+                await WaitRandomMs(BrowserConstants.HUMAN_ACTION_MIN, BrowserConstants.HUMAN_ACTION_MAX);
 
-                await Task.Delay(GetRandomMsTimes(2500, 5000));
-                int count = await elements.CountAsync();
-
+                int count = await data.Page.Locator(BrowserConstants.ADDITIONAL_PTS_IMAGE_LOCATOR).CountAsync();
                 if (count == 0)
                 {
                     _logger.LogInformation("No additional points found from the dashboard for {Email} | {User}",
@@ -39,48 +37,61 @@ namespace MSRewardsBot.Server.Automation
                     return true;
                 }
 
-                for (int i = count - 1; i >= 0; i--)
+                try
                 {
-                    await data.Page.BringToFrontAsync();
-                    await Task.Delay(GetRandomMsTimes(2500, 5000));
-
-                    try
+                    IReadOnlyList<ILocator> locators = await data.Page.Locator(BrowserConstants.ADDITIONAL_PTS_IMAGE_LOCATOR).AllAsync();
+                    foreach (ILocator loc in locators)
                     {
-                        IPage newPage = await data.Page.Context.RunAndWaitForPageAsync(async () =>
+                        if (!await loc.IsVisibleAsync())
                         {
-                            string js = BrowserConstants.ADDITIONAL_PTS_IMAGE_CLICK
-                                .Replace("{locator}", BrowserConstants.ADDITIONAL_PTS_IMAGE_LOCATOR)
-                                .Replace("{idx}", i.ToString());
-                            await data.Page.EvaluateAsync(js);
+                            continue;
+                        }
 
-                            await Task.Delay(GetRandomMsTimes(5000, 7000));
-                        });
+                        await loc.ScrollIntoViewIfNeededAsync();
+                        await WaitRandomMs(1200, 2000);
 
-                        await newPage?.CloseAsync();
-                    }
-                    catch
-                    {
-                        continue;
+                        try
+                        {
+                            IPage newPage = await data.Page.Context.RunAndWaitForPageAsync(async () =>
+                            {
+                                await loc.ClickAsync();
+                            });
+
+                            await WaitRandomMs(1500, 5000);
+                            await HumanScroll(newPage);
+                            await WaitRandomMs(3000, 4500);
+                            await newPage.CloseAsync();
+                        }
+                        catch
+                        {
+                            continue;
+                        }
                     }
                 }
-
-                await Task.Delay(GetRandomMsTimes(3000, 7000));
-
-                await data.Page.EvaluateAsync(BrowserConstants.ADDITIONAL_PTS_CLAIM_PTS);
-
-                await Task.Delay(GetRandomMsTimes(3000, 7000));
-
-                string totPts = await data.Page.EvaluateAsync<string>(BrowserConstants.SELECTOR_ACCOUNT_TOTAL_POINTS);
-                totPts = totPts.Trim();
-
-                if (!int.TryParse(totPts, out int totalPts))
+                catch (Exception ex)
                 {
-                    _logger.LogError("Cannot get total points from account for {Email} | {User}",
+                    _logger.LogWarning("Error while getting additional points. {err}", ex.Message);
+                    return false;
+                }
+
+                await WaitRandomMs(2500, 5000);
+
+                ILocator claimPts = data.Page.Locator(BrowserConstants.ADDITIONAL_PTS_CLAIM_PTS);
+                if (await claimPts.IsVisibleAsync())
+                {
+                    await claimPts.ScrollIntoViewIfNeededAsync();
+                    await claimPts.ClickAsync();
+                }
+
+                await WaitRandomMs(3000, 7000);
+
+                if (!await GetAccTotalPoints(data))
+                {
+                    _logger.LogWarning("Cannot get total points from account for {Email} | {User}",
                         data.Account.Email, data.Account.User.Username);
                     return false;
                 }
 
-                data.Account.Stats.TotalAccountPoints = totalPts;
                 int gainedPts = data.Stats.TotalAccountPoints - previousPoints;
 
                 _logger.LogInformation("Gained {pts} points from the dashboard for {Email} | {User}",
