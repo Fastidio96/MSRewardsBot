@@ -1,7 +1,7 @@
 # Microsoft Rewards Bot
 
 ![Server](https://img.shields.io/badge/Server-Windows%20%7C%20Linux%20%7C%20Docker-blue)
-![Client](https://img.shields.io/badge/Client-WPF%20(Windows%20only)-informational)
+[![Client](https://img.shields.io/badge/Client-WPF%20(Windows%20only)-informational)](https://github.com/fastidio96/MSRewardsBot/releases/latest)
 [![Docker Image](https://img.shields.io/docker/v/fastidio96/msrb?label=Docker%20Image)](https://hub.docker.com/r/fastidio96/msrb)
 [![Docker Pulls](https://img.shields.io/docker/pulls/fastidio96/msrb?label=Docker%20Pulls)](https://hub.docker.com/r/fastidio96/msrb)
 ![Server](https://img.shields.io/badge/Server-.NET%209-success)
