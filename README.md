@@ -19,7 +19,7 @@
 
 - [Overview](#-overview)
 - [Features](#-features)
-- [Automation & Stealth Features](#-automation--stealth-features)
+- [Automation & Stealth Features](#%EF%B8%8F-automation--stealth-features)
   - [Human-like Automation](#-human-like-automation)
   - [Anti-Bot Browser Patching)](#%EF%B8%8F-anti-bot-browser-patching)
 - [Authentication & Multi-User Support](#-authentication--multi-user-support)
@@ -52,9 +52,9 @@ The goal is to automate searches and periodically update Microsoft Rewards stati
 
 ---
 
-## 🤖 Automation & Stealth Features
+## ⚙️ Automation & Stealth Features
 
-### 🤖 Human-like Automation
+### 🧠 Human-like Automation
 
 | Feature | Description |
 |--------|--------|
