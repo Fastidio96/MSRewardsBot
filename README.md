@@ -15,6 +15,22 @@
 
 ---
 
+## 📑 Table of Contents
+
+- [Overview](#-overview)
+- [Supported Platforms](#-supported-platforms)
+- [Features](#-features)
+- [Server Configuration](#%EF%B8%8F-server-configuration)
+- [Authentication & Multi-User Support](#-authentication--multi-user-support)
+- [Project Structure](#-project-structure)
+  - [Client (WPF – Windows only)](#%EF%B8%8F-client-wpf--windows-only)
+  - [Server (Cross-platform)](#-server-cross-platform)
+- [Technologies Used](#-technologies-used)
+- [Legal Notice](#%EF%B8%8F-legal-notice)
+- [Final Notes](#-final-notes)
+
+---
+
 ## 📌 Overview
 
 This project is a **Microsoft Rewards automation bot** composed of a **Windows client** and a **cross-platform server**.
