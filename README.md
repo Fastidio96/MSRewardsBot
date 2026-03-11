@@ -2,8 +2,8 @@
 
 ![Server](https://img.shields.io/badge/Server-Windows%20%7C%20Linux%20%7C%20Docker-blue)
 ![Client](https://img.shields.io/badge/Client-WPF%20(Windows%20only)-informational)
-![Docker Image](https://img.shields.io/docker/v/fastidio96/msrb?label=Docker%20Image)
-![Docker Pulls](https://img.shields.io/docker/pulls/fastidio96/msrb?label=Docker%20Pulls)
+[![Docker Image](https://img.shields.io/docker/v/fastidio96/msrb?label=Docker%20Image)](https://hub.docker.com/r/fastidio96/msrb)
+[![Docker Pulls](https://img.shields.io/docker/pulls/fastidio96/msrb?label=Docker%20Pulls)](https://hub.docker.com/r/fastidio96/msrb)
 ![Server](https://img.shields.io/badge/Server-.NET%209-success)
 ![License](https://img.shields.io/badge/License-MIT-green)
 
@@ -21,8 +21,108 @@ This project is a **Microsoft Rewards automation bot** composed of a **Windows c
 
 The goal is to automate searches and periodically update Microsoft Rewards statistics using a **scheduled and configurable system**.
 
-> 🐳 **Docker users:** This image contains **only the server component**.  
-> 🖥️ The Windows client is available via **GitHub Releases**.
+---
+
+## 🐧 Supported Platforms
+
+### 🖥️ Client
+- ✅ Windows only (available on [GitHub Releases](https://github.com/fastidio96/MSRewardsBot/releases/latest))
+
+### 🖧 Server
+- ✅ Linux
+- ✅ Windows (Console / Windows Service)
+- ✅ Docker (Dockerfile / Docker Compose)
+- 🐳 Docker Image available on [Docker Hub](https://hub.docker.com/r/fastidio96/msrb)
+
+---
+
+## ✨ Features
+
+| Category | Feature |
+|--------|--------|
+| 🤖 Human-like Behavior | Write searches as a real user |
+| 🤖 Human-like Behavior | Scroll pages naturally |
+| 🤖 Human-like Behavior | Randomized waiting times between actions |
+| 🔍 Search Logic | Searches based on real keywords that change over time |
+| 🌍 Localization | Automatically imports the current locale |
+| 🧭 Browser Identity | Realistic user agent |
+| 🧭 Browser Identity | Realistic viewport size |
+
+### 🛡️ Anti-Bot Browser Patching
+
+The browser environment is patched using **JavaScript injection** to reduce automation fingerprints.
+
+- Remove `navigator.webdriver` and related automation flags  
+- Provide believable **plugins** and **languages**  
+- Patch **WebGL `getParameter`** to return realistic vendor/renderer  
+- Ensure `window.chrome` exists and looks native  
+- Fake `deviceMemory` and `hardwareConcurrency` with realistic values  
+- Remove Playwright/CDP visible globals  
+- Provide `chrome.loadTimes` and `chrome.csi` shims used by some detectors  
+- Worker patch: ensure workers see the same navigator-like values and no webdriver  
+- Invisible iframe getter patch: implement a native-like `contentWindow` getter  
+- Patch stack trace strings used by some CDP detection techniques  
+- Remove suspicious iframe overrides done by naive automation patches  
+- Small timing/randomization helpers to make execution less deterministic
+
+---
+
+## ⚙️ Server Configuration
+
+The server can be fully configured using the `appsettings.json` file.
+
+### 🔌 Network Configuration
+```json
+"IsHttpsEnabled": false,
+"ServerHost": "0.0.0.0",
+"ServerPort": "10500"
+```
+
+### 🔄 Client Updater
+```json
+"IsClientUpdaterEnabled": false
+```
+> Enabling the updater increases CPU usage.
+
+### 🌍 Browser Settings
+```json
+"UseFirefox": true
+```
+> - `true` → Firefox (less detectable, less stable)  
+> - `false` → Chromium (more detectable, more stable)  
+
+### ⏳ Search Timing (Randomized)
+```json
+"MinSecsWaitBetweenSearches": 180,
+"MaxSecsWaitBetweenSearches": 600
+```
+> The values are expressed in seconds
+
+### 📊 Scheduled Checks
+```json
+"DashboardCheck": "12:00:00",
+"SearchesCheck": "06:00:00",
+"KeywordsListRefresh": "03:00:00"
+```
+> The format is hh:mm:ss
+
+### 🔑 Keywords Configuration
+```json
+"KeywordsListCountries": [ "IT", "US", "GB", "DE", "FR", "ES" ]
+```
+
+> **Behavior:**
+> - 20 keywords are downloaded per country
+> - Each keyword is consumed after use
+> - When all keywords are used, the list restarts
+> - Intended behavior: **keywords should never be reused once consumed**
+
+### 📋 Logging
+```json
+"WriteLogsOnFile": true,
+"LogsGroupedCategories": true,
+"MinimumLogLevel": "Debug"
+```
 
 ---
 
@@ -99,77 +199,6 @@ It is composed of **four main components**:
 
 ---
 
-## ⚙️ Server Configuration
-
-The server can be fully configured using the `appsettings.json` file.
-
-### 🔌 Network Configuration
-```json
-"IsHttpsEnabled": false,
-"ServerHost": "0.0.0.0",
-"ServerPort": "10500"
-```
-
-### 🔄 Client Updater
-```json
-"IsClientUpdaterEnabled": false
-```
-> Enabling the updater increases CPU usage.
-
-### 🌍 Browser Settings
-```json
-"UseFirefox": true
-```
-> - `true` → Firefox (less detectable, less stable)  
-> - `false` → Chromium (more detectable, more stable)  
-
-### ⏳ Search Timing (Randomized)
-```json
-"MinSecsWaitBetweenSearches": 180,
-"MaxSecsWaitBetweenSearches": 600
-```
-> The values are expressed in seconds
-
-### 📊 Scheduled Checks
-```json
-"DashboardCheck": "12:00:00",
-"SearchesCheck": "06:00:00",
-"KeywordsListRefresh": "03:00:00"
-```
-> The format is hh:mm:ss
-
-### 🔑 Keywords Configuration
-```json
-"KeywordsListCountries": [ "IT", "US", "GB", "DE", "FR", "ES" ]
-```
-
-> **Behavior:**
-> - 20 keywords are downloaded per country
-> - Each keyword is consumed after use
-> - When all keywords are used, the list restarts
-> - Intended behavior: **keywords should never be reused once consumed**
-
-### 📋 Logging
-```json
-"WriteLogsOnFile": true,
-"LogsGroupedCategories": true,
-"MinimumLogLevel": "Debug"
-```
-
----
-
-## 🐧 Supported Platforms
-
-### 🖥️ Client
-- ✅ Windows only
-
-### 🖧 Server
-- ✅ Linux
-- ✅ Windows (Console / Windows Service)
-- ✅ Docker (Dockerfile / Docker Compose)
-
----
-
 ## 🚀 Technologies Used
 
 - C#
@@ -196,6 +225,3 @@ This repository exists **only for learning, experimentation, and fun**.
 
 If you find this project interesting, feel free to explore the code and learn from it.  
 Please **do not use it on real accounts**.
-
-Have fun and stay safe 🚀
-
