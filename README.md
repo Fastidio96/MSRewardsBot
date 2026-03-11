@@ -18,13 +18,16 @@
 ## 📑 Table of Contents
 
 - [Overview](#-overview)
-- [Supported Platforms](#-supported-platforms)
 - [Features](#-features)
-- [Server Configuration](#%EF%B8%8F-server-configuration)
+- [Automation & Stealth Features](#-automation--stealth-features)
+  - [Human-like Automation](#-human-like-automation)
+  - [Anti-Bot Browser Patching)](#%EF%B8%8F-anti-bot-browser-patching)
 - [Authentication & Multi-User Support](#-authentication--multi-user-support)
 - [Project Structure](#-project-structure)
   - [Client (WPF – Windows only)](#%EF%B8%8F-client-wpf--windows-only)
   - [Server (Cross-platform)](#-server-cross-platform)
+- [Server Configuration](#%EF%B8%8F-server-configuration)
+- [Supported Platforms](#-supported-platforms)
 - [Technologies Used](#-technologies-used)
 - [Legal Notice](#%EF%B8%8F-legal-notice)
 - [Final Notes](#-final-notes)
@@ -39,22 +42,21 @@ The goal is to automate searches and periodically update Microsoft Rewards stati
 
 ---
 
-## 🐧 Supported Platforms
+## ✨ Features
 
-### 🖥️ Client
-- ✅ Windows only (available on [GitHub Releases](https://github.com/fastidio96/MSRewardsBot/releases/latest))
-
-### 🖧 Server
-- ✅ Linux
-- ✅ Windows (Console / Windows Service)
-- ✅ Docker (Dockerfile / Docker Compose)
-- 🐳 Docker Image available on [Docker Hub](https://hub.docker.com/r/fastidio96/msrb)
+| Feature | Description |
+|-------|-------------|
+| 🎯 Dashboard Tasks | Collect additional Microsoft Rewards points available in the dashboard |
+| 🖥️ PC Searches | Perform automated searches from desktop |
+| 📱 Mobile Searches | Perform automated searches emulating a mobile device |
 
 ---
 
-## ✨ Features
+## 🤖 Automation & Stealth Features
 
-| Category | Feature |
+### 🤖 Human-like Automation
+
+| Feature | Description |
 |--------|--------|
 | 🤖 Human-like Behavior | Write searches as a real user |
 | 🤖 Human-like Behavior | Scroll pages naturally |
@@ -80,65 +82,6 @@ The browser environment is patched using **JavaScript injection** to reduce auto
 - Patch stack trace strings used by some CDP detection techniques  
 - Remove suspicious iframe overrides done by naive automation patches  
 - Small timing/randomization helpers to make execution less deterministic
-
----
-
-## ⚙️ Server Configuration
-
-The server can be fully configured using the `appsettings.json` file.
-
-### 🔌 Network Configuration
-```json
-"IsHttpsEnabled": false,
-"ServerHost": "0.0.0.0",
-"ServerPort": "10500"
-```
-
-### 🔄 Client Updater
-```json
-"IsClientUpdaterEnabled": false
-```
-> Enabling the updater increases CPU usage.
-
-### 🌍 Browser Settings
-```json
-"UseFirefox": true
-```
-> - `true` → Firefox (less detectable, less stable)  
-> - `false` → Chromium (more detectable, more stable)  
-
-### ⏳ Search Timing (Randomized)
-```json
-"MinSecsWaitBetweenSearches": 180,
-"MaxSecsWaitBetweenSearches": 600
-```
-> The values are expressed in seconds
-
-### 📊 Scheduled Checks
-```json
-"DashboardCheck": "12:00:00",
-"SearchesCheck": "06:00:00",
-"KeywordsListRefresh": "03:00:00"
-```
-> The format is hh:mm:ss
-
-### 🔑 Keywords Configuration
-```json
-"KeywordsListCountries": [ "IT", "US", "GB", "DE", "FR", "ES" ]
-```
-
-> **Behavior:**
-> - 20 keywords are downloaded per country
-> - Each keyword is consumed after use
-> - When all keywords are used, the list restarts
-> - Intended behavior: **keywords should never be reused once consumed**
-
-### 📋 Logging
-```json
-"WriteLogsOnFile": true,
-"LogsGroupedCategories": true,
-"MinimumLogLevel": "Debug"
-```
 
 ---
 
@@ -212,6 +155,78 @@ It is composed of **four main components**:
 #### 🔑 Keyword Provider
 - Fetches valid keywords for searches
 - Supplies keywords to the Core Server
+
+---
+
+## ⚙️ Server Configuration
+
+The server can be fully configured using the `appsettings.json` file.
+
+### 🔌 Network Configuration
+```json
+"IsHttpsEnabled": false,
+"ServerHost": "0.0.0.0",
+"ServerPort": "10500"
+```
+
+### 🔄 Client Updater
+```json
+"IsClientUpdaterEnabled": false
+```
+> Enabling the updater increases CPU usage.
+
+### 🌍 Browser Settings
+```json
+"UseFirefox": true
+```
+> - `true` → Firefox (less detectable, less stable)  
+> - `false` → Chromium (more detectable, more stable)  
+
+### ⏳ Search Timing (Randomized)
+```json
+"MinSecsWaitBetweenSearches": 180,
+"MaxSecsWaitBetweenSearches": 600
+```
+> The values are expressed in seconds
+
+### 📊 Scheduled Checks
+```json
+"DashboardCheck": "12:00:00",
+"SearchesCheck": "06:00:00",
+"KeywordsListRefresh": "03:00:00"
+```
+> The format is hh:mm:ss
+
+### 🔑 Keywords Configuration
+```json
+"KeywordsListCountries": [ "IT", "US", "GB", "DE", "FR", "ES" ]
+```
+
+> **Behavior:**
+> - 20 keywords are downloaded per country
+> - Each keyword is consumed after use
+> - When all keywords are used, the list restarts
+> - Intended behavior: **keywords should never be reused once consumed**
+
+### 📋 Logging
+```json
+"WriteLogsOnFile": true,
+"LogsGroupedCategories": true,
+"MinimumLogLevel": "Debug"
+```
+
+---
+
+## 🐧 Supported Platforms
+
+### 🖥️ Client
+- ✅ Windows only (available on [GitHub Releases](https://github.com/fastidio96/MSRewardsBot/releases/latest))
+
+### 🖧 Server
+- ✅ Linux
+- ✅ Windows (Console / Windows Service)
+- ✅ Docker (Dockerfile / Docker Compose)
+- 🐳 Docker Image available on [Docker Hub](https://hub.docker.com/r/fastidio96/msrb)
 
 ---
 
