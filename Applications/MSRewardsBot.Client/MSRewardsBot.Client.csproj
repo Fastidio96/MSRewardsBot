@@ -11,8 +11,27 @@
 		<ApplicationIcon>icon.ico</ApplicationIcon>
 		<StartupObject>MSRewardsBot.Client.App</StartupObject>
 		<ProduceReferenceAssembly>False</ProduceReferenceAssembly>
+
+		<PackageReadmeFile>README.md</PackageReadmeFile>
+		<RepositoryUrl>https://github.com/Fastidio96/MSRewardsBot.git</RepositoryUrl>
+		<FileVersion>1.1.0.0</FileVersion>
+		<AssemblyVersion>1.1.0.0</AssemblyVersion>
+		<Title>MS Rewards Bot Server</Title>
+		<PackageLicenseFile>LICENSE</PackageLicenseFile>
+		<Authors>Fastidio96</Authors>
 	</PropertyGroup>
 
+	<ItemGroup>
+		<None Include="..\..\LICENSE">
+			<Pack>True</Pack>
+			<PackagePath>\</PackagePath>
+		</None>
+		<None Include="..\..\README.md">
+			<Pack>True</Pack>
+			<PackagePath>\</PackagePath>
+		</None>
+	</ItemGroup>
+	
 	<PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">
 	  <DebugType>none</DebugType>
 	</PropertyGroup>
