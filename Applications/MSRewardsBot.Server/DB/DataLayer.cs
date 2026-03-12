@@ -5,6 +5,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using MSRewardsBot.Common.DataEntities.Accounting;
+using MSRewardsBot.Server.DataEntities;
 
 namespace MSRewardsBot.Server.DB
 {

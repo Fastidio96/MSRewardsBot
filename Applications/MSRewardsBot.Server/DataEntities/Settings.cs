@@ -1,7 +1,7 @@
 ﻿using System;
 using Microsoft.Extensions.Logging;
 
-namespace MSRewardsBot.Server
+namespace MSRewardsBot.Server.DataEntities
 {
     public class Settings
     {

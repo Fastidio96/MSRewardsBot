@@ -14,6 +14,7 @@ using MSRewardsBot.Common.Utilities;
 using MSRewardsBot.Server.Automation;
 using MSRewardsBot.Server.Core;
 using MSRewardsBot.Server.Core.Factories;
+using MSRewardsBot.Server.DataEntities;
 using MSRewardsBot.Server.DB;
 using MSRewardsBot.Server.Helpers;
 using MSRewardsBot.Server.Network;
