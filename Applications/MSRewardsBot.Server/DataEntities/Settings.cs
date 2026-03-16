@@ -16,9 +16,10 @@ namespace MSRewardsBot.Server.DataEntities
         #region Common
 
         /// <summary>
-        /// Disable this if you don't need it. It saves performances
+        /// Enable the client updater. It downloads the new release from GitHub for the client. 
+        /// In order to download the server needs to update first
         /// </summary>
-        public bool IsClientUpdaterEnabled { get; set; } = false;
+        public bool IsClientUpdaterEnabled { get; set; } = true;
 
         /// <summary>
         /// Chromium is more stable than firefox but can be reconized as a bot
@@ -62,7 +63,7 @@ namespace MSRewardsBot.Server.DataEntities
 
         #region Logs
 
-        public bool WriteLogsOnFile { get; set; } = true;
+        public bool WriteLogsOnFile { get; set; } = false;
         public bool LogsGroupedCategories { get; set; } = true;
         public LogLevel MinimumLogLevel { get; set; } = LogLevel.Debug;
 
