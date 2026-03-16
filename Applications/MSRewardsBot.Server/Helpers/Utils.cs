@@ -7,74 +7,6 @@ namespace MSRewardsBot.Server.Helpers
 {
     public class Utils
     {
-        private static string _serverPath => new Uri(AppDomain.CurrentDomain.BaseDirectory + "MSRB").LocalPath;
-        private static string _logsPath => Path.Combine(_serverPath, "logs");
-        private static string _clientUpdatePath => Path.Combine(_serverPath, "updates");
-
-        #region Folders
-
-        public static string GetFolderServerData()
-        {
-            if (!Directory.Exists(_serverPath))
-            {
-                Directory.CreateDirectory(_serverPath);
-            }
-
-            return _serverPath;
-        }
-
-        public static string GetFolderLogs()
-        {
-            if (!Directory.Exists(_logsPath))
-            {
-                Directory.CreateDirectory(_logsPath);
-            }
-
-            return _logsPath;
-        }
-
-        public static string GetFolderClientUpdate()
-        {
-            if (!Directory.Exists(_clientUpdatePath))
-            {
-                Directory.CreateDirectory(_clientUpdatePath);
-            }
-
-            return _clientUpdatePath;
-        }
-
-        #endregion
-
-        #region Files
-
-        public static string GetDBFile()
-        {
-            return Path.Combine(GetFolderServerData(), "data.db");
-        }
-
-        public static string GetKeywordsFile()
-        {
-            return Path.Combine(GetFolderServerData(), "keywords.txt");
-        }
-
-        public static string GetLogFile()
-        {
-            string now = DateTime.Now.ToString("yyyy-MM-dd");
-            return Path.Combine(GetFolderLogs(), $"{now}.txt");
-        }
-
-        public static string GetVersionFile()
-        {
-            return Path.Combine(GetFolderClientUpdate(), "latest.txt");
-        }
-
-        public static string GetPathClientUpdate()
-        {
-            return Path.Combine(GetFolderClientUpdate(), "client.zip");
-        }
-
-        #endregion
-
         public static string GetMd5FileHash(string path)
         {
             if (!File.Exists(path))
@@ -100,7 +32,8 @@ namespace MSRewardsBot.Server.Helpers
             using (FileStream fs = File.OpenRead(path))
             using (SHA256 sha = SHA256.Create())
             {
-                return hash == Convert.ToBase64String(sha.ComputeHash(fs));
+                byte[] checksum = sha.ComputeHash(fs);
+                return hash.ToLower() == BitConverter.ToString(checksum).Replace("-", string.Empty).ToLower();
             }
         }
 

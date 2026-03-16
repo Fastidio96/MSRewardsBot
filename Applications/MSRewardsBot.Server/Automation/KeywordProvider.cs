@@ -20,7 +20,7 @@ namespace MSRewardsBot.Server.Automation
         public KeywordProvider(KeywordStore store)
         {
             _store = store;
-            _filePath = Utils.GetKeywordsFile();
+            _filePath = Paths.GetKeywordsFile();
 
             LoadKeywords();
 

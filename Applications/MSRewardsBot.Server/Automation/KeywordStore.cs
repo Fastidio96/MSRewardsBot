@@ -22,7 +22,7 @@ namespace MSRewardsBot.Server.Automation
         public KeywordStore(string[] countries)
         {
             _countries = countries;
-            _filePath = Utils.GetKeywordsFile();
+            _filePath = Paths.GetKeywordsFile();
         }
 
         public async Task<bool> RefreshList()

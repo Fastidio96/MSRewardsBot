@@ -175,7 +175,7 @@ namespace MSRewardsBot.Server.Helpers
                 return true;
             }
 
-            string path = Utils.GetLogFile();
+            string path = Paths.GetLogFile();
 
             try
             {
@@ -203,7 +203,7 @@ namespace MSRewardsBot.Server.Helpers
         {
             try
             {
-                using (FileStream fs = File.Open(Utils.GetLogFile(), FileMode.Append, FileAccess.Write, FileShare.ReadWrite))
+                using (FileStream fs = File.Open(Paths.GetLogFile(), FileMode.Append, FileAccess.Write, FileShare.ReadWrite))
                 using (StreamWriter sw = new StreamWriter(fs, Encoding.UTF8))
                 {
                     sw.WriteLine(log);

@@ -37,7 +37,7 @@ namespace MSRewardsBot.Server.DB
 
         private void PollingFileVersion_Elapsed(object? sender, ElapsedEventArgs e)
         {
-            string hash = Utils.GetFileHash(Utils.GetVersionFile());
+            string hash = Utils.GetMd5FileHash(Paths.GetVersionFile());
 
             if (_clientVersionFileHash == null || _clientVersionFileHash != hash)
             {
@@ -48,13 +48,13 @@ namespace MSRewardsBot.Server.DB
 
         private void LoadLatestVersionFile()
         {
-            if (!File.Exists(Utils.GetVersionFile()))
+            if (!File.Exists(Paths.GetVersionFile()))
             {
                 _logger.LogCritical("The version file does not exists!");
                 return;
             }
 
-            string[] lines = File.ReadAllLines(Utils.GetVersionFile());
+            string[] lines = File.ReadAllLines(Paths.GetVersionFile());
             if (lines.Length == 0 || string.IsNullOrEmpty(lines[0]))
             {
                 _logger.LogCritical("The version file is empty!");
@@ -68,12 +68,12 @@ namespace MSRewardsBot.Server.DB
         {
             try
             {
-                if (!File.Exists(Utils.GetFileLatestUpdate()))
+                if (!File.Exists(Paths.GetPathClientUpdate()))
                 {
                     return null;
                 }
 
-                return File.ReadAllBytes(Utils.GetFileLatestUpdate());
+                return File.ReadAllBytes(Paths.GetPathClientUpdate());
             }
             catch (Exception e)
             {
