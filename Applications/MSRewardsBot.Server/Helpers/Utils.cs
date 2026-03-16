@@ -1,6 +1,7 @@
 ﻿using System;
 using System.IO;
 using System.Runtime.InteropServices;
+using System.Security.Cryptography;
 
 namespace MSRewardsBot.Server.Helpers
 {
@@ -67,14 +68,14 @@ namespace MSRewardsBot.Server.Helpers
             return Path.Combine(GetFolderClientUpdate(), "latest.txt");
         }
 
-        public static string GetFileLatestUpdate()
+        public static string GetPathClientUpdate()
         {
-            return Path.Combine(GetFolderClientUpdate(), "update.zip");
+            return Path.Combine(GetFolderClientUpdate(), "client.zip");
         }
 
         #endregion
 
-        public static string GetFileHash(string path)
+        public static string GetMd5FileHash(string path)
         {
             if (!File.Exists(path))
             {
@@ -82,10 +83,24 @@ namespace MSRewardsBot.Server.Helpers
             }
 
             using (FileStream fs = File.OpenRead(path))
-            using (System.Security.Cryptography.MD5 md5 = System.Security.Cryptography.MD5.Create())
+            using (MD5 md5 = MD5.Create())
             {
                 byte[] hash = md5.ComputeHash(fs);
                 return Convert.ToBase64String(hash);
+            }
+        }
+
+        public static bool VerifyFileSha256(string path, string hash)
+        {
+            if (hash.ToLower().StartsWith("sha256:"))
+            {
+                hash = hash.Replace("sha256:", "");
+            }
+
+            using (FileStream fs = File.OpenRead(path))
+            using (SHA256 sha = SHA256.Create())
+            {
+                return hash == Convert.ToBase64String(sha.ComputeHash(fs));
             }
         }
 
