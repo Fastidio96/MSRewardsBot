@@ -2,6 +2,9 @@
 using System.IO;
 using System.Runtime.InteropServices;
 using System.Security.Cryptography;
+using System.Threading;
+using System.Threading.Tasks;
+using MSRewardsBot.Common.Utilities;
 
 namespace MSRewardsBot.Server.Helpers
 {
@@ -35,6 +38,57 @@ namespace MSRewardsBot.Server.Helpers
                 byte[] checksum = sha.ComputeHash(fs);
                 return hash.ToLower() == BitConverter.ToString(checksum).Replace("-", string.Empty).ToLower();
             }
+        }
+
+        public static bool Retry(TimeSpan retryAfter, Func<bool> operation, int maxRetries)
+        {
+            int retries = 0;
+            DateTime lastRetry = DateTime.MinValue;
+            while (retries < maxRetries)
+            {
+                retries++;
+                DateTime now = DateTime.Now;
+
+                if (DateTimeUtilities.HasElapsed(now, lastRetry, retryAfter))
+                {
+                    lastRetry = now;
+
+                    if (operation())
+                    {
+                        return true;
+                    }
+                }
+
+                Thread.Sleep(1000);
+            }
+
+            return false;
+        }
+
+        public static async Task<bool> RetryAsync(TimeSpan retryAfter, Func<Task<bool>> operation, int maxRetries)
+        {
+            int retries = 0;
+            DateTime lastRetry = DateTime.MinValue;
+
+            while (retries < maxRetries)
+            {
+                retries++;
+                DateTime now = DateTime.Now;
+
+                if (DateTimeUtilities.HasElapsed(now, lastRetry, retryAfter))
+                {
+                    lastRetry = now;
+
+                    if (await operation())
+                    {
+                        return true;
+                    }
+                }
+
+                await Task.Delay(1000);
+            }
+
+            return false;
         }
 
         #region Enable console colors
