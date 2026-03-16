@@ -21,6 +21,8 @@ namespace MSRewardsBot.Server.Network
             _connectionManager = connectionManager;
         }
 
+        public event EventHandler<ClientArgs> UpdatedClientInfoVersion;
+
         public Task<bool> LoginWithToken(Guid token)
         {
             using (ScopedBusiness scope = _businessFactory.Create())
@@ -85,6 +87,8 @@ namespace MSRewardsBot.Server.Network
             clientInfo.LastVersionRequest = DateTime.Now;
 
             _connectionManager.UpdateConnection(connectionId, clientInfo);
+
+            UpdatedClientInfoVersion?.Invoke(this, new ClientArgs(connectionId));
 
             return Task.FromResult(clientInfo);
         }

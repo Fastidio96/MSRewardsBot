@@ -70,6 +70,7 @@ namespace MSRewardsBot.Server
 
             // Add services to the container.
             builder.Services.AddAuthorization();
+            builder.Services.AddSingleton<Updater>();
             builder.Services.AddSingleton<RealTimeData>();
             builder.Services.AddSingleton<IConnectionManager, ConnectionManager>();
             builder.Services.AddSingleton<Core.Server>();
@@ -98,6 +99,7 @@ namespace MSRewardsBot.Server
             WebApplication app = builder.Build();
             app.UseResponseCompression();
 
+            Updater updater = app.Services.GetRequiredService<Updater>();
             TaskScheduler taskScheduler = app.Services.GetRequiredService<TaskScheduler>();
             Core.Server server = app.Services.GetRequiredService<Core.Server>();
             BrowserManager browser = app.Services.GetRequiredService<BrowserManager>();
@@ -127,11 +129,13 @@ namespace MSRewardsBot.Server
             app.UseAuthorization();
 
             server.Start();
+            updater.Start();
 
             app.Lifetime.ApplicationStopping.Register(() =>
             {
                 System.Threading.Tasks.TaskScheduler.UnobservedTaskException -= TaskScheduler_UnobservedTaskException;
 
+                updater.Dispose();
                 taskScheduler.Dispose();
                 server.Dispose();
                 browser.Dispose();
