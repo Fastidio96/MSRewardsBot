@@ -53,9 +53,9 @@ namespace MSRewardsBot.Server.Network
             return _hubProxy.InsertMSAccount(token, account);
         }
 
-        public Task SendClientVersion(string connectionId, Version version)
+        public void SendClientVersion(string connectionId, Version version)
         {
-            return _hubProxy.SendClientVersion(connectionId, version);
+            _hubProxy.SendClientVersion(connectionId, version);
         }
     }
 }

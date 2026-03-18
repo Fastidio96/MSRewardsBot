@@ -1,27 +1,27 @@
 ﻿using System;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.SignalR;
+using Microsoft.Extensions.Logging;
 using MSRewardsBot.Common.DataEntities.Accounting;
 using MSRewardsBot.Common.DataEntities.Interfaces;
 using MSRewardsBot.Server.Core.Factories;
-using MSRewardsBot.Server.DataEntities;
 
 namespace MSRewardsBot.Server.Network
 {
     public class CommandHubProxy : IBotAPI
     {
+        private readonly ILogger<CommandHubProxy> _logger;
         private readonly BusinessFactory _businessFactory;
         private readonly IHubContext<CommandHub> _hubContext;
         private readonly IConnectionManager _connectionManager;
 
-        public CommandHubProxy(BusinessFactory businessFactory, IHubContext<CommandHub> hubContext, IConnectionManager connectionManager)
+        public CommandHubProxy(ILogger<CommandHubProxy> logger, BusinessFactory businessFactory, IHubContext<CommandHub> hubContext, IConnectionManager connectionManager)
         {
+            _logger = logger;
             _businessFactory = businessFactory;
             _hubContext = hubContext;
             _connectionManager = connectionManager;
         }
-
-        public event EventHandler<ClientArgs> UpdatedClientInfoVersion;
 
         public Task<bool> LoginWithToken(Guid token)
         {
@@ -70,31 +70,26 @@ namespace MSRewardsBot.Server.Network
             }
         }
 
-        internal Task SendUpdateMSAccountStats(string connectionId, MSAccountStats accountStat, string propertyName)
+        internal async Task SendUpdateMSAccountStats(string connectionId, MSAccountStats accountStat, string propertyName)
         {
-            return _hubContext.Clients.Client(connectionId).SendAsync(nameof(SendUpdateMSAccountStats), accountStat, propertyName);
+            await _hubContext.Clients.Client(connectionId).SendAsync(nameof(SendUpdateMSAccountStats), accountStat, propertyName);
         }
 
-        internal Task RequestClientVersion(string connectionId)
+        internal async Task RequestClientVersion(string connectionId)
         {
-            return _hubContext.Clients.Client(connectionId).SendAsync(nameof(RequestClientVersion), connectionId);
+            _logger.LogDebug("Requesting client version from {id}..", connectionId);
+            await _hubContext.Clients.Client(connectionId).SendAsync(nameof(RequestClientVersion), connectionId);
         }
 
-        public Task SendClientVersion(string connectionId, Version version)
+        public void SendClientVersion(string connectionId, Version version)
         {
-            ClientInfo clientInfo = _connectionManager.GetConnection(connectionId);
-            clientInfo.Version = version;
-            clientInfo.LastVersionRequest = DateTime.Now;
-
-            _connectionManager.UpdateConnection(connectionId, clientInfo);
-
-            UpdatedClientInfoVersion?.Invoke(this, new ClientArgs(connectionId));
-
-            return Task.FromResult(clientInfo);
+            _logger.LogDebug("Received new client version {ver} from {id}..", version, connectionId);
+            _connectionManager.UpdateClientVersion(connectionId, version);
         }
 
         public Task SendClientUpdateFile(string connectionId, byte[] file)
         {
+            _logger.LogDebug("Sending update package to client {id}..", connectionId);
             return _hubContext.Clients.Client(connectionId).SendAsync(nameof(SendClientUpdateFile), file);
         }
     }
