@@ -39,12 +39,16 @@ namespace MSRewardsBot.Server.Core
         public void Start()
         {
             _connectionManager.ClientConnected += ConnectionManager_ClientConnected;
+            _connectionManager.ClientUpdateVersion += ConnectionManager_ClientUpdateVersion;
 
             _updateChecker = new Thread(CheckUpdateLoop);
             _updateChecker.Name = nameof(CheckUpdateLoop);
             _updateChecker.Start();
+        }
 
-            _commandHubProxy.UpdatedClientInfoVersion += CommandHubProxy_UpdatedClientInfoVersion;
+        private async void ConnectionManager_ClientUpdateVersion(object? sender, ClientArgs e)
+        {
+            await StartClientUpdate(e.ConnectionId);
         }
 
         private async void ConnectionManager_ClientConnected(object? sender, ClientArgs e)
@@ -60,17 +64,6 @@ namespace MSRewardsBot.Server.Core
                 client.LastVersionRequest = DateTime.Now;
                 await _commandHubProxy.RequestClientVersion(client.ConnectionId);
             }
-        }
-
-        private async void CommandHubProxy_UpdatedClientInfoVersion(object? sender, ClientArgs e)
-        {
-            ClientInfo client = _connectionManager.GetConnection(e.ConnectionId);
-            if (client == null)
-            {
-                return;
-            }
-
-            await StartClientUpdate(e.ConnectionId);
         }
 
         private async void CheckUpdateLoop()
@@ -138,14 +131,15 @@ namespace MSRewardsBot.Server.Core
                 return false;
             }
 
+            if (client.Version < _release.Version)
+            {
+                return true;
+            }
+
             if (DateTimeUtilities.HasElapsed(now, client.LastServerCheck, new TimeSpan(0, 5, 0)))
             {
                 client.LastServerCheck = now;
-
-                if (client.Version < _release.Version)
-                {
-                    await _commandHubProxy.SendClientUpdateFile(client.ConnectionId, file);
-                }
+                await _commandHubProxy.SendClientUpdateFile(client.ConnectionId, file);
             }
 
             return true;
@@ -208,8 +202,11 @@ namespace MSRewardsBot.Server.Core
 
                 if (!File.Exists(Paths.GetVersionFile()))
                 {
-                    File.Create(Paths.GetVersionFile());
-                    File.CreateText(_release.Version.ToString());
+                    using (FileStream fs = new FileStream(Paths.GetVersionFile(), FileMode.Create, FileAccess.Write))
+                    using (StreamWriter sw = new StreamWriter(fs))
+                    {
+                        sw.Write(_release.Version.ToString());
+                    }
                 }
 
                 return true;
@@ -295,7 +292,7 @@ namespace MSRewardsBot.Server.Core
             _isDisposing = true;
 
             _connectionManager.ClientConnected -= ConnectionManager_ClientConnected;
-            _commandHubProxy.UpdatedClientInfoVersion -= CommandHubProxy_UpdatedClientInfoVersion;
+            _connectionManager.ClientUpdateVersion -= ConnectionManager_ClientUpdateVersion;
 
             if (_updateChecker != null)
             {
