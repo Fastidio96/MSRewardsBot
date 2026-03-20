@@ -48,7 +48,10 @@ namespace MSRewardsBot.Server.Core
 
         private async void ConnectionManager_ClientUpdateVersion(object? sender, ClientArgs e)
         {
-            await StartClientUpdate(e.ConnectionId);
+           await Utils.RetryAsync(new TimeSpan(0, 0, 30), async delegate ()
+           {
+              return await StartClientUpdate(e.ConnectionId);
+           }, 3);
         }
 
         private async void ConnectionManager_ClientConnected(object? sender, ClientArgs e)
@@ -126,7 +129,7 @@ namespace MSRewardsBot.Server.Core
             DateTime now = DateTime.Now;
             ClientInfo client = _connectionManager.GetConnection(connectionId);
 
-            if (client.Version == null)
+            if (client.Version == null || _release == null)
             {
                 return false;
             }
