@@ -92,7 +92,7 @@ namespace MSRewardsBot.Server.Core
                             continue;
                         }
 
-                        if (localVersion < _release.Version || true)
+                        if (localVersion < _release.Version)
                         {
                             _logger.LogInformation("A new version is available! Current version: {localVersion} | New version: {release}",
                                 localVersion, _release.Version);
