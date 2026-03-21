@@ -29,7 +29,6 @@ namespace MSRewardsBot.Server.Core
         private readonly KeywordStore _keywordStore;
 
         private Thread _mainThread;
-        private Thread _clientsThread;
         private bool _isDisposing = false;
 
         public Server
@@ -63,7 +62,7 @@ namespace MSRewardsBot.Server.Core
 
             _mainThread = new Thread(AccountLoop);
             _mainThread.Name = nameof(AccountLoop);
-            //_mainThread.Start();
+            _mainThread.Start();
         }
 
         private async void AccountLoop()
@@ -326,19 +325,6 @@ namespace MSRewardsBot.Server.Core
                 foreach (KeyValuePair<int, MSAccountServerData> acc in _rt.CacheMSAccStats)
                 {
                     acc.Value.Account.Stats.PropertyChanged -= MsAccountStats_PropertyChanged;
-                }
-            }
-
-            if (_settings.Value.IsClientUpdaterEnabled)
-            {
-                if (_clientsThread != null)
-                {
-                    if (_clientsThread.IsAlive)
-                    {
-                        _clientsThread.Join(5000);
-                    }
-
-                    _clientsThread = null;
                 }
             }
         }
