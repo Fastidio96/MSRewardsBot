@@ -16,12 +16,6 @@ namespace MSRewardsBot.Server.DataEntities
         #region Common
 
         /// <summary>
-        /// Enable the client updater. It downloads the new release from GitHub for the client. 
-        /// In order to download the server needs to update first
-        /// </summary>
-        public bool IsClientUpdaterEnabled { get; set; } = true;
-
-        /// <summary>
         /// Chromium is more stable than firefox but can be reconized as a bot
         /// </summary>
         public bool UseFirefox { get; set; } = true;

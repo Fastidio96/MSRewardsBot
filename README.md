@@ -169,12 +169,6 @@ The server can be fully configured using the `appsettings.json` file.
 "ServerPort": "10500"
 ```
 
-### 🔄 Client Updater
-```json
-"IsClientUpdaterEnabled": false
-```
-> Enabling the updater increases CPU usage.
-
 ### 🌍 Browser Settings
 ```json
 "UseFirefox": true

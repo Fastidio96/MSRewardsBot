@@ -46,7 +46,6 @@ FROM mcr.microsoft.com/dotnet/aspnet:9.0-noble AS runtime
 ENV IsHttpsEnabled=false
 ENV ServerHost=0.0.0.0
 ENV ServerPort=10500
-ENV IsClientUpdaterEnabled=false
 ENV UseFirefox=true
 ENV MinSecsWaitBetweenSearches=180
 ENV MaxSecsWaitBetweenSearches=300

@@ -17,7 +17,6 @@ services:
       IsHttpsEnabled: "false"
       ServerHost: "0.0.0.0"
       ServerPort: "10500"
-      IsClientUpdaterEnabled: "false"
       UseFirefox: "true"
       MinSecsWaitBetweenSearches: "180"
       MaxSecsWaitBetweenSearches: "300"
