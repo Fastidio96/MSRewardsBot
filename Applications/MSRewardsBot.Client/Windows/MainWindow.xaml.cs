@@ -95,5 +95,15 @@ namespace MSRewardsBot.Client.Windows
 
             e.Handled = true;
         }
+
+        private void BtnUpdate_Click(object sender, RoutedEventArgs e)
+        {
+            if (!_appInfo.UpdateAvailable)
+            {
+                return;
+            }
+
+            _vm.ApplyUpdate();
+        }
     }
 }
