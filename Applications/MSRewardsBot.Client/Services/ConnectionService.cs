@@ -1,8 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics;
-using System.IO;
-using System.IO.Compression;
 using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.SignalR.Client;
@@ -50,9 +48,6 @@ namespace MSRewardsBot.Client.Services
                 _connection.Closed += Connection_Closed;
                 _isDisposing = false;
 
-                await TryConnect();
-                _appInfo.ConnectedToServer = true;
-
                 _disposables.Add(_connection.On<Guid>(nameof(IBotAPI.GetUserInfo), GetUserInfo));
                 _disposables.Add(_connection.On<bool>(nameof(IBotAPI.Logout), delegate ()
                 {
@@ -71,7 +66,16 @@ namespace MSRewardsBot.Client.Services
                 {
                     await SendClientVersion(clientId, _appInfo.Version);
                 }));
-                _disposables.Add(_connection.On<byte[]>("SendClientUpdateFile", SaveUpdateFile));
+                _disposables.Add(_connection.On<byte[]>("SendClientUpdateFile", delegate (byte[] file)
+                {
+                    if (FileManager.ApplyUpdate(file))
+                    {
+                        _appInfo.UpdateAvailable = true;
+                    }
+                }));
+
+                await TryConnect();
+                _appInfo.ConnectedToServer = true;
             });
         }
 
@@ -164,26 +168,6 @@ namespace MSRewardsBot.Client.Services
         public Task SendClientVersion(string clientId, Version version)
         {
             return _connection.InvokeAsync(nameof(SendClientVersion), clientId, version);
-        }
-
-        public void SaveUpdateFile(byte[] file)
-        {
-            try
-            {
-                ZipArchiveEntry entry;
-                using (Stream sr = new MemoryStream(file))
-                using (ZipArchive zip = new ZipArchive(sr, ZipArchiveMode.Create))
-                {
-                    entry = zip.CreateEntry("update");
-                    entry.ExtractToFile(Path.Combine(FileManager.GetFolderApp, "update.zip"), true);
-                }
-
-                FileManager.ApplyUpdate();
-            }
-            catch (Exception ex)
-            {
-                Debug.WriteLine(ex);
-            }
         }
     }
 }
