@@ -64,7 +64,6 @@ namespace MSRewardsBot.Server.Core
 
             if (client.Version == null)
             {
-                client.LastVersionRequest = DateTime.Now;
                 await _commandHubProxy.RequestClientVersion(client.ConnectionId);
             }
         }
@@ -120,12 +119,6 @@ namespace MSRewardsBot.Server.Core
                 return false;
             }
 
-            byte[] file = File.ReadAllBytes(Paths.GetPathClientUpdate());
-            if (file == null || file.Length == 0)
-            {
-                return false;
-            }
-
             DateTime now = DateTime.Now;
             ClientInfo client = _connectionManager.GetConnection(connectionId);
 
@@ -134,7 +127,7 @@ namespace MSRewardsBot.Server.Core
                 return false;
             }
 
-            if (client.Version < _release.Version)
+            if(client.Version >= _release.Version)
             {
                 return true;
             }
@@ -142,6 +135,13 @@ namespace MSRewardsBot.Server.Core
             if (DateTimeUtilities.HasElapsed(now, client.LastServerCheck, new TimeSpan(0, 5, 0)))
             {
                 client.LastServerCheck = now;
+
+                byte[] file = File.ReadAllBytes(Paths.GetPathClientUpdate());
+                if (file == null || file.Length == 0)
+                {
+                    return false;
+                }
+
                 await _commandHubProxy.SendClientUpdateFile(client.ConnectionId, file);
             }
 
