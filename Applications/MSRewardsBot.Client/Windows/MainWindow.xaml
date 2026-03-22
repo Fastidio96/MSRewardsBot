@@ -201,15 +201,28 @@
                     </InlineUIContainer>
                 </Hyperlink>
             </TextBlock>
-            <DockPanel
+            <DockPanel 
                         Grid.Row="0"
                         Grid.Column="2">
                 <Button DockPanel.Dock="Left"
                         x:Name="btnUpdate"
                         Content=" Update now "
                         Click="BtnUpdate_Click"
-                        IsEnabled="{Binding UpdateAvailable}"
-                        HorizontalAlignment="Left" />
+                        HorizontalAlignment="Left">
+                    <Button.Style>
+                        <Style TargetType="Button" BasedOn="{StaticResource {x:Type Button}}">
+                            <Setter Property="Visibility"
+                                    Value="Collapsed" />
+                            <Style.Triggers>
+                                <DataTrigger Binding="{Binding UpdateAvailable}"
+                                             Value="True">
+                                    <Setter Property="Visibility"
+                                            Value="Visible" />
+                                </DataTrigger>
+                            </Style.Triggers>
+                        </Style>
+                    </Button.Style>
+                </Button>
                 <TextBlock HorizontalAlignment="Right">
                  <Run Text="Version" />
                  <Run Text="{Binding Version}" />
