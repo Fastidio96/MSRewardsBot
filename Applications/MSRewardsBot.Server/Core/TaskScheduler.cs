@@ -11,7 +11,7 @@ namespace MSRewardsBot.Server.Core
 {
     public class TaskScheduler : IDisposable
     {
-        private SortedList<DateTime, Job> _todo;
+        private readonly SortedList<DateTime, Job> _todo;
         private Thread _threadScheduler;
 
         private readonly BrowserManager _browser;

@@ -12,7 +12,7 @@ namespace MSRewardsBot.Server.Helpers
 {
     public sealed class CustomConsoleFormatter : ConsoleFormatter
     {
-        private CustomConsoleOptions _options;
+        private readonly CustomConsoleOptions _options;
         private TextWriter _writer;
 
         private string _previousCategory = null;
