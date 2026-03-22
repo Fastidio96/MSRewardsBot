@@ -35,7 +35,7 @@ namespace MSRewardsBot.Client
         {
             _appInfo = new AppInfo();
 
-            if (Directory.Exists(FileManager.TempFolderUpdaterPath)) // Cleanup any update folder
+            if (Directory.Exists(FileManager.TempFolderUpdaterPath)) // Cleanup any update temp folder
             {
                 Directory.Delete(FileManager.TempFolderUpdaterPath, true);
             }
@@ -158,16 +158,14 @@ namespace MSRewardsBot.Client
                 FileManager.SaveData(new AppData());
             }
 
+            RestartApp();
+        }
+
+        public void RestartApp()
+        {
             Dispose();
 
-            ProcessStartInfo psi = new ProcessStartInfo
-            {
-                Arguments = "choice /C Y /N /D Y /T 1 & START \"\" \"" + Environment.ProcessPath + "\"",
-                WindowStyle = ProcessWindowStyle.Hidden,
-                CreateNoWindow = true,
-                FileName = "cmd.exe"
-            };
-            Process.Start(psi);
+            Process.Start(Environment.ProcessPath);
             Environment.Exit(0);
         }
 
