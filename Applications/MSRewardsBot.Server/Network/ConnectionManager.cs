@@ -55,7 +55,6 @@ namespace MSRewardsBot.Server.Network
 
                 client.LastUpdatedInfo = DateTime.Now;
                 client.Version = version;
-                client.LastVersionRequest = DateTime.Now;
 
                 _connections.Add(client);
             }

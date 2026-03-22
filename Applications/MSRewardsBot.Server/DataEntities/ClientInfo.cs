@@ -6,7 +6,7 @@ namespace MSRewardsBot.Server.DataEntities
     public class ClientInfo
     {
         /// <summary>
-        /// Do not set! It's set automatically
+        /// Do not set! It's set automatically by the ConnectionManager
         /// </summary>
         public DateTime LastUpdatedInfo { get; set; }
         public DateTime LastServerCheck { get; set; }
@@ -16,9 +16,5 @@ namespace MSRewardsBot.Server.DataEntities
 
         public string IP { get; set; }
         public Version Version { get; set; }
-
-        public DateTime LastVersionRequest { get; set; }
-        public DateTime LastSendUpdateFile { get; set; }
-
     }
 }
