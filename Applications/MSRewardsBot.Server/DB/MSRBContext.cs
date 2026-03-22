@@ -18,7 +18,7 @@ namespace MSRewardsBot.Server.DB
 
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
         {
-            optionsBuilder.UseSqlite($"Data Source={Utils.GetDBFile()};Cache=Shared");
+            optionsBuilder.UseSqlite($"Data Source={Paths.GetDBFile()};Cache=Shared");
 #if DEBUG
             //optionsBuilder.EnableSensitiveDataLogging();
 #endif

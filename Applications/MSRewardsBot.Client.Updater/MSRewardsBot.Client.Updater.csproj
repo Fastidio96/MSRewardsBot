@@ -1,20 +1,28 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
 	<PropertyGroup>
+		<OutputType>Exe</OutputType>
 		<TargetFramework>net9.0</TargetFramework>
 		<ImplicitUsings>disable</ImplicitUsings>
 		<Nullable>annotations</Nullable>
-
-		<!-- Fix RID warning -->
-		<RuntimeIdentifiers>win-x64;linux-x64</RuntimeIdentifiers>
 
 		<PackageReadmeFile>README.md</PackageReadmeFile>
 		<RepositoryUrl>https://github.com/Fastidio96/MSRewardsBot.git</RepositoryUrl>
 		<FileVersion>1.2.0.0</FileVersion>
 		<AssemblyVersion>1.2.0.0</AssemblyVersion>
-		<Title>MS Rewards Bot Common</Title>
+		<Title>MS Rewards Bot Client Updater</Title>
 		<PackageLicenseFile>LICENSE</PackageLicenseFile>
 		<Authors>Fastidio96</Authors>
+		<RunPostBuildEvent>Always</RunPostBuildEvent>
+	</PropertyGroup>
+
+	<PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">
+	  <DebugType>none</DebugType>
+	  <IsPublishable>False</IsPublishable>
+	</PropertyGroup>
+
+	<PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
+	  <IsPublishable>False</IsPublishable>
 	</PropertyGroup>
 
 	<ItemGroup>
@@ -27,9 +35,5 @@
 			<PackagePath>\</PackagePath>
 		</None>
 	</ItemGroup>
-
-	<PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">
-	  <DebugType>none</DebugType>
-	</PropertyGroup>
 
 </Project>

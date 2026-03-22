@@ -11,23 +11,54 @@
 		<ApplicationIcon>icon.ico</ApplicationIcon>
 		<StartupObject>MSRewardsBot.Client.App</StartupObject>
 		<ProduceReferenceAssembly>False</ProduceReferenceAssembly>
+
+		<PackageReadmeFile>README.md</PackageReadmeFile>
+		<RepositoryUrl>https://github.com/Fastidio96/MSRewardsBot.git</RepositoryUrl>
+		<FileVersion>1.2.0.0</FileVersion>
+		<AssemblyVersion>1.2.0.0</AssemblyVersion>
+		<Title>MS Rewards Bot Client</Title>
+		<PackageLicenseFile>LICENSE</PackageLicenseFile>
+		<Authors>Fastidio96</Authors>
+		<RunPostBuildEvent>OnOutputUpdated</RunPostBuildEvent>
 	</PropertyGroup>
+
+	<ItemGroup>
+		<None Include="..\..\LICENSE">
+			<Pack>True</Pack>
+			<PackagePath>\</PackagePath>
+		</None>
+		<None Include="..\..\README.md">
+			<Pack>True</Pack>
+			<PackagePath>\</PackagePath>
+		</None>
+	</ItemGroup>
 
 	<PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">
-	  <DebugType>none</DebugType>
+		<DebugType>none</DebugType>
+	</PropertyGroup>
+
+	<PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
 	</PropertyGroup>
 
 	<ItemGroup>
-	  <Content Include="icon.ico" />
+		<Content Include="icon.ico" />
 	</ItemGroup>
 
 	<ItemGroup>
-	  <PackageReference Include="Microsoft.AspNetCore.SignalR.Client" Version="9.0.9" />
-	  <PackageReference Include="Microsoft.Web.WebView2" Version="1.0.3537.50" />
+		<PackageReference Include="Microsoft.AspNetCore.SignalR.Client" Version="9.0.9" />
+		<PackageReference Include="Microsoft.Web.WebView2" Version="1.0.3537.50" />
 	</ItemGroup>
 
 	<ItemGroup>
-	  <ProjectReference Include="..\..\Libraries\MSRewardsBot.Common\MSRewardsBot.Common.csproj" />
+		<ProjectReference Include="..\..\Libraries\MSRewardsBot.Common\MSRewardsBot.Common.csproj" />
 	</ItemGroup>
+
+	<Target Name="PostBuild" AfterTargets="PostBuildEvent" Condition="'$(Configuration)' == 'Release'">
+		<Exec Command="dotnet build &quot;$(SolutionDir)Applications\MSRewardsBot.Client.Updater\MSRewardsBot.Client.Updater.csproj&quot; -c Release&#xD;&#xA;mkdir &quot;$(TargetDir)updater&quot; 2&gt;nul&#xD;&#xA;xcopy &quot;$(SolutionDir)Applications\MSRewardsBot.Client.Updater\bin\Release\net9.0\*.*&quot; &quot;$(TargetDir)updater\&quot; /Y /E /I" />
+	</Target>
+
+	<Target Name="PostBuild" AfterTargets="PostBuildEvent" Condition="'$(Configuration)' == 'Debug'">
+		<Exec Command="dotnet build &quot;$(SolutionDir)Applications\MSRewardsBot.Client.Updater\MSRewardsBot.Client.Updater.csproj&quot; -c Debug&#xD;&#xA;mkdir &quot;$(TargetDir)updater&quot; 2&gt;nul&#xD;&#xA;xcopy &quot;$(SolutionDir)Applications\MSRewardsBot.Client.Updater\bin\Debug\net9.0\*.*&quot; &quot;$(TargetDir)updater\&quot; /Y /E /I" />
+	</Target>
 
 </Project>

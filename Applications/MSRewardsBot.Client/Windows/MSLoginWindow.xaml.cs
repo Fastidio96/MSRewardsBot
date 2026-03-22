@@ -12,7 +12,7 @@ namespace MSRewardsBot.Client.Windows
     /// </summary>
     public partial class MSLoginWindow : Window
     {
-        private ViewModel _vm;
+        private readonly ViewModel _vm;
         private event EventHandler InitCompleted;
 
         public MSLoginWindow(ViewModel vm)

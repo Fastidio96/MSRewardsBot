@@ -1,7 +1,7 @@
 ﻿using System;
 using Microsoft.Extensions.Logging;
 
-namespace MSRewardsBot.Server
+namespace MSRewardsBot.Server.DataEntities
 {
     public class Settings
     {
@@ -14,11 +14,6 @@ namespace MSRewardsBot.Server
         #endregion
 
         #region Common
-
-        /// <summary>
-        /// Disable this if you don't need it. It saves performances
-        /// </summary>
-        public bool IsClientUpdaterEnabled { get; set; } = false;
 
         /// <summary>
         /// Chromium is more stable than firefox but can be reconized as a bot
@@ -62,7 +57,7 @@ namespace MSRewardsBot.Server
 
         #region Logs
 
-        public bool WriteLogsOnFile { get; set; } = true;
+        public bool WriteLogsOnFile { get; set; } = false;
         public bool LogsGroupedCategories { get; set; } = true;
         public LogLevel MinimumLogLevel { get; set; } = LogLevel.Debug;
 

@@ -395,7 +395,7 @@ namespace MSRewardsBot.Server.Automation
 
                 if (c.Expires.HasValue && (c.Expires > DateTime.UtcNow))
                 {
-                    cookie.Expires = (float)((DateTimeOffset)c.Expires.Value).ToUnixTimeSeconds();
+                    cookie.Expires = ((DateTimeOffset)c.Expires.Value).ToUnixTimeSeconds();
                 }
 
                 if (Enum.TryParse(typeof(SameSiteAttribute), c.SameSite, out object attr))

@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
 using MSRewardsBot.Client.DataEntities;
@@ -33,6 +34,11 @@ namespace MSRewardsBot.Client
         public async void Init()
         {
             _appInfo = new AppInfo();
+
+            if (Directory.Exists(FileManager.TempFolderUpdaterPath)) // Cleanup any update temp folder
+            {
+                Directory.Delete(FileManager.TempFolderUpdaterPath, true);
+            }
 
             bool validData = FileManager.LoadData(out _appData) && IsValidConnectionSettings(_appData);
             if (!validData)
@@ -152,16 +158,14 @@ namespace MSRewardsBot.Client
                 FileManager.SaveData(new AppData());
             }
 
+            RestartApp();
+        }
+
+        public void RestartApp()
+        {
             Dispose();
 
-            ProcessStartInfo psi = new ProcessStartInfo
-            {
-                Arguments = "choice /C Y /N /D Y /T 1 & START \"\" \"" + Environment.ProcessPath + "\"",
-                WindowStyle = ProcessWindowStyle.Hidden,
-                CreateNoWindow = true,
-                FileName = "cmd.exe"
-            };
-            Process.Start(psi);
+            Process.Start(Environment.ProcessPath);
             Environment.Exit(0);
         }
 
@@ -229,6 +233,39 @@ namespace MSRewardsBot.Client
             };
 
             return _connection.InsertMSAccount(_token, acc);
+        }
+
+        public void ApplyUpdate()
+        {
+            PrepareTempFolder();
+
+            Process.Start(new ProcessStartInfo()
+            {
+                FileName = Path.Combine(FileManager.TempFolderUpdaterPath, FileManager.UPDATER_NAME),
+                Arguments = FileManager.AppFolderPath
+            });
+
+            Environment.Exit(0);
+        }
+
+        private void PrepareTempFolder()
+        {
+            if (Directory.Exists(FileManager.TempFolderUpdaterPath))
+            {
+                Directory.Delete(FileManager.TempFolderUpdaterPath, true);
+            }
+
+            Directory.CreateDirectory(FileManager.TempFolderUpdaterPath);
+
+            DirectoryInfo dir = new DirectoryInfo(FileManager.LocalFolderUpdaterPath);
+            foreach (FileInfo file in dir.GetFiles()) // Copy all updater file into temp
+            {
+                File.Copy(file.FullName, Path.Combine(FileManager.TempFolderUpdaterPath, file.Name), true);
+            }
+
+            FileInfo updater = new FileInfo(FileManager.LocalUpdatePackagePath);
+            File.Copy(FileManager.LocalUpdatePackagePath, Path.Combine(FileManager.TempFolderUpdaterPath, updater.Name), true); // Copy zip package into temp
+            File.Delete(FileManager.LocalUpdatePackagePath);
         }
 
         public async void Dispose()

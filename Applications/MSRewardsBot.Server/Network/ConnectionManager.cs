@@ -9,6 +9,7 @@ namespace MSRewardsBot.Server.Network
     {
         public event EventHandler<ClientArgs> ClientConnected;
         public event EventHandler<ClientArgs> ClientDisconnected;
+        public event EventHandler<ClientArgs> ClientUpdateVersion;
 
         private readonly HashSet<ClientInfo> _connections = [];
 
@@ -38,6 +39,27 @@ namespace MSRewardsBot.Server.Network
 
                 _connections.Add(updatedClientInfo);
             }
+        }
+
+        public void UpdateClientVersion(string connectionId, Version version)
+        {
+            lock (_connections)
+            {
+                ClientInfo client = _connections.FirstOrDefault(c => c.ConnectionId == connectionId);
+                if (client == null)
+                {
+                    return;
+                }
+
+                _connections.RemoveWhere(c => c.ConnectionId == connectionId);
+
+                client.LastUpdatedInfo = DateTime.Now;
+                client.Version = version;
+
+                _connections.Add(client);
+            }
+
+            ClientUpdateVersion?.Invoke(this, new ClientArgs(connectionId));
         }
 
         public void RemoveConnection(string connectionId)

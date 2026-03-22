@@ -19,6 +19,7 @@ namespace MSRewardsBot.Client.DataEntities
             Accounts.CollectionChanged += Accounts_CollectionChanged;
 
             Version = Assembly.GetExecutingAssembly().GetName().Version;
+            UpdateAvailable = false;
         }
 
         ~AppInfo()
@@ -115,6 +116,17 @@ namespace MSRewardsBot.Client.DataEntities
         public ObservableCollection<MSAccount> Accounts { get; set; }
 
         public Version Version { get; set; }
+
+        public bool UpdateAvailable
+        {
+            get => _updateAvailable;
+            set
+            {
+                _updateAvailable = value;
+                NotifyPropertyChanged(nameof(UpdateAvailable));
+            }
+        }
+        private bool _updateAvailable;
 
         private void NotifyPropertyChanged([CallerMemberName] string propName = "")
         {

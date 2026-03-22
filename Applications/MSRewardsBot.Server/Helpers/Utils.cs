@@ -1,80 +1,16 @@
 ﻿using System;
 using System.IO;
 using System.Runtime.InteropServices;
+using System.Security.Cryptography;
+using System.Threading;
+using System.Threading.Tasks;
+using MSRewardsBot.Common.Utilities;
 
 namespace MSRewardsBot.Server.Helpers
 {
     public class Utils
     {
-        private static string _serverPath => new Uri(AppDomain.CurrentDomain.BaseDirectory + "MSRB").LocalPath;
-        private static string _logsPath => Path.Combine(_serverPath, "logs");
-        private static string _clientUpdatePath => Path.Combine(_serverPath, "updates");
-
-        #region Folders
-
-        public static string GetFolderServerData()
-        {
-            if (!Directory.Exists(_serverPath))
-            {
-                Directory.CreateDirectory(_serverPath);
-            }
-
-            return _serverPath;
-        }
-
-        public static string GetFolderLogs()
-        {
-            if (!Directory.Exists(_logsPath))
-            {
-                Directory.CreateDirectory(_logsPath);
-            }
-
-            return _logsPath;
-        }
-
-        public static string GetFolderClientUpdate()
-        {
-            if (!Directory.Exists(_clientUpdatePath))
-            {
-                Directory.CreateDirectory(_clientUpdatePath);
-            }
-
-            return _clientUpdatePath;
-        }
-
-        #endregion
-
-        #region Files
-
-        public static string GetDBFile()
-        {
-            return Path.Combine(GetFolderServerData(), "data.db");
-        }
-
-        public static string GetKeywordsFile()
-        {
-            return Path.Combine(GetFolderServerData(), "keywords.txt");
-        }
-
-        public static string GetLogFile()
-        {
-            string now = DateTime.Now.ToString("yyyy-MM-dd");
-            return Path.Combine(GetFolderLogs(), $"{now}.txt");
-        }
-
-        public static string GetVersionFile()
-        {
-            return Path.Combine(GetFolderClientUpdate(), "latest.txt");
-        }
-
-        public static string GetFileLatestUpdate()
-        {
-            return Path.Combine(GetFolderClientUpdate(), "update.zip");
-        }
-
-        #endregion
-
-        public static string GetFileHash(string path)
+        public static string GetMd5FileHash(string path)
         {
             if (!File.Exists(path))
             {
@@ -82,11 +18,77 @@ namespace MSRewardsBot.Server.Helpers
             }
 
             using (FileStream fs = File.OpenRead(path))
-            using (System.Security.Cryptography.MD5 md5 = System.Security.Cryptography.MD5.Create())
+            using (MD5 md5 = MD5.Create())
             {
                 byte[] hash = md5.ComputeHash(fs);
                 return Convert.ToBase64String(hash);
             }
+        }
+
+        public static bool VerifyFileSha256(string path, string hash)
+        {
+            if (hash.ToLower().StartsWith("sha256:"))
+            {
+                hash = hash.Replace("sha256:", "");
+            }
+
+            using (FileStream fs = File.OpenRead(path))
+            using (SHA256 sha = SHA256.Create())
+            {
+                byte[] checksum = sha.ComputeHash(fs);
+                return hash.ToLower() == BitConverter.ToString(checksum).Replace("-", string.Empty).ToLower();
+            }
+        }
+
+        public static bool Retry(TimeSpan retryAfter, Func<bool> operation, int maxRetries)
+        {
+            int retries = 0;
+            DateTime lastRetry = DateTime.MinValue;
+            while (retries < maxRetries)
+            {
+                retries++;
+                DateTime now = DateTime.Now;
+
+                if (DateTimeUtilities.HasElapsed(now, lastRetry, retryAfter))
+                {
+                    lastRetry = now;
+
+                    if (operation())
+                    {
+                        return true;
+                    }
+                }
+
+                Thread.Sleep(1000);
+            }
+
+            return false;
+        }
+
+        public static async Task<bool> RetryAsync(TimeSpan retryAfter, Func<Task<bool>> operation, int maxRetries)
+        {
+            int retries = 0;
+            DateTime lastRetry = DateTime.MinValue;
+
+            while (retries < maxRetries)
+            {
+                retries++;
+                DateTime now = DateTime.Now;
+
+                if (DateTimeUtilities.HasElapsed(now, lastRetry, retryAfter))
+                {
+                    lastRetry = now;
+
+                    if (await operation())
+                    {
+                        return true;
+                    }
+                }
+
+                await Task.Delay(1000);
+            }
+
+            return false;
         }
 
         #region Enable console colors

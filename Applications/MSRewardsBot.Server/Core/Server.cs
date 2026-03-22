@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Threading;
-using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using MSRewardsBot.Common.DataEntities.Accounting;
@@ -29,7 +28,6 @@ namespace MSRewardsBot.Server.Core
         private readonly KeywordStore _keywordStore;
 
         private Thread _mainThread;
-        private Thread _clientsThread;
         private bool _isDisposing = false;
 
         public Server
@@ -64,61 +62,6 @@ namespace MSRewardsBot.Server.Core
             _mainThread = new Thread(AccountLoop);
             _mainThread.Name = nameof(AccountLoop);
             _mainThread.Start();
-
-            if (_settings.Value.IsClientUpdaterEnabled)
-            {
-                _clientsThread = new Thread(ClientLoop);
-                _clientsThread.Name = nameof(ClientLoop);
-                _clientsThread.Start();
-            }
-        }
-
-        private async void ClientLoop()
-        {
-            _logger.LogDebug("Clients thread started");
-
-            while (!_isDisposing)
-            {
-                foreach (ClientInfo client in _connectionManager.GetClients())
-                {
-                    DateTime now = DateTime.Now;
-
-                    if (DateTimeUtilities.HasElapsed(now, client.LastServerCheck, new TimeSpan(0, 5, 0)))
-                    {
-                        client.LastServerCheck = now;
-
-                        if (client.Version == null)
-                        {
-                            if (DateTimeUtilities.HasElapsed(now, client.LastVersionRequest, new TimeSpan(0, 15, 0)))
-                            {
-                                client.LastVersionRequest = now;
-                                await _commandHubProxy.RequestClientVersion(client.ConnectionId);
-                            }
-                        }
-
-                        using (ScopedBusiness scope = _businessFactory.Create())
-                        {
-                            if (scope.Business.ClientNeedsToUpdate(client.Version))
-                            {
-                                _logger.LogInformation("The client {id} needs to update. Client version {ClientVersion} | Server version {ServerVersion}",
-                                    client.ConnectionId, client.Version, scope.Business.LatestClientVersion);
-
-                                if (DateTimeUtilities.HasElapsed(now, client.LastSendUpdateFile, new TimeSpan(0, 15, 0)))
-                                {
-                                    _logger.LogInformation("Sending to client {id} update {ServerVersion}",
-                                        client.ConnectionId, scope.Business.LatestClientVersion);
-
-                                    client.LastSendUpdateFile = now;
-                                    await StartClientUpdate(client.ConnectionId);
-                                }
-                            }
-                        }
-
-                    }
-                }
-
-                Thread.Sleep(1000);
-            }
         }
 
         private async void AccountLoop()
@@ -341,7 +284,7 @@ namespace MSRewardsBot.Server.Core
                                     {
                                         _logger.LogWarning("Job {name} failed", nameof(DashboardUpdateCommand));
 
-                                        data.Stats.LastDashboardUpdate = DateTime.MinValue; // Retry again after failure
+                                        data.Stats.LastDashboardUpdate = DateTime.MinValue; // RetryAsync again after failure
                                     }
                                 });
 
@@ -360,23 +303,6 @@ namespace MSRewardsBot.Server.Core
 
                 await _commandHubProxy.SendUpdateMSAccountStats(info.ConnectionId, stats, e.PropertyName);
             }
-        }
-
-        private async Task<bool> StartClientUpdate(string connectionId)
-        {
-            byte[] file;
-            using (ScopedBusiness scope = _businessFactory.Create())
-            {
-                file = scope.Business.GetClientUpdateFile();
-            }
-
-            if (file == null || file.Length == 0)
-            {
-                return false;
-            }
-
-            await _commandHubProxy.SendClientUpdateFile(connectionId, file);
-            return true;
         }
 
         public void Dispose()
@@ -398,19 +324,6 @@ namespace MSRewardsBot.Server.Core
                 foreach (KeyValuePair<int, MSAccountServerData> acc in _rt.CacheMSAccStats)
                 {
                     acc.Value.Account.Stats.PropertyChanged -= MsAccountStats_PropertyChanged;
-                }
-            }
-
-            if (_settings.Value.IsClientUpdaterEnabled)
-            {
-                if (_clientsThread != null)
-                {
-                    if (_clientsThread.IsAlive)
-                    {
-                        _clientsThread.Join(5000);
-                    }
-
-                    _clientsThread = null;
                 }
             }
         }

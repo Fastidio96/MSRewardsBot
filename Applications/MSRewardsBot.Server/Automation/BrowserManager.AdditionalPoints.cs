@@ -28,8 +28,8 @@ namespace MSRewardsBot.Server.Automation
 
                 await WaitRandomMs(BrowserConstants.HUMAN_ACTION_MIN, BrowserConstants.HUMAN_ACTION_MAX);
 
-                int count = await data.Page.Locator(BrowserConstants.ADDITIONAL_PTS_IMAGE_LOCATOR).CountAsync();
-                if (count == 0)
+                IReadOnlyList<ILocator> locators = await data.Page.Locator(BrowserConstants.ADDITIONAL_PTS_IMAGE_LOCATOR).AllAsync();
+                if (locators.Count == 0)
                 {
                     _logger.LogInformation("No additional points found from the dashboard for {Email} | {User}",
                         data.Account.Email, data.Account.User.Username);
@@ -39,7 +39,6 @@ namespace MSRewardsBot.Server.Automation
 
                 try
                 {
-                    IReadOnlyList<ILocator> locators = await data.Page.Locator(BrowserConstants.ADDITIONAL_PTS_IMAGE_LOCATOR).AllAsync();
                     foreach (ILocator loc in locators)
                     {
                         if (!await loc.IsVisibleAsync())
@@ -93,9 +92,16 @@ namespace MSRewardsBot.Server.Automation
                 }
 
                 int gainedPts = data.Stats.TotalAccountPoints - previousPoints;
-
-                _logger.LogInformation("Gained {pts} points from the dashboard for {Email} | {User}",
+                if (gainedPts > 0)
+                {
+                    _logger.LogInformation("Gained {pts} points from the dashboard for {Email} | {User}",
                     gainedPts, data.Account.Email, data.Account.User.Username);
+                }
+                else
+                {
+                    _logger.LogInformation("No additional points found from the dashboard for {Email} | {User}",
+                        data.Account.Email, data.Account.User.Username);
+                }
 
                 return true;
             }

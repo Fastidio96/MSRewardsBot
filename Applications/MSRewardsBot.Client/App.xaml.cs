@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Diagnostics;
 using System.Windows;
 
 namespace MSRewardsBot.Client
@@ -13,18 +12,8 @@ namespace MSRewardsBot.Client
 
         public App()
         {
-            CheckForInstanceRunning();
-
             this.DispatcherUnhandledException += App_DispatcherUnhandledException;
             this.Startup += App_Startup;
-        }
-
-        private void CheckForInstanceRunning()
-        {
-            if (Process.GetProcessesByName(Process.GetCurrentProcess().ProcessName).Length > 1)
-            {
-                Environment.Exit(-2);
-            }
         }
 
         private void App_Startup(object sender, StartupEventArgs e)

@@ -1,9 +1,9 @@
 # Microsoft Rewards Bot
 
 ![Server](https://img.shields.io/badge/Server-Windows%20%7C%20Linux%20%7C%20Docker-blue)
-![Client](https://img.shields.io/badge/Client-WPF%20(Windows%20only)-informational)
-![Docker Image](https://img.shields.io/docker/v/fastidio96/msrb?label=Docker%20Image)
-![Docker Pulls](https://img.shields.io/docker/pulls/fastidio96/msrb?label=Docker%20Pulls)
+[![Client](https://img.shields.io/badge/Client-WPF%20(Windows%20only)-informational)](https://github.com/fastidio96/MSRewardsBot/releases/latest)
+[![Docker Image](https://img.shields.io/docker/v/fastidio96/msrb?label=Docker%20Image)](https://hub.docker.com/r/fastidio96/msrb)
+[![Docker Pulls](https://img.shields.io/docker/pulls/fastidio96/msrb?label=Docker%20Pulls)](https://hub.docker.com/r/fastidio96/msrb)
 ![Server](https://img.shields.io/badge/Server-.NET%209-success)
 ![License](https://img.shields.io/badge/License-MIT-green)
 
@@ -15,14 +15,73 @@
 
 ---
 
+## 📑 Table of Contents
+
+- [Overview](#-overview)
+- [Features](#-features)
+- [Automation & Stealth Features](#%EF%B8%8F-automation--stealth-features)
+  - [Human-like Automation](#-human-like-automation)
+  - [Anti-Bot Browser Patching)](#%EF%B8%8F-anti-bot-browser-patching)
+- [Authentication & Multi-User Support](#-authentication--multi-user-support)
+- [Project Structure](#-project-structure)
+  - [Client (WPF – Windows only)](#%EF%B8%8F-client-wpf--windows-only)
+  - [Server (Cross-platform)](#-server-cross-platform)
+- [Server Configuration](#%EF%B8%8F-server-configuration)
+- [Supported Platforms](#-supported-platforms)
+- [Technologies Used](#-technologies-used)
+- [Legal Notice](#%EF%B8%8F-legal-notice)
+- [Final Notes](#-final-notes)
+
+---
+
 ## 📌 Overview
 
 This project is a **Microsoft Rewards automation bot** composed of a **Windows client** and a **cross-platform server**.
 
 The goal is to automate searches and periodically update Microsoft Rewards statistics using a **scheduled and configurable system**.
 
-> 🐳 **Docker users:** This image contains **only the server component**.  
-> 🖥️ The Windows client is available via **GitHub Releases**.
+---
+
+## ✨ Features
+
+| Feature | Description |
+|-------|-------------|
+| 🎯 Dashboard Tasks | Collect additional Microsoft Rewards points available in the dashboard |
+| 🖥️ PC Searches | Perform automated searches from desktop |
+| 📱 Mobile Searches | Perform automated searches emulating a mobile device |
+
+---
+
+## ⚙️ Automation & Stealth Features
+
+### 🧠 Human-like Automation
+
+| Feature | Description |
+|--------|--------|
+| 🤖 Human-like Behavior | Write searches as a real user |
+| 🤖 Human-like Behavior | Scroll pages naturally |
+| 🤖 Human-like Behavior | Randomized waiting times between actions |
+| 🔍 Search Logic | Searches based on real keywords that change over time |
+| 🌍 Localization | Automatically imports the current locale |
+| 🧭 Browser Identity | Realistic user agent |
+| 🧭 Browser Identity | Realistic viewport size |
+
+### 🛡️ Anti-Bot Browser Patching
+
+The browser environment is patched using **JavaScript injection** to reduce automation fingerprints.
+
+- Remove `navigator.webdriver` and related automation flags  
+- Provide believable **plugins** and **languages**  
+- Patch **WebGL `getParameter`** to return realistic vendor/renderer  
+- Ensure `window.chrome` exists and looks native  
+- Fake `deviceMemory` and `hardwareConcurrency` with realistic values  
+- Remove Playwright/CDP visible globals  
+- Provide `chrome.loadTimes` and `chrome.csi` shims used by some detectors  
+- Worker patch: ensure workers see the same navigator-like values and no webdriver  
+- Invisible iframe getter patch: implement a native-like `contentWindow` getter  
+- Patch stack trace strings used by some CDP detection techniques  
+- Remove suspicious iframe overrides done by naive automation patches  
+- Small timing/randomization helpers to make execution less deterministic
 
 ---
 
@@ -62,7 +121,7 @@ The client is a **WPF application** running **exclusively on Windows**.
 - Add new Microsoft accounts
 - Register and login
 - View Microsoft Rewards account statistics
-- Communicate with the server for updates
+- Client updater (v1.2.0): the server checks for updates and, if the client is outdated, provides the latest version, allowing the user to update via the **"Update now"** button.
 
 > ❗ The client **cannot run on Linux or macOS**.
 
@@ -110,12 +169,6 @@ The server can be fully configured using the `appsettings.json` file.
 "ServerPort": "10500"
 ```
 
-### 🔄 Client Updater
-```json
-"IsClientUpdaterEnabled": false
-```
-> Enabling the updater increases CPU usage.
-
 ### 🌍 Browser Settings
 ```json
 "UseFirefox": true
@@ -161,12 +214,13 @@ The server can be fully configured using the `appsettings.json` file.
 ## 🐧 Supported Platforms
 
 ### 🖥️ Client
-- ✅ Windows only
+- ✅ Windows only (available on [GitHub Releases](https://github.com/fastidio96/MSRewardsBot/releases/latest))
 
 ### 🖧 Server
 - ✅ Linux
 - ✅ Windows (Console / Windows Service)
 - ✅ Docker (Dockerfile / Docker Compose)
+- 🐳 Docker Image available on [Docker Hub](https://hub.docker.com/r/fastidio96/msrb)
 
 ---
 
@@ -196,6 +250,3 @@ This repository exists **only for learning, experimentation, and fun**.
 
 If you find this project interesting, feel free to explore the code and learn from it.  
 Please **do not use it on real accounts**.
-
-Have fun and stay safe 🚀
-

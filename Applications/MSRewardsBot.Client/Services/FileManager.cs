@@ -8,14 +8,16 @@ namespace MSRewardsBot.Client.Services
 {
     public class FileManager
     {
-        public static string GetFolderApp => new Uri(AppDomain.CurrentDomain.BaseDirectory).LocalPath;
+        public const string UPDATER_NAME = "MSRewardsBot.Client.Updater.exe";
+        public static string AppFolderPath => new Uri(AppDomain.CurrentDomain.BaseDirectory).LocalPath;
+        public static string LocalUpdatePackagePath => Path.Combine(AppFolderPath, "update.zip");
+        public static string TempFolderUpdaterPath => Path.Combine(Path.GetTempPath(), "MSRB Client Updater");
+        public static string LocalFolderUpdaterPath => Path.Combine(AppFolderPath, "updater");
 
         private static string _filePath => Path.Combine(_folderPath, "data.xml");
         private static string _folderPath => AppConstants.IS_PRODUCTION ?
             Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "MSRB") :
             Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "MSRB", "Debug");
-
-        #region Data
 
         public static bool SaveData(AppData data)
         {
@@ -100,42 +102,16 @@ namespace MSRewardsBot.Client.Services
             }
         }
 
-        #endregion
-
-        #region Updates
-
-        public static string GetUpdateFolder()
-        {
-            string updateFolder = Path.Combine(GetFolderApp, "updates");
-            if (!Directory.Exists(updateFolder))
-            {
-                Directory.CreateDirectory(updateFolder);
-            }
-
-            return updateFolder;
-        }
-
-        private static string GetBackupUpdateFolder()
-        {
-            string backupFolder = Path.Combine(GetFolderApp, "backup");
-            if (!Directory.Exists(backupFolder))
-            {
-                Directory.CreateDirectory(backupFolder);
-            }
-
-            return backupFolder;
-        }
-
-        public static bool ApplyUpdate()
+        public static bool ApplyUpdate(byte[] file)
         {
             try
             {
-                if (!BackupAppFiles())
+                if (File.Exists(LocalUpdatePackagePath))
                 {
-                    return false;
+                    File.Delete(LocalUpdatePackagePath);
                 }
 
-
+                File.WriteAllBytes(LocalUpdatePackagePath, file);
 
                 return true;
             }
@@ -144,37 +120,5 @@ namespace MSRewardsBot.Client.Services
                 return false;
             }
         }
-
-        private static bool BackupAppFiles()
-        {
-            try
-            {
-                if (Directory.Exists(GetBackupUpdateFolder()))
-                {
-                    Directory.Delete(GetBackupUpdateFolder(), true);
-                }
-
-                Directory.CreateDirectory(GetBackupUpdateFolder());
-
-                string[] files = Directory.GetFiles(GetFolderApp);
-                foreach (string file in files)
-                {
-                    if (Path.GetFileName(file) == "update.zip")
-                    {
-                        continue;
-                    }
-
-                    //File.Copy(file, )
-                }
-
-                return true;
-            }
-            catch
-            {
-                return false;
-            }
-        }
-
-        #endregion
     }
 }
