@@ -19,20 +19,8 @@ namespace MSRewardsBot.Client.Updater
 
         static void Main(string[] args)
         {
-#if !DEBUG
             nint handle = GetConsoleWindow();
             ShowWindow(handle, SW_HIDE);
-#endif
-
-#if DEBUG
-            while (!Debugger.IsAttached)
-            {
-                Thread.Sleep(500);
-            }
-
-            Debugger.Launch();
-            Debugger.Break();
-#endif
 
             if (args.Length != 1)
             {
