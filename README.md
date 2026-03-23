@@ -121,7 +121,7 @@ The client is a **WPF application** running **exclusively on Windows**.
 - Add new Microsoft accounts
 - Register and login
 - View Microsoft Rewards account statistics
-- Communicate with the server for updates
+- Client updater (v1.2.0): the server checks for updates and, if the client is outdated, provides the latest version, allowing the user to update via the **"Update now"** button.
 
 > ❗ The client **cannot run on Linux or macOS**.
 
