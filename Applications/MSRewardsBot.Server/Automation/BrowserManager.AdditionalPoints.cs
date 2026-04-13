@@ -41,13 +41,13 @@ namespace MSRewardsBot.Server.Automation
                 {
                     foreach (ILocator loc in locators)
                     {
+                        await loc.ScrollIntoViewIfNeededAsync();
+                        await WaitRandomMs(1200, 2000);
+
                         if (!await loc.IsVisibleAsync())
                         {
                             continue;
                         }
-
-                        await loc.ScrollIntoViewIfNeededAsync();
-                        await WaitRandomMs(1200, 2000);
 
                         try
                         {
