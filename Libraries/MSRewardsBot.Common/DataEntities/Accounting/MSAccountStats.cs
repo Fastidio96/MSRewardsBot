@@ -153,6 +153,9 @@ namespace MSRewardsBot.Common.DataEntities.Accounting
         [JsonIgnore]
         public DateTime LastSearchesCheck { get; set; }
 
+        [JsonIgnore]
+        public DateTime LastDashboardPointsCheck { get; set; }
+
         public int MSAccountId { get; set; }
 
         [JsonIgnore]
