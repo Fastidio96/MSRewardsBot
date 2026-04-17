@@ -10,8 +10,8 @@
 
 		<PackageReadmeFile>README.md</PackageReadmeFile>
 		<RepositoryUrl>https://github.com/Fastidio96/MSRewardsBot.git</RepositoryUrl>
-		<FileVersion>1.2.0.0</FileVersion>
-		<AssemblyVersion>1.2.0.0</AssemblyVersion>
+		<FileVersion>1.2.1.0</FileVersion>
+		<AssemblyVersion>1.2.1.0</AssemblyVersion>
 		<Title>MS Rewards Bot Common</Title>
 		<PackageLicenseFile>LICENSE</PackageLicenseFile>
 		<Authors>Fastidio96</Authors>
