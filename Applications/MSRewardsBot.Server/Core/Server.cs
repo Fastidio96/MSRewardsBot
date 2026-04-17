@@ -90,6 +90,7 @@ namespace MSRewardsBot.Server.Core
                     {
                         cache.Value.IsFirstTimeUpdateStats = true;
                         cache.Value.Stats.LastDashboardUpdate = DateTime.MinValue;
+                        cache.Value.Stats.LastDashboardPointsCheck = DateTime.MinValue;
                         cache.Value.Stats.LastSearchesCheck = DateTime.MinValue;
                     }
                 }
@@ -145,16 +146,16 @@ namespace MSRewardsBot.Server.Core
                         continue;
                     }
 
-                    if (DateTimeUtilities.HasElapsed(now, cache.Stats.LastSearchesCheck, _settings.Value.SearchesCheck))
+                    if (DateTimeUtilities.HasElapsed(now, cache.Stats.LastDashboardPointsCheck, _settings.Value.DashboardPointsCheck))
                     {
-                        cache.Stats.LastSearchesCheck = now;
+                        cache.Stats.LastDashboardPointsCheck = now;
 
                         _taskScheduler.AddJob(now, new Job(new AdditionalPointsCommand()
                         {
                             Data = cache,
                             OnSuccess = delegate ()
                             {
-                                _logger.LogInformation("Job {name} succeded for {user}",
+                                _logger.LogInformation("Job {name} successed for {user}",
                                     nameof(AdditionalPointsCommand), acc.Email);
                             },
                             OnFail = delegate ()
@@ -162,9 +163,14 @@ namespace MSRewardsBot.Server.Core
                                 _logger.LogWarning("Job {name} failed for {user}",
                                     nameof(AdditionalPointsCommand), acc.Email);
 
-                                cache.Stats.LastSearchesCheck = DateTime.Now;
+                                cache.Stats.LastDashboardPointsCheck = DateTime.MinValue;
                             }
                         }));
+                    }
+
+                    if (DateTimeUtilities.HasElapsed(now, cache.Stats.LastSearchesCheck, _settings.Value.SearchesCheck))
+                    {
+                        cache.Stats.LastSearchesCheck = now;
 
                         if (cache.Stats.PCSearchesToDo > 0)
                         {
@@ -173,9 +179,9 @@ namespace MSRewardsBot.Server.Core
                             for (int i = 0; i < cache.Stats.PCSearchesToDo; i++)
                             {
                                 start = start.AddSeconds
-                                    (
-                                        Random.Shared.Next(_settings.Value.MinSecsWaitBetweenSearches, _settings.Value.MaxSecsWaitBetweenSearches)
-                                    );
+                                (
+                                    Random.Shared.Next(_settings.Value.MinSecsWaitBetweenSearches, _settings.Value.MaxSecsWaitBetweenSearches)
+                                );
 
                                 string keyword = await _keywordProvider.GetKeyword();
                                 if (keyword == null)
@@ -190,7 +196,7 @@ namespace MSRewardsBot.Server.Core
                                         Keyword = keyword,
                                         OnSuccess = delegate ()
                                         {
-                                            _logger.LogInformation("Job {name} succeded (with keyword {keyword}) for {user}",
+                                            _logger.LogInformation("Job {name} successed (with keyword {keyword}) for {user}",
                                                 nameof(PCSearchCommand), keyword, acc.Email);
 
                                             cache.Stats.PCSearchCompleted();
@@ -236,7 +242,7 @@ namespace MSRewardsBot.Server.Core
                                         Keyword = keyword,
                                         OnSuccess = delegate ()
                                         {
-                                            _logger.LogInformation("Job {name} succeded (with keyword {keyword}) for {user}",
+                                            _logger.LogInformation("Job {name} successed (with keyword {keyword}) for {user}",
                                                 nameof(MobileSearchCommand), keyword, acc.Email);
 
                                             cache.Stats.MobileSearchCompleted();
@@ -275,7 +281,7 @@ namespace MSRewardsBot.Server.Core
                                     Data = data,
                                     OnSuccess = delegate ()
                                     {
-                                        _logger.LogInformation("Job {name} succeded for {user}",
+                                        _logger.LogInformation("Job {name} successed for {user}",
                                                 nameof(DashboardUpdateCommand), data.Account.Email);
 
                                         data.IsFirstTimeUpdateStats = false;

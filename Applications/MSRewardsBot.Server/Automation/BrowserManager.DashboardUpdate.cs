@@ -197,7 +197,7 @@ namespace MSRewardsBot.Server.Automation
                 await locTotPts.WaitForAsync(new LocatorWaitForOptions() { State = WaitForSelectorState.Visible });
 
                 string totPts = await locTotPts.InnerTextAsync();
-                totPts = totPts.Trim().Replace(",", "");
+                totPts = totPts.Trim().Replace(",", "").Replace(".","");
 
                 if (int.TryParse(totPts, out int totalPts))
                 {

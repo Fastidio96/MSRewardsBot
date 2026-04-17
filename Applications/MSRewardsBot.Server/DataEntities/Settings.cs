@@ -33,12 +33,17 @@ namespace MSRewardsBot.Server.DataEntities
         /// <summary>
         /// Define the amount of time the program check if there any dashboard update(stats) job to do
         /// </summary>
-        public TimeSpan DashboardCheck { get; set; } = new TimeSpan(12, 0, 0);
+        public TimeSpan DashboardCheck { get; set; } = new TimeSpan(6, 0, 0);
+
+        /// <summary>
+        /// Define the amount of time the program check if there any dashboard points(collect) job to do
+        /// </summary>
+        public TimeSpan DashboardPointsCheck { get; set; } = new TimeSpan(6, 0, 0);
 
         /// <summary>
         /// Define the amount of time the program check if there any search job to do
         /// </summary>
-        public TimeSpan SearchesCheck { get; set; } = new TimeSpan(18, 0, 0);
+        public TimeSpan SearchesCheck { get; set; } = new TimeSpan(12, 0, 0);
 
         /// <summary>
         /// Define the amount of time keyword list should be refreshed

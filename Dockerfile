@@ -49,8 +49,9 @@ ENV ServerPort=10500
 ENV UseFirefox=true
 ENV MinSecsWaitBetweenSearches=180
 ENV MaxSecsWaitBetweenSearches=300
-ENV DashboardCheck="12:00:00"
-ENV SearchesCheck="06:00:00"
+ENV DashboardCheck="06:00:00"
+ENV DashboardPointsCheck: "06:00:00"
+ENV SearchesCheck="12:00:00"
 ENV KeywordsListRefresh="03:00:00"
 ENV KeywordsListCountries="IT,US,GB,DE,FR,ES"
 ENV WriteLogsOnFile=true

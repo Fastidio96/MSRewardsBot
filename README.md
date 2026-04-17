@@ -185,11 +185,12 @@ The server can be fully configured using the `appsettings.json` file.
 
 ### 📊 Scheduled Checks
 ```json
-"DashboardCheck": "12:00:00",
-"SearchesCheck": "06:00:00",
+"DashboardCheck": "06:00:00",
+"DashboardPointsCheck": "06:00:00",
+"SearchesCheck": "12:00:00",
 "KeywordsListRefresh": "03:00:00"
 ```
-> The format is hh:mm:ss
+> Timespan: the format is hh:mm:ss
 
 ### 🔑 Keywords Configuration
 ```json
