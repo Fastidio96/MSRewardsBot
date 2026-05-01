@@ -83,7 +83,7 @@ namespace MSRewardsBot.Server.Network
 
         public void SendClientVersion(string connectionId, Version version)
         {
-            _logger.LogDebug("Received new client version {ver} from {id}..", version, connectionId);
+            _logger.LogDebug("Received client version ({ver}) from {id}..", version, connectionId);
             _connectionManager.UpdateClientVersion(connectionId, version);
         }
 
