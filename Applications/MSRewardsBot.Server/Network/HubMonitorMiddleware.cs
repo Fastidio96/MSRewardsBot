@@ -29,8 +29,8 @@ namespace MSRewardsBot.Server.Network
             string connectionId = context.Context.ConnectionId;
 
             // Before call
-            _logger.Log(LogLevel.Debug, "Incoming call on {MethodName} by {ConnectionId}",
-                context.HubMethodName, connectionId);
+            //_logger.Log(LogLevel.Debug, "Incoming call on {MethodName} by {ConnectionId}",
+            //    context.HubMethodName, connectionId);
 
             try
             {
