@@ -148,6 +148,14 @@ namespace MSRewardsBot.Server.Automation
             _logger.LogDebug("Playwright disposed");
         }
 
+        public async Task RebootBrowser()
+        {
+            await CloseBrowser();
+            await CreateBrowser();
+
+            _logger.LogInformation("Browser rebooted");
+        }
+
         private async void IdleCheckLoop()
         {
             _logger.LogDebug("BrowserManager idle check thread started");

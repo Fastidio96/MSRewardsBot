@@ -129,6 +129,8 @@ namespace MSRewardsBot.Server.Core
 
         private async void Loop()
         {
+            int jobExec = 0;
+
             while (!_isDisposing)
             {
                 foreach (KeyValuePair<DateTime, Job> todo in GetTodoList())
@@ -141,6 +143,12 @@ namespace MSRewardsBot.Server.Core
                     if (todo.Key > DateTime.Now)
                     {
                         break;
+                    }
+
+                    if(jobExec >= 30)
+                    {
+                        jobExec = 0;
+                        await _browser.RebootBrowser();
                     }
 
                     Job job = todo.Value;
@@ -192,7 +200,7 @@ namespace MSRewardsBot.Server.Core
                     }
 
                     await _browser.DeleteContext(job.Command.Data);
-
+                    jobExec += 1;
 
                     if (job.Status != JobStatus.Pending)
                     {
