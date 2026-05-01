@@ -4,6 +4,7 @@
     {
         #region URLs
         public const string URL_DASHBOARD = "https://rewards.bing.com/";
+        public const string URL_MS_CHECK = "https://rewards.bing.com/welcome?idru=";
         public const string URL_DASHBOARD_PTS_BREAKDOWN = "https://rewards.bing.com/status/pointsbreakdown";
         public const string URL_SEARCHES_HOMEPAGE = "https://www.bing.com/";
         public const string URL_SEARCHES = "https://www.bing.com/search?q=";
@@ -19,6 +20,7 @@
         public const string SELECTOR_ACCOUNT_LEVEL = "#meeGradientBanner > div > div > div > p";
         public const string SELECTOR_ACCOUNT_LEVEL_POINTS = "#earningreport-level-heading > p.pointsDetail.c-subheading-3.ng-binding.ng-scope";
         public const string SELECTOR_ACCOUNT_BANNED = "#fraudErrorBody";
+        public const string SELECTOR_BUTTON_MS_CHECK = "#start-earning-rewards-link";
         #endregion
 
         #region Searches on homepage selectors

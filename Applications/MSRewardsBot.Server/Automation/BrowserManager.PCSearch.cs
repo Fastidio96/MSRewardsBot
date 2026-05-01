@@ -35,7 +35,7 @@ namespace MSRewardsBot.Server.Automation
                 await data.Page.ReloadAsync(new PageReloadOptions()
                 {
                     Timeout = 15000,
-                    WaitUntil = WaitUntilState.Load
+                    WaitUntil = WaitUntilState.NetworkIdle
                 });
 
                 if (await data.Page.Locator(BrowserConstants.BTN_YES_GDPR).IsVisibleAsync())

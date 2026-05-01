@@ -194,7 +194,6 @@ namespace MSRewardsBot.Server.Automation
 
                 if (!await StartLoggedSession(data))
                 {
-                    _logger.LogWarning("Cannot install cookies for {Email} | {User}", data.Account.Email, data.Account.User.Username);
                     return false;
                 }
 
@@ -245,38 +244,10 @@ namespace MSRewardsBot.Server.Automation
 
             await data.Context.AddCookiesAsync(ConvertToPWCookies(data.Account.Cookies));
 
-            if (!await CheckIsLogged(data))
+            if (!await NavigateToURL(data, BrowserConstants.URL_DASHBOARD))
             {
                 _logger.LogError("Cannot proceed. Redirect failed for {Email} | {User}.",
                     data.Account.Email, data.Account.User.Username);
-                return false;
-            }
-
-            return true;
-        }
-
-        private async Task<bool> CheckIsLogged(MSAccountServerData data)
-        {
-            if (!await NavigateToURL(data, BrowserConstants.URL_DASHBOARD))
-            {
-                return false;
-            }
-
-            int retries = 0;
-            while (data.Page.Url.StartsWith(BrowserConstants.URL_EXPIRED_COOKIES))
-            {
-                retries += 1;
-                if (retries > 5)
-                {
-                    break;
-                }
-
-                await Task.Delay(1000);
-            }
-
-            if (retries > 5)
-            {
-                data.Account.IsCookiesExpired = true;
                 return false;
             }
 
@@ -299,6 +270,20 @@ namespace MSRewardsBot.Server.Automation
                         if (response == null || !response.Ok)
                         {
                             _logger.LogWarning("Failed to navigate to {url}. Returned status {code}", url, response?.Status);
+                            return false;
+                        }
+                        else if (data.Page.Url.StartsWith(BrowserConstants.URL_MS_CHECK))
+                        {
+                            await data.Page.ClickAsync(BrowserConstants.SELECTOR_BUTTON_MS_CHECK);
+                            await data.Page.WaitForLoadStateAsync(LoadState.NetworkIdle);
+                        }
+
+                        if (data.Page.Url.StartsWith(BrowserConstants.URL_EXPIRED_COOKIES))
+                        {
+                            _logger.LogError("Failed to navigate to {url} for {email} | {user}. The cookies are expired. The user needs to login again",
+                                url, data.Account.Email, data.Account.User.Username);
+
+                            data.Account.IsCookiesExpired = true;
                             return false;
                         }
                     }
