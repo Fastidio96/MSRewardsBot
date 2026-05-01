@@ -153,7 +153,7 @@ namespace MSRewardsBot.Server.Automation
             await CloseBrowser();
             await CreateBrowser();
 
-            _logger.LogInformation("Browser rebooted");
+            _logger.LogDebug("Browser rebooted");
         }
 
         private async void IdleCheckLoop()
@@ -283,37 +283,22 @@ namespace MSRewardsBot.Server.Automation
             return true;
         }
 
-        public async Task CloseLoggedSession(IBrowserContext context)
+        private async Task<bool> NavigateToURL(MSAccountServerData data, string url, bool force = false)
         {
             try
             {
-                await context.ClearCookiesAsync();
-                await context.CloseAsync();
-
-                _logger.LogDebug("Context closed");
-            }
-            catch (Exception ex)
-            {
-                _logger.LogWarning("Error {e}", ex.Message);
-            }
-        }
-
-        private async Task<bool> NavigateToURL(MSAccountServerData data, string url)
-        {
-            try
-            {
-                if (data.Page.Url != url)
+                if (force || data.Page.Url != url)
                 {
                     IResponse response = await data.Page.GotoAsync(url, new PageGotoOptions()
                     {
-                        WaitUntil = WaitUntilState.Load,
+                        WaitUntil = WaitUntilState.NetworkIdle,
                         Timeout = 15000
                     });
                     if (url != BrowserConstants.URL_BLANK_PAGE)
                     {
                         if (response == null || !response.Ok)
                         {
-                            _logger.LogWarning("Failed to navigate to {url}. Request failed.", url);
+                            _logger.LogWarning("Failed to navigate to {url}. Returned status {code}", url, response?.Status);
                             return false;
                         }
                     }
@@ -389,7 +374,7 @@ namespace MSRewardsBot.Server.Automation
         private List<Cookie> ConvertToPWCookies(IEnumerable<AccountCookie> cookies)
         {
             List<Cookie> result = new List<Cookie>();
-            foreach (var c in cookies)
+            foreach (AccountCookie c in cookies)
             {
                 Cookie cookie = new Cookie()
                 {
