@@ -148,6 +148,8 @@ namespace MSRewardsBot.Server.Core
                     if(jobExec >= 30)
                     {
                         jobExec = 0;
+
+                        _logger.LogDebug("Max jobs reached. Rebooting browser...");
                         await _browser.RebootBrowser();
                     }
 
