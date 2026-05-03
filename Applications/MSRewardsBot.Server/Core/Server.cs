@@ -163,7 +163,7 @@ namespace MSRewardsBot.Server.Core
                                 _logger.LogWarning("Job {name} failed for {user}",
                                     nameof(AdditionalPointsCommand), acc.Email);
 
-                                if (!acc.IsCookiesExpired || !acc.IsAccountBanned)
+                                if (acc.IsCookiesExpired || acc.IsAccountBanned)
                                 {
                                     return;
                                 }
@@ -206,13 +206,13 @@ namespace MSRewardsBot.Server.Core
 
                                             cache.Stats.PCSearchCompleted();
 
-                                            if (!acc.IsCookiesExpired || !acc.IsAccountBanned)
+                                            if (acc.IsCookiesExpired || acc.IsAccountBanned)
                                             {
                                                 return;
                                             }
 
 
-                                            if (cache.Stats.PCSearchesToDo == cache.Stats.MaxPointsPCSearches)
+                                            if (cache.Stats.PCSearchesToDo >= cache.Stats.MaxPointsPCSearches)
                                             {
                                                 AddJobDashboardUpdate(cache);
                                             }
@@ -222,7 +222,7 @@ namespace MSRewardsBot.Server.Core
                                             _logger.LogWarning("Job {name} failed for {user}",
                                                 nameof(PCSearchCommand), acc.Email);
 
-                                            if (!acc.IsCookiesExpired || !acc.IsAccountBanned)
+                                            if (acc.IsCookiesExpired || acc.IsAccountBanned)
                                             {
                                                 return;
                                             }
@@ -263,12 +263,12 @@ namespace MSRewardsBot.Server.Core
 
                                             cache.Stats.MobileSearchCompleted();
 
-                                            if (!acc.IsCookiesExpired || !acc.IsAccountBanned)
+                                            if (acc.IsCookiesExpired || acc.IsAccountBanned)
                                             {
                                                 return;
                                             }
 
-                                            if (cache.Stats.MobileSearchesToDo == cache.Stats.MaxPointsMobileSearches)
+                                            if (cache.Stats.MobileSearchesToDo >= cache.Stats.MaxPointsMobileSearches)
                                             {
                                                 AddJobDashboardUpdate(cache);
                                             }
@@ -278,7 +278,7 @@ namespace MSRewardsBot.Server.Core
                                             _logger.LogWarning("Job {name} failed for {user}",
                                                 nameof(MobileSearchCommand), acc.Email);
 
-                                            if (!acc.IsCookiesExpired || !acc.IsAccountBanned)
+                                            if (acc.IsCookiesExpired || acc.IsAccountBanned)
                                             {
                                                 return;
                                             }
