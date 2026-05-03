@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
@@ -221,16 +222,18 @@ namespace MSRewardsBot.Server.Automation
 
         public async Task DeleteContext(MSAccountServerData data)
         {
-            _logger.LogDebug("Deleting context for {Email} | {User}", data.Account.Email, data.Account.User.Username);
-
-            if (data.Context != null)
+            if (data.Context == null)
             {
-                await data.Context.CloseAsync();
-                await data.Context.DisposeAsync();
+                return;
             }
+
+            await data.Context.CloseAsync();
+            await data.Context.DisposeAsync();
 
             data.Context = null;
             data.Page = null;
+
+            _logger.LogDebug("Deleted context for {Email} | {User}", data.Account.Email, data.Account.User.Username);
         }
 
         private async Task<bool> StartLoggedSession(MSAccountServerData data)
