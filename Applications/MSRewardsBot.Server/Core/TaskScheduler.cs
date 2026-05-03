@@ -145,7 +145,7 @@ namespace MSRewardsBot.Server.Core
                         break;
                     }
 
-                    if(jobExec >= 30)
+                    if(jobExec >= 20)
                     {
                         jobExec = 0;
 
