@@ -10,21 +10,6 @@ namespace MSRewardsBot.Server.Helpers
 {
     public class Utils
     {
-        public static string GetMd5FileHash(string path)
-        {
-            if (!File.Exists(path))
-            {
-                return string.Empty;
-            }
-
-            using (FileStream fs = File.OpenRead(path))
-            using (MD5 md5 = MD5.Create())
-            {
-                byte[] hash = md5.ComputeHash(fs);
-                return Convert.ToBase64String(hash);
-            }
-        }
-
         public static bool VerifyFileSha256(string path, string hash)
         {
             if (hash.ToLower().StartsWith("sha256:"))
