@@ -72,7 +72,9 @@ namespace MSRewardsBot.Server.Network
 
                     if (GetUserByConnectionId(connectionId) == null)
                     {
-                        throw new Exception($"{connectionId} [{GetIp(context.Context.GetHttpContext())}] tried to execute a logged operation ({context.HubMethodName}) while not logged.");
+                        _logger.Log(LogLevel.Warning, "{ConnectionId} [{Ip}] tried to execute a logged operation ({Method}) while not logged.",
+                            connectionId, GetIp(context.Context.GetHttpContext()), context.HubMethodName);
+                        throw new HubException("Not authenticated.");
                     }
                 }
 
@@ -81,13 +83,17 @@ namespace MSRewardsBot.Server.Network
                 {
                     if (!hasLoggedOnAttr)
                     {
-                        throw new Exception($"The method {context.HubMethodName} has the restricted attribute but doesn't require the log in!");
+                        _logger.Log(LogLevel.Critical, "Method {Method} has [RequiredPrivilege] without [LoggedOn].",
+                            context.HubMethodName);
+                        throw new HubException("Server configuration error.");
                     }
 
                     User user = GetUserByConnectionId(connectionId);
                     if (user == null || !user.IsAdmin)
                     {
-                        throw new Exception($"{connectionId} [{GetIp(context.Context.GetHttpContext())}] tried to execute an admin operation ({context.HubMethodName}) while not logged as admin.");
+                        _logger.Log(LogLevel.Warning, "{ConnectionId} [{Ip}] tried to execute an admin operation ({Method}) without admin rights.",
+                            connectionId, GetIp(context.Context.GetHttpContext()), context.HubMethodName);
+                        throw new HubException("Not authorized.");
                     }
                 }
 
@@ -125,15 +131,16 @@ namespace MSRewardsBot.Server.Network
         {
             string connectionId = context.Context.ConnectionId;
             ClientInfo info = _connection.GetConnection(connectionId);
+            string ip = info?.IP ?? "unknown";
 
             if (exception != null)
             {
-                _logger.Log(LogLevel.Error, "Client disconnected with ip [{ip}] with an exception: {Error}", info.IP, exception.Message);
+                _logger.Log(LogLevel.Error, "Client disconnected with ip [{ip}] with an exception: {Error}", ip, exception.Message);
             }
 
             _connection.RemoveConnection(connectionId);
 
-            _logger.Log(LogLevel.Information, "Client disconnected with ip [{ip}]: {ConnectionId}", info.IP, connectionId);
+            _logger.Log(LogLevel.Information, "Client disconnected with ip [{ip}]: {ConnectionId}", ip, connectionId);
             return next(context, exception);
         }
 
