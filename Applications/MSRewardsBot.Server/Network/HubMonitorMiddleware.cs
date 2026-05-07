@@ -5,6 +5,7 @@ using System.Threading.Tasks;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.SignalR;
 using Microsoft.Extensions.Logging;
+using MSRewardsBot.Common.DataEntities.Accounting;
 using MSRewardsBot.Server.Core.Factories;
 using MSRewardsBot.Server.DataEntities;
 using MSRewardsBot.Server.DataEntities.Attributes;
@@ -34,12 +35,10 @@ namespace MSRewardsBot.Server.Network
 
             try
             {
-                object result = await next(context); // call the actual hub method
-
                 MethodInfo? methodInfo = context.HubMethod;
                 if (methodInfo == null)
                 {
-                    throw new Exception("Method info is null!");
+                    throw new Exception("Method info is null");
                 }
 
                 bool hasLoggedOnAttr = methodInfo.GetCustomAttribute<LoggedOnAttribute>() != null;
@@ -54,8 +53,14 @@ namespace MSRewardsBot.Server.Network
                             if (Guid.TryParse(val, out Guid token))
                             {
                                 UpdateConnectionInfo(token, connectionId);
+                                break;
                             }
                         }
+                    }
+
+                    if (GetUserByConnectionId(connectionId) == null)
+                    {
+                        throw new Exception($"{connectionId} [{GetIp(context.Context.GetHttpContext())}] tried to execute a logged operation ({context.HubMethodName}) while not logged.");
                     }
                 }
 
@@ -67,8 +72,14 @@ namespace MSRewardsBot.Server.Network
                         throw new Exception($"The method {context.HubMethodName} has the restricted attribute but doesn't require the log in!");
                     }
 
-
+                    User user = GetUserByConnectionId(connectionId);
+                    if (user == null || !user.IsAdmin)
+                    {
+                        throw new Exception($"{connectionId} [{GetIp(context.Context.GetHttpContext())}] tried to execute an admin operation ({context.HubMethodName}) while not logged as admin.");
+                    }
                 }
+
+                object result = await next(context); // call the actual hub method
 
                 // After successful call
                 _logger.Log(LogLevel.Trace, "Completed call on {MethodName} by {ConnectionId}",
@@ -78,7 +89,6 @@ namespace MSRewardsBot.Server.Network
             }
             catch (Exception ex)
             {
-                // Handle exceptions
                 _logger.Log(LogLevel.Error, "Error in {MethodName} by {ConnectionId}: {ExMessage}",
                     context.HubMethodName, context.Context.ConnectionId, ex.Message);
                 throw;
@@ -87,7 +97,7 @@ namespace MSRewardsBot.Server.Network
 
         public Task OnConnectedAsync(HubLifetimeContext context, Func<HubLifetimeContext, Task> next)
         {
-            string ip = GetIp(context);
+            string ip = GetIp(context.Context.GetHttpContext());
             _logger.LogInformation("Client connected with ip [{ip}]: {ConnectionId}", ip, context.Context.ConnectionId);
             _connection.AddConnection(new ClientInfo()
             {
@@ -114,6 +124,11 @@ namespace MSRewardsBot.Server.Network
             return next(context, exception);
         }
 
+        private User GetUserByConnectionId(string connectionId)
+        {
+            return _connection.GetConnection(connectionId)?.User;
+        }
+
         private void UpdateConnectionInfo(Guid token, string connectionId)
         {
             ClientInfo info = _connection.GetConnection(connectionId);
@@ -127,9 +142,8 @@ namespace MSRewardsBot.Server.Network
             _connection.UpdateConnection(connectionId, info);
         }
 
-        private string GetIp(HubLifetimeContext context)
+        private static string GetIp(HttpContext ctx)
         {
-            HttpContext ctx = context.Context.GetHttpContext();
             return
                 ctx?.Request.Headers["X-Forwarded-For"].FirstOrDefault()
                 ?? ctx?.Connection.RemoteIpAddress?.ToString();

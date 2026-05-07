@@ -1,7 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Security.Cryptography;
-using System.Text;
 using Microsoft.Extensions.Logging;
 using MSRewardsBot.Common.DataEntities.Accounting;
 using MSRewardsBot.Server.DataEntities;
@@ -102,11 +100,6 @@ namespace MSRewardsBot.Server.Core
         public User GetUserInfo(Guid token)
         {
             if (!IsUserLogged(token, out User user))
-            {
-                return null;
-            }
-
-            if (user == null)
             {
                 return null;
             }

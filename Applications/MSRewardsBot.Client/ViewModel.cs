@@ -112,8 +112,18 @@ namespace MSRewardsBot.Client
 
         public async Task<bool> GetUserInfo()
         {
-            User user = await _connection.GetUserInfo(_token);
-            if (user == null)
+            User user;
+
+            try
+            {
+                user = await _connection.GetUserInfo(_token);
+                if (user == null)
+                {
+                    await Logout();
+                    return false;
+                }
+            }
+            catch
             {
                 await Logout();
                 return false;
@@ -148,14 +158,25 @@ namespace MSRewardsBot.Client
 
         public async Task Logout(bool deleteData = true)
         {
-            if (_token != Guid.Empty)
+            try
             {
-                await _connection.Logout(_token);
+                if (_token != Guid.Empty)
+                {
+                    await _connection.Logout(_token);
+                }
+            }
+            catch
+            {
             }
 
             if (deleteData)
             {
-                FileManager.SaveData(new AppData());
+                FileManager.SaveData(new AppData()
+                {
+                    IsHttpsEnabled = _appData.IsHttpsEnabled,
+                    ServerHost = _appData.ServerHost,
+                    ServerPort = _appData.ServerPort
+                });
             }
 
             RestartApp();
