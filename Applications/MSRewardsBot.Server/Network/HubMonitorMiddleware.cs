@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Concurrent;
 using System.Linq;
 using System.Reflection;
 using System.Threading.Tasks;
@@ -6,6 +7,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.SignalR;
 using Microsoft.Extensions.Logging;
 using MSRewardsBot.Common.DataEntities.Accounting;
+using MSRewardsBot.Common.DataEntities.Interfaces;
 using MSRewardsBot.Server.Core.Factories;
 using MSRewardsBot.Server.DataEntities;
 using MSRewardsBot.Server.DataEntities.Attributes;
@@ -17,6 +19,7 @@ namespace MSRewardsBot.Server.Network
         private readonly ILogger _logger;
         private readonly IConnectionManager _connection;
         private readonly BusinessFactory _businessFactory;
+        private static readonly ConcurrentDictionary<string, (int count, DateTime windowStart)> _attempts = new ConcurrentDictionary<string, (int count, DateTime windowStart)>();
 
         public HubMonitorMiddleware(ILogger<HubMonitorMiddleware> logger, IConnectionManager connection, BusinessFactory businessFactory)
         {
@@ -29,16 +32,25 @@ namespace MSRewardsBot.Server.Network
         {
             string connectionId = context.Context.ConnectionId;
 
-            // Before call
-            //_logger.Log(LogLevel.Debug, "Incoming call on {MethodName} by {ConnectionId}",
-            //    context.HubMethodName, connectionId);
-
             try
             {
                 MethodInfo? methodInfo = context.HubMethod;
                 if (methodInfo == null)
                 {
                     throw new Exception("Method info is null");
+                }
+
+                if (context.HubMethodName is nameof(IBotAPI.Login) or nameof(IBotAPI.Register))
+                {
+                    string ip = GetIp(context.Context.GetHttpContext()) ?? "unknown";
+                    var now = DateTime.UtcNow;
+                    var entry = _attempts.AddOrUpdate(ip,
+                        _ => (1, now),
+                        (_, old) => (now - old.windowStart > TimeSpan.FromMinutes(1)) ? (1, now) : (old.count + 1, old.windowStart));
+                    if (entry.count > 5)
+                    {
+                        throw new HubException("Too many attempts. Try again later.");
+                    }
                 }
 
                 bool hasLoggedOnAttr = methodInfo.GetCustomAttribute<LoggedOnAttribute>() != null;
@@ -99,7 +111,7 @@ namespace MSRewardsBot.Server.Network
         {
             string ip = GetIp(context.Context.GetHttpContext());
             _logger.LogInformation("Client connected with ip [{ip}]: {ConnectionId}", ip, context.Context.ConnectionId);
-            
+
             _connection.AddConnection(new ClientInfo()
             {
                 ConnectionId = context.Context.ConnectionId,
