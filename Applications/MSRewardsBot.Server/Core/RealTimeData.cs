@@ -6,7 +6,7 @@ namespace MSRewardsBot.Server.Core
 {
     public class RealTimeData : IDisposable
     {
-        public ConcurrentDictionary<int, MSAccountServerData> CacheMSAccStats { get; private set; }
+        public ConcurrentDictionary<int, MSAccountServerData> CacheMSAccStats { get; }
 
         public RealTimeData()
         {
@@ -15,8 +15,7 @@ namespace MSRewardsBot.Server.Core
 
         public void Dispose()
         {
-            CacheMSAccStats?.Clear();
-            CacheMSAccStats = null;
+            CacheMSAccStats.Clear();
         }
     }
 }
