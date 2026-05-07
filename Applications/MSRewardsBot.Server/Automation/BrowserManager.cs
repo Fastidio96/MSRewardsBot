@@ -323,7 +323,7 @@ namespace MSRewardsBot.Server.Automation
             {
                 await page.Mouse.WheelAsync(0, diff);
 
-                if (Random.Shared.Next(0, 1) == 1)
+                if (Random.Shared.Next(0, 2) == 1)
                 {
                     await Task.Delay(Random.Shared.Next(3, 8));
                 }
