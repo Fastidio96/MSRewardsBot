@@ -133,90 +133,97 @@ namespace MSRewardsBot.Server.Core
 
             while (!_isDisposing)
             {
-                foreach (KeyValuePair<DateTime, Job> todo in GetTodoList())
+                try
                 {
-                    if (DateTime.Now.Day != todo.Key.Day)
+                    foreach (KeyValuePair<DateTime, Job> todo in GetTodoList())
                     {
-                        break;
-                    }
-
-                    if (todo.Key > DateTime.Now)
-                    {
-                        break;
-                    }
-
-                    if(jobExec >= 20)
-                    {
-                        jobExec = 0;
-
-                        _logger.LogDebug("Max jobs reached. Rebooting browser...");
-                        await _browser.RebootBrowser();
-                    }
-
-                    Job job = todo.Value;
-
-                    if (!await _browser.CreateContext(job.Command.Data, job.Command is MobileSearchCommand))
-                    {
-                        job.Status = JobStatus.Failure;
-                    }
-                    else
-                    {
-                        if (job.Command is DashboardUpdateCommand dashCMD)
+                        if (DateTime.Now.Day != todo.Key.Day)
                         {
-                            job.Status = await _browser.DashboardUpdate(dashCMD.Data) ?
-                                JobStatus.Success : JobStatus.Failure;
-
-                            if (job.Status == JobStatus.Success)
-                            {
-                                dashCMD.Data.Stats.LastDashboardUpdate = DateTime.Now;
-                                using (ScopedBusiness scope = _businessFactory.Create())
-                                {
-                                    if (!scope.Business.UpdateMSAccount(dashCMD.Data.Account))
-                                    {
-                                        dashCMD.Data.Stats.LastDashboardUpdate = DateTime.MinValue;
-                                        job.Status = JobStatus.Failure;
-                                    }
-                                }
-                            }
+                            break;
                         }
-                        else if (job.Command is AdditionalPointsCommand addCMD)
+
+                        if (todo.Key > DateTime.Now)
                         {
-                            job.Status = await _browser.GetAdditionalPoints(addCMD.Data) ?
-                                JobStatus.Success : JobStatus.Failure;
+                            break;
                         }
-                        else if (job.Command is PCSearchCommand pcCMD)
+
+                        if (jobExec >= 20)
                         {
-                            job.Status = await _browser.PCSearch(pcCMD.Data, pcCMD.Keyword) ?
-                                JobStatus.Success : JobStatus.Failure;
+                            jobExec = 0;
+
+                            _logger.LogDebug("Max jobs reached. Rebooting browser...");
+                            await _browser.RebootBrowser();
                         }
-                        else if (job.Command is MobileSearchCommand mobileCMD)
+
+                        Job job = todo.Value;
+
+                        if (!await _browser.CreateContext(job.Command.Data, job.Command is MobileSearchCommand))
                         {
-                            job.Status = await _browser.MobileSearch(mobileCMD.Data, mobileCMD.Keyword) ?
-                                JobStatus.Success : JobStatus.Failure;
+                            job.Status = JobStatus.Failure;
                         }
                         else
                         {
-                            _logger.LogError("Unknown command received! Command {cmd}", job.Command);
-                            job.Status = JobStatus.CriticalFailure;
+                            if (job.Command is DashboardUpdateCommand dashCMD)
+                            {
+                                job.Status = await _browser.DashboardUpdate(dashCMD.Data) ?
+                                    JobStatus.Success : JobStatus.Failure;
+
+                                if (job.Status == JobStatus.Success)
+                                {
+                                    dashCMD.Data.Stats.LastDashboardUpdate = DateTime.Now;
+                                    using (ScopedBusiness scope = _businessFactory.Create())
+                                    {
+                                        if (!scope.Business.UpdateMSAccount(dashCMD.Data.Account))
+                                        {
+                                            dashCMD.Data.Stats.LastDashboardUpdate = DateTime.MinValue;
+                                            job.Status = JobStatus.Failure;
+                                        }
+                                    }
+                                }
+                            }
+                            else if (job.Command is AdditionalPointsCommand addCMD)
+                            {
+                                job.Status = await _browser.GetAdditionalPoints(addCMD.Data) ?
+                                    JobStatus.Success : JobStatus.Failure;
+                            }
+                            else if (job.Command is PCSearchCommand pcCMD)
+                            {
+                                job.Status = await _browser.PCSearch(pcCMD.Data, pcCMD.Keyword) ?
+                                    JobStatus.Success : JobStatus.Failure;
+                            }
+                            else if (job.Command is MobileSearchCommand mobileCMD)
+                            {
+                                job.Status = await _browser.MobileSearch(mobileCMD.Data, mobileCMD.Keyword) ?
+                                    JobStatus.Success : JobStatus.Failure;
+                            }
+                            else
+                            {
+                                _logger.LogError("Unknown command received! Command {cmd}", job.Command);
+                                job.Status = JobStatus.CriticalFailure;
+                            }
+                        }
+
+                        await _browser.DeleteContext(job.Command.Data);
+                        jobExec += 1;
+
+                        if (job.Status != JobStatus.Pending)
+                        {
+                            if (job.Status == JobStatus.Success)
+                            {
+                                job.Command.OnSuccess?.Invoke();
+                            }
+                            else if (job.Status == JobStatus.Failure)
+                            {
+                                job.Command.OnFail?.Invoke();
+                            }
+
+                            RemoveJob(todo.Key);
                         }
                     }
-
-                    await _browser.DeleteContext(job.Command.Data);
-                    jobExec += 1;
-
-                    if (job.Status != JobStatus.Pending)
-                    {
-                        if (job.Status == JobStatus.Success)
-                        {
-                            job.Command.OnSuccess?.Invoke();
-                        }
-                        else if (job.Status == JobStatus.Failure)
-                        {
-                            job.Command.OnFail?.Invoke();
-                        }
-
-                        RemoveJob(todo.Key);
-                    }
+                }
+                catch (Exception ex)
+                {
+                    _logger.Log(LogLevel.Error, ex, "Error in TaskScheduler.Loop iteration");
                 }
 
                 Thread.Sleep(1000);

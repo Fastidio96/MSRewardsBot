@@ -13,7 +13,7 @@ using MSRewardsBot.Server.DataEntities;
 
 namespace MSRewardsBot.Server.Automation
 {
-    public partial class BrowserManager : IDisposable
+    public partial class BrowserManager : IAsyncDisposable
     {
         private readonly ILogger<BrowserManager> _logger;
         private readonly IOptions<Settings> _settings;
@@ -36,7 +36,7 @@ namespace MSRewardsBot.Server.Automation
             _rt = rt;
         }
 
-        public async void Init()
+        public async Task Init()
         {
             _logger.Log(LogLevel.Information, "Checking and installing browser dependencies..");
 
@@ -109,11 +109,11 @@ namespace MSRewardsBot.Server.Automation
                         List<string> args =
                         [
                             "--no-default-browser-check",
-                        "--disable-extensions",
-                        "--disable-blink-features=AutomationControlled",
-                        "--disable-infobars",
-                        "--no-default-browser-check",
-                        "--disable-extensions"
+                            "--disable-extensions",
+                            "--disable-blink-features=AutomationControlled",
+                            "--disable-infobars",
+                            "--no-default-browser-check",
+                            "--disable-extensions"
                         ];
 
                         if (RuntimeEnvironment.IsDocker())
@@ -183,10 +183,17 @@ namespace MSRewardsBot.Server.Automation
 
             while (!_isDisposing)
             {
-                if (_browser != null && DateTime.Now - _lastUsed > new TimeSpan(0, 0, _settings.Value.MaxSecsWaitBetweenSearches + 60))
+                try
                 {
-                    _logger.LogDebug("Browser idle timeout reached, closing...");
-                    await CloseBrowser();
+                    if (_browser != null && DateTime.Now - _lastUsed > new TimeSpan(0, 0, _settings.Value.MaxSecsWaitBetweenSearches + 60))
+                    {
+                        _logger.LogDebug("Browser idle timeout reached, closing...");
+                        await CloseBrowser();
+                    }
+                }
+                catch (Exception ex)
+                {
+                    _logger.Log(LogLevel.Error, ex, "Error in IdleCheckLoop");
                 }
 
                 Thread.Sleep(1000);
@@ -410,9 +417,19 @@ namespace MSRewardsBot.Server.Automation
             return result;
         }
 
-        public async void Dispose()
+        public async ValueTask DisposeAsync()
         {
             _isDisposing = true;
+
+            if (_idleCheckThread != null)
+            {
+                if (_idleCheckThread.IsAlive)
+                {
+                    _idleCheckThread.Join(5000);
+                }
+
+                _idleCheckThread = null;
+            }
 
             if (_browser != null)
             {
@@ -425,6 +442,8 @@ namespace MSRewardsBot.Server.Automation
                     }
 
                     await _browser.CloseAsync();
+                    await _browser.DisposeAsync();
+                    _browser = null;
                 }
                 catch (Exception ex)
                 {
@@ -432,15 +451,10 @@ namespace MSRewardsBot.Server.Automation
                 }
             }
 
-            if (_idleCheckThread != null)
-            {
-                if (_idleCheckThread.IsAlive)
-                {
-                    _idleCheckThread.Join(5000);
-                }
+            _playwright?.Dispose();
+            _playwright = null;
 
-                _idleCheckThread = null;
-            }
+            _browserLock.Dispose();
         }
     }
 }
