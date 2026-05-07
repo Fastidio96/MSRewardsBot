@@ -25,6 +25,8 @@ namespace MSRewardsBot.Server.Automation
         private DateTime _lastUsed;
         private Thread _idleCheckThread;
 
+        private readonly SemaphoreSlim _browserLock = new SemaphoreSlim(1, 1);
+
         private bool _isDisposing = false;
 
         public BrowserManager(ILogger<BrowserManager> logger, IOptions<Settings> settings, RealTimeData rt)
@@ -62,91 +64,109 @@ namespace MSRewardsBot.Server.Automation
 
         private async Task CreateBrowser()
         {
-            if (_playwright == null)
-            {
-                _playwright = await Playwright.CreateAsync();
-            }
+            await _browserLock.WaitAsync();
 
-            if (_browser == null)
+            try
             {
-                if (_settings.Value.UseFirefox)
+                if (_playwright == null)
                 {
-                    Dictionary<string, object> args = new Dictionary<string, object>()
-                    {
-                        ["network.http.http3.enabled"] = false,
-                        ["security.webauth.webauthn"] = false,
-                        ["media.autoplay.default"] = 0,
-                        ["media.autoplay.blocking_policy"] = 0,
-                        ["browser.shell.checkDefaultBrowser"] = false,
-                        ["startup.homepage_welcome_url"] = BrowserConstants.URL_BLANK_PAGE,
-                        ["startup.homepage_welcome_url.additional"] = "",
-                        ["browser.startup.firstrunSkipsHomepage"] = false,
-                        ["extensions.autoDisableScopes"] = 15,
-                        ["extensions.systemAddon.update.enabled"] = false
-                    };
-
-                    if (RuntimeEnvironment.IsDocker())
-                    {
-                        args.Add("layers.gpu-process.enabled", false);
-                    }
-
-                    _browser = await _playwright.Firefox.LaunchAsync(new BrowserTypeLaunchOptions()
-                    {
-#if DEBUG
-                        //Headless = false,
-#endif
-                        FirefoxUserPrefs = args
-                    });
+                    _playwright = await Playwright.CreateAsync();
                 }
-                else
+
+                if (_browser == null)
                 {
-                    List<string> args =
-                    [
-                        "--no-default-browser-check",
+                    if (_settings.Value.UseFirefox)
+                    {
+                        Dictionary<string, object> args = new Dictionary<string, object>()
+                        {
+                            ["network.http.http3.enabled"] = false,
+                            ["security.webauth.webauthn"] = false,
+                            ["media.autoplay.default"] = 0,
+                            ["media.autoplay.blocking_policy"] = 0,
+                            ["browser.shell.checkDefaultBrowser"] = false,
+                            ["startup.homepage_welcome_url"] = BrowserConstants.URL_BLANK_PAGE,
+                            ["startup.homepage_welcome_url.additional"] = "",
+                            ["browser.startup.firstrunSkipsHomepage"] = false,
+                            ["extensions.autoDisableScopes"] = 15,
+                            ["extensions.systemAddon.update.enabled"] = false
+                        };
+
+                        if (RuntimeEnvironment.IsDocker())
+                        {
+                            args.Add("layers.gpu-process.enabled", false);
+                        }
+
+                        _browser = await _playwright.Firefox.LaunchAsync(new BrowserTypeLaunchOptions()
+                        {
+#if DEBUG
+                            //Headless = false,
+#endif
+                            FirefoxUserPrefs = args
+                        });
+                    }
+                    else
+                    {
+                        List<string> args =
+                        [
+                            "--no-default-browser-check",
                         "--disable-extensions",
                         "--disable-blink-features=AutomationControlled",
                         "--disable-infobars",
                         "--no-default-browser-check",
                         "--disable-extensions"
-                    ];
+                        ];
 
-                    if (RuntimeEnvironment.IsDocker())
-                    {
-                        args.Add("--disable-dev-shm-usage");
-                    }
+                        if (RuntimeEnvironment.IsDocker())
+                        {
+                            args.Add("--disable-dev-shm-usage");
+                        }
 
-                    _browser = await _playwright.Chromium.LaunchAsync(new BrowserTypeLaunchOptions()
-                    {
+                        _browser = await _playwright.Chromium.LaunchAsync(new BrowserTypeLaunchOptions()
+                        {
 #if DEBUG
-                        //Headless = false,
+                            //Headless = false,
 #endif
-                        Args = args
-                    });
+                            Args = args
+                        });
+                    }
                 }
+            }
+            finally
+            {
+                _browserLock.Release();
             }
         }
 
         private async Task CloseBrowser()
         {
-            _logger.LogDebug("Deleting context references..");
-            foreach (KeyValuePair<int, MSAccountServerData> data in _rt.CacheMSAccStats) // Delete refs before disposing
+            await _browserLock.WaitAsync();
+
+            try
             {
-                await DeleteContext(data.Value);
-            }
+                _logger.LogDebug("Deleting context references..");
+                foreach (KeyValuePair<int, MSAccountServerData> data in _rt.CacheMSAccStats) // Delete refs before disposing
+                {
+                    await DeleteContext(data.Value);
+                }
 
-            if (_browser != null)
+                if (_browser != null)
+                {
+                    await _browser.CloseAsync();
+                    await _browser.DisposeAsync();
+                    _browser = null;
+
+                    _logger.LogDebug("Browser disposed");
+                }
+
+                _playwright?.Dispose();
+                _playwright = null;
+
+                _logger.LogDebug("Playwright disposed");
+            }
+            finally
             {
-                await _browser.CloseAsync();
-                await _browser.DisposeAsync();
-                _browser = null;
-
-                _logger.LogDebug("Browser disposed");
+                _browserLock.Release();
             }
-
-            _playwright?.Dispose();
-            _playwright = null;
-
-            _logger.LogDebug("Playwright disposed");
         }
 
         public async Task RebootBrowser()
