@@ -28,9 +28,9 @@ namespace MSRewardsBot.Server.Core
 
         public Guid Login(User input)
         {
-            if (input == null || string.IsNullOrEmpty(input.Username) || string.IsNullOrEmpty(input.Password))
+            if (input == null || !InputValidator.IsValidUsername(input.Username) || string.IsNullOrEmpty(input.Password))
             {
-                _logger.Log(LogLevel.Warning, "LoginWithToken failed. Username/password is empty");
+                _logger.Log(LogLevel.Warning, "Login failed. Invalid username or empty password");
                 return Guid.Empty;
             }
 
@@ -52,9 +52,9 @@ namespace MSRewardsBot.Server.Core
 
         public Guid Register(User user)
         {
-            if (user == null ||
-                user.Username.Length == 0 || user.Username.Length > 32 ||
-                user.Password.Length == 0 || user.Password.Length > 32)
+            if (user == null
+                || !InputValidator.IsValidUsername(user.Username)
+                || !InputValidator.IsValidPassword(user.Password))
             {
                 _logger.Log(LogLevel.Warning, "Register failed. The username/password does not meet the minimum requirements");
                 return Guid.Empty;
@@ -133,6 +133,18 @@ namespace MSRewardsBot.Server.Core
         {
             if (!IsUserLogged(token, out User user))
             {
+                return false;
+            }
+
+            if (account == null || !InputValidator.IsValidEmail(account.Email))
+            {
+                _logger.Log(LogLevel.Warning, "InsertMSAccount rejected: invalid email for user {User}", user.Username);
+                return false;
+            }
+
+            if (!InputValidator.IsValidCookies(account.Cookies, out string reason))
+            {
+                _logger.Log(LogLevel.Warning, "InsertMSAccount rejected for user {User}: {Reason}", user.Username, reason);
                 return false;
             }
 
