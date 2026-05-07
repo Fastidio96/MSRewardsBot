@@ -11,8 +11,6 @@ namespace MSRewardsBot.Server.Core
 {
     public partial class BusinessLayer
     {
-        private const string PWD_SALT = @"C3tn5yrPYPiAv9Pm59L4Y1tArw6eEjYK";
-
         private readonly ILogger<BusinessLayer> _logger;
         private readonly RealTimeData _rt;
         private readonly DataLayer _data;
@@ -44,7 +42,7 @@ namespace MSRewardsBot.Server.Core
                 return Guid.Empty;
             }
 
-            if (dbUser.Password != GenerateHashFromPassword(input.Password))
+            if(!AuthUtils.VerifyPassword(input.Password, dbUser.Password))
             {
                 _logger.Log(LogLevel.Warning, "LoginWithToken failed. The password do not match for user {User}", input.Username);
                 return Guid.Empty;
@@ -69,7 +67,7 @@ namespace MSRewardsBot.Server.Core
                 return Guid.Empty;
             }
 
-            user.Password = GenerateHashFromPassword(user.Password);
+            user.Password = AuthUtils.HashPassword(user.Password);
 
             if (!_data.CreateUser(user.Username, user.Password))
             {
@@ -79,12 +77,6 @@ namespace MSRewardsBot.Server.Core
 
             return _data.GetUserAuthToken(user.Username);
         }
-
-        private static string GenerateHashFromPassword(string password)
-        {
-            return Convert.ToBase64String(SHA256.HashData(Encoding.UTF8.GetBytes(PWD_SALT + password)));
-        }
-
 
         private bool IsUserLogged(Guid token, out User user)
         {
