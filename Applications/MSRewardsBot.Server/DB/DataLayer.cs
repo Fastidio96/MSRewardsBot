@@ -32,14 +32,15 @@ namespace MSRewardsBot.Server.DB
 
         public bool UpdateMSAccount(MSAccount account)
         {
-            MSAccount acc = _db.Accounts.AsNoTracking().FirstOrDefault(a => a.DbId == account.DbId);
-            if (acc == null)
+            MSAccount tracked = _db.Accounts.FirstOrDefault(a => a.DbId == account.DbId);
+            if (tracked == null)
             {
                 return false;
             }
 
-            _db.Accounts.Update(account);
-            return _db.SaveChanges() > 0;
+            tracked.Email = account.Email;
+
+            return _db.SaveChanges() >= 0;
         }
     }
 }
