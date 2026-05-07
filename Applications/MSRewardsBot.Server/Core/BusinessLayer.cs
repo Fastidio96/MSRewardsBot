@@ -31,7 +31,7 @@ namespace MSRewardsBot.Server.Core
         {
             if (input == null || string.IsNullOrEmpty(input.Username) || string.IsNullOrEmpty(input.Password))
             {
-                _logger.Log(LogLevel.Warning, "LoginWithToken failed. Username/password is empty. {Username}|{Password}", input.Username, input.Password);
+                _logger.Log(LogLevel.Warning, "LoginWithToken failed. Username/password is empty");
                 return Guid.Empty;
             }
 
