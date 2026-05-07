@@ -136,7 +136,7 @@ namespace MSRewardsBot.Server.Core
                 return false;
             }
 
-            if (account == null || !InputValidator.IsValidEmail(account.Email))
+            if (account == null)
             {
                 _logger.Log(LogLevel.Warning, "InsertMSAccount rejected: invalid email for user {User}", user.Username);
                 return false;
