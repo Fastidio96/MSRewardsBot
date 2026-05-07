@@ -2,7 +2,7 @@
 using System.Security.Cryptography;
 using System.Text;
 
-namespace MSRewardsBot.Server.Core
+namespace MSRewardsBot.Server.Helpers
 {
     internal class AuthUtils
     {

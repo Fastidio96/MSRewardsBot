@@ -226,7 +226,11 @@ namespace MSRewardsBot.Server.Core
         public void Dispose()
         {
             _isDisposing = true;
-            _todo.Clear();
+
+            using (_lock.EnterScope())
+            {
+                _todo.Clear();
+            }
 
             if (_threadScheduler != null)
             {

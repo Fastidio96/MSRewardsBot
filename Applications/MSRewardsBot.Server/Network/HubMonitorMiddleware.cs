@@ -99,6 +99,7 @@ namespace MSRewardsBot.Server.Network
         {
             string ip = GetIp(context.Context.GetHttpContext());
             _logger.LogInformation("Client connected with ip [{ip}]: {ConnectionId}", ip, context.Context.ConnectionId);
+            
             _connection.AddConnection(new ClientInfo()
             {
                 ConnectionId = context.Context.ConnectionId,
