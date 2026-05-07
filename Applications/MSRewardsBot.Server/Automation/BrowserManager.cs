@@ -357,6 +357,47 @@ namespace MSRewardsBot.Server.Automation
             }
         }
 
+        // Scrolls top-bottom in viewport-sized steps until the count of `selector` stops growing,
+        // then returns to the top. Needed because Firefox headless does not trigger
+        // IntersectionObserver-based lazy loading on cards below the initial viewport.
+        private async Task ScrollUntilLocatorStable(IPage page, string selector, int maxIterations = 14)
+        {
+            await page.BringToFrontAsync();
+
+            ILocator loc = page.Locator(selector);
+
+            // Reset to top
+            await page.Mouse.WheelAsync(0, -100000);
+            await WaitRandomMs(300, 600);
+
+            int previousCount = -1;
+            int stableHits = 0;
+
+            for (int i = 0; i < maxIterations; i++)
+            {
+                await page.Mouse.WheelAsync(0, 700);
+                await WaitRandomMs(400, 700);
+
+                int currentCount = await loc.CountAsync();
+                if (currentCount == previousCount)
+                {
+                    stableHits++;
+                    if (stableHits >= 2 && currentCount > 0)
+                    {
+                        break;
+                    }
+                }
+                else
+                {
+                    stableHits = 0;
+                    previousCount = currentCount;
+                }
+            }
+
+            await page.Mouse.WheelAsync(0, -100000);
+            await WaitRandomMs(500, 900);
+        }
+
         private async Task<bool> WriteSearchAsHuman(IPage page, string keyword)
         {
             //Wait for the animation to finish

@@ -28,8 +28,12 @@ namespace MSRewardsBot.Server.Automation
 
                 await WaitRandomMs(BrowserConstants.HUMAN_ACTION_MIN, BrowserConstants.HUMAN_ACTION_MAX);
 
-                IReadOnlyList<ILocator> locators = await data.Page.Locator(BrowserConstants.ADDITIONAL_PTS_IMAGE_LOCATOR).AllAsync();
-                if (locators.Count == 0)
+                // Force lazy-loaded cards (headless browser does not auto-trigger IntersectionObserver below the fold)
+                await ScrollUntilLocatorStable(data.Page, BrowserConstants.ADDITIONAL_PTS_IMAGE_LOCATOR);
+
+                ILocator allIcons = data.Page.Locator(BrowserConstants.ADDITIONAL_PTS_IMAGE_LOCATOR);
+                int initialCount = await allIcons.CountAsync();
+                if (initialCount == 0)
                 {
                     _logger.LogInformation("No additional points found from the dashboard for {Email} | {User}",
                         data.Account.Email, data.Account.User.Username);
@@ -37,33 +41,62 @@ namespace MSRewardsBot.Server.Automation
                     return true;
                 }
 
-                try
+                _logger.LogInformation("Found {n} additional point icons", initialCount);
+
+                async Task<bool> ProcessIconAsync(ILocator loc)
                 {
-                    foreach (ILocator loc in locators)
+                    try
                     {
-                        await loc.ScrollIntoViewIfNeededAsync();
+                        await loc.ScrollIntoViewIfNeededAsync(new LocatorScrollIntoViewIfNeededOptions { Timeout = 5000 });
                         await WaitRandomMs(1200, 2000);
 
                         if (!await loc.IsVisibleAsync())
                         {
-                            continue;
+                            return false;
                         }
 
-                        try
+                        IPage newPage = await data.Page.Context.RunAndWaitForPageAsync(async () =>
                         {
-                            IPage newPage = await data.Page.Context.RunAndWaitForPageAsync(async () =>
-                            {
-                                await loc.ClickAsync();
-                            });
+                            await loc.ClickAsync(new LocatorClickOptions { Timeout = 5000 });
+                        });
 
-                            await WaitRandomMs(1500, 5000);
-                            await HumanScroll(newPage);
-                            await WaitRandomMs(3000, 4500);
-                            await newPage.CloseAsync();
-                        }
-                        catch
+                        await WaitRandomMs(1500, 5000);
+                        await HumanScroll(newPage);
+                        await WaitRandomMs(3000, 4500);
+                        await newPage.CloseAsync();
+                        return true;
+                    }
+                    catch
+                    {
+                        return false;
+                    }
+                }
+
+                try
+                {
+                    // Iterate by always targeting the next still-present icon. After a card is completed,
+                    // the dashboard replaces .mee-icon-AddMedium with the checkmark, so count decreases
+                    // and Nth(skipIndex) points to the next uncompleted card. If processing fails without
+                    // removing the icon (stuck card), advance skipIndex to skip past it.
+                    int skipIndex = 0;
+                    int safetyIterations = 0;
+                    const int maxIterations = 30;
+
+                    while (safetyIterations++ < maxIterations)
+                    {
+                        int currentCount = await allIcons.CountAsync();
+                        if (skipIndex >= currentCount)
                         {
-                            continue;
+                            break;
+                        }
+
+                        bool processed = await ProcessIconAsync(allIcons.Nth(skipIndex));
+
+                        int countAfter = await allIcons.CountAsync();
+                        if (!processed || countAfter >= currentCount)
+                        {
+                            // card did not disappear from the dashboard, skip it to avoid an infinite loop
+                            skipIndex++;
                         }
                     }
                 }
