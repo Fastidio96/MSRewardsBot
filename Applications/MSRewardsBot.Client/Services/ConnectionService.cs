@@ -49,10 +49,9 @@ namespace MSRewardsBot.Client.Services
                 _isDisposing = false;
 
                 _disposables.Add(_connection.On<Guid>(nameof(IBotAPI.GetUserInfo), GetUserInfo));
-                _disposables.Add(_connection.On<bool>(nameof(IBotAPI.Logout), delegate ()
+                _disposables.Add(_connection.On<Guid>(nameof(IBotAPI.Logout), _ =>
                 {
                     _appInfo.IsUserLogged = false;
-                    return true;
                 }));
                 _disposables.Add(_connection.On("SendUpdateMSAccountStats", delegate (MSAccountStats changedAcc, string propertyName)
                 {
@@ -82,7 +81,7 @@ namespace MSRewardsBot.Client.Services
         private async Task TryConnect()
         {
             bool exit = false;
-            while (_connection != null && (!exit || _isDisposing))
+            while (_connection != null && !exit && !_isDisposing)
             {
                 _appInfo.ConnectionState = _connection.State;
 

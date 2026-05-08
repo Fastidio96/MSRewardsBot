@@ -34,7 +34,17 @@ namespace MSRewardsBot.Client.Windows
 
         private void MSLoginWindow_Closed(object? sender, EventArgs e)
         {
-            webview?.Dispose();
+            this.Closed -= MSLoginWindow_Closed;
+
+            if (webview != null)
+            {
+                webview.NavigationCompleted -= Webview_DetectInit_NavigationCompleted;
+                webview.NavigationCompleted -= WebView_NavigationCompleted;
+                webview.Dispose();
+                webview = null;
+            }
+
+            Utils.KillWebViewProcess();
         }
 
         private void WebViewWorker_InitCompleted(object? sender, EventArgs e)
@@ -88,25 +98,7 @@ namespace MSRewardsBot.Client.Windows
                 await _vm.GetUserInfo();
             }
 
-            this.Close();
-            Dispose();
-        }
-
-        public void Dispose()
-        {
-            if (webview != null)
-            {
-                webview.NavigationCompleted -= Webview_DetectInit_NavigationCompleted;
-
-                Dispatcher.InvokeAsync(delegate ()
-                {
-                    //webview.CoreWebView2?.Stop();
-                    webview.Dispose();
-                    webview = null;
-                }).Wait();
-            }
-
-            Utils.KillWebViewProcess();
+            this.Close(); // MSLoginWindow_Closed handles webview disposal
         }
     }
 }

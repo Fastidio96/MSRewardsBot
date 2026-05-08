@@ -46,14 +46,13 @@ namespace MSRewardsBot.Client.Windows
             });
         }
 
-        private async void MainWindow_Loaded(object sender, RoutedEventArgs e)
+        private void MainWindow_Loaded(object sender, RoutedEventArgs e)
         {
             this.Loaded -= MainWindow_Loaded;
             _appInfo.Accounts.CollectionChanged += Accounts_CollectionChanged;
 
-            _splashScreenWindow.Hide();
+            _splashScreenWindow?.Hide();
 
-            await _vm.GetUserInfo();
             if (cmbAcc.IsEnabled && cmbAcc.SelectedItem == null)
             {
                 cmbAcc.SelectedIndex = 0;
@@ -70,14 +69,14 @@ namespace MSRewardsBot.Client.Windows
             await _vm.Logout();
         }
 
-        private void MainWindow_Closing(object? sender, System.ComponentModel.CancelEventArgs e)
+        private async void MainWindow_Closing(object? sender, System.ComponentModel.CancelEventArgs e)
         {
             e.Cancel = true;
 
             _appInfo.Accounts.CollectionChanged -= Accounts_CollectionChanged;
             this.Closing -= MainWindow_Closing;
 
-            _vm.Dispose();
+            await _vm.DisposeAsync();
             Environment.Exit(0);
         }
 

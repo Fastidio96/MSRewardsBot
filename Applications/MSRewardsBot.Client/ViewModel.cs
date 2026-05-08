@@ -11,7 +11,7 @@ using MSRewardsBot.Common.DataEntities.Accounting;
 
 namespace MSRewardsBot.Client
 {
-    public class ViewModel : IDisposable
+    public class ViewModel : IAsyncDisposable
     {
         public bool IsLogged => _appInfo.IsUserLogged;
         private Guid _token => !_appData.AuthToken.HasValue ? Guid.Empty : _appData.AuthToken.Value;
@@ -179,12 +179,12 @@ namespace MSRewardsBot.Client
                 });
             }
 
-            RestartApp();
+            await RestartApp();
         }
 
-        public void RestartApp()
+        public async Task RestartApp()
         {
-            Dispose();
+            await DisposeAsync();
 
             Process.Start(Environment.ProcessPath);
             Environment.Exit(0);
@@ -213,7 +213,7 @@ namespace MSRewardsBot.Client
                 return false;
             }
 
-            if (port.Length != 5 || !int.TryParse(port, out _))
+            if (!int.TryParse(port, out int p) || p < 1 || p > 65535)
             {
                 return false;
             }
@@ -228,9 +228,8 @@ namespace MSRewardsBot.Client
                 return false;
             }
 
-            _appData.AuthToken = null;
-
             await Logout(false);
+            _appData.AuthToken = null;
             return true;
         }
 
@@ -289,7 +288,7 @@ namespace MSRewardsBot.Client
             File.Delete(FileManager.LocalUpdatePackagePath);
         }
 
-        public async void Dispose()
+        public async ValueTask DisposeAsync()
         {
             if (_connection != null)
             {
