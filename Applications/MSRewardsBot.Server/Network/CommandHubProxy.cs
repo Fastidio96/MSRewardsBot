@@ -75,6 +75,11 @@ namespace MSRewardsBot.Server.Network
             await _hubContext.Clients.Client(connectionId).SendAsync(nameof(SendUpdateMSAccountStats), accountStat, propertyName);
         }
 
+        internal async Task SendUpdateMSAccount(string connectionId, MSAccount account, string propertyName)
+        {
+            await _hubContext.Clients.Client(connectionId).SendAsync(nameof(SendUpdateMSAccount), account, propertyName);
+        }
+
         internal async Task RequestClientVersion(string connectionId)
         {
             _logger.LogDebug("Requesting client version from {id}..", connectionId);

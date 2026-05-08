@@ -61,6 +61,14 @@ namespace MSRewardsBot.Client.Services
                             ?.Stats.ChangeProperty(changedAcc, propertyName);
                     });
                 }));
+                _disposables.Add(_connection.On("SendUpdateMSAccount", delegate (MSAccount changedAcc, string propertyName)
+                {
+                    App.Current.Dispatcher.Invoke(() =>
+                    {
+                        _appInfo.Accounts.FirstOrDefault(c => c.DbId == changedAcc.DbId)
+                            ?.ChangeProperty(changedAcc, propertyName);
+                    });
+                }));
                 _disposables.Add(_connection.On("RequestClientVersion", async delegate (string clientId)
                 {
                     await SendClientVersion(clientId, _appInfo.Version);

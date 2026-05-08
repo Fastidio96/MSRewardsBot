@@ -1,12 +1,16 @@
 ﻿using System.Collections.Generic;
+using System.ComponentModel;
 using System.ComponentModel.DataAnnotations.Schema;
+using System.Runtime.CompilerServices;
 using System.Text.Json.Serialization;
 
 namespace MSRewardsBot.Common.DataEntities.Accounting
 {
     [Table("account")]
-    public class MSAccount : BaseEntity
+    public class MSAccount : BaseEntity, INotifyPropertyChanged
     {
+        public event PropertyChangedEventHandler? PropertyChanged;
+
         public MSAccount()
         {
             Cookies = new List<AccountCookie>();
@@ -19,20 +23,80 @@ namespace MSRewardsBot.Common.DataEntities.Accounting
         [Column("user_id")]
         public int UserId { get; set; }
 
+        private string? _email;
         [Column("email")]
-        public string? Email { get; set; }
+        public string? Email
+        {
+            get => _email;
+            set
+            {
+                if (_email == value)
+                {
+                    return;
+                }
+                _email = value;
+                NotifyPropertyChanged();
+            }
+        }
 
         [JsonIgnore]
         public User User { get; set; }
         public List<AccountCookie> Cookies { get; set; }
 
+        private bool _isCookiesExpired;
         [NotMapped]
-        public bool IsCookiesExpired { get; set; }
+        public bool IsCookiesExpired
+        {
+            get => _isCookiesExpired;
+            set
+            {
+                if (_isCookiesExpired == value)
+                {
+                    return;
+                }
+                _isCookiesExpired = value;
+                NotifyPropertyChanged();
+            }
+        }
 
+        private bool _isAccountBanned;
         [NotMapped]
-        public bool IsAccountBanned { get; set; }
+        public bool IsAccountBanned
+        {
+            get => _isAccountBanned;
+            set
+            {
+                if (_isAccountBanned == value)
+                {
+                    return;
+                }
+                _isAccountBanned = value;
+                NotifyPropertyChanged();
+            }
+        }
 
         [NotMapped]
         public MSAccountStats Stats { get; set; }
+
+        public void ChangeProperty(MSAccount account, string propertyName)
+        {
+            switch (propertyName)
+            {
+                case nameof(Email):
+                    Email = account.Email;
+                    break;
+                case nameof(IsCookiesExpired):
+                    IsCookiesExpired = account.IsCookiesExpired;
+                    break;
+                case nameof(IsAccountBanned):
+                    IsAccountBanned = account.IsAccountBanned;
+                    break;
+            }
+        }
+
+        private void NotifyPropertyChanged([CallerMemberName] string propertyName = "")
+        {
+            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
+        }
     }
 }

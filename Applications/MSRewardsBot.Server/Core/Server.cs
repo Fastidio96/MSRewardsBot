@@ -131,6 +131,7 @@ namespace MSRewardsBot.Server.Core
                             acc.Stats.UserId = acc.UserId;
                             acc.Stats.MSAccountId = acc.DbId;
                             acc.Stats.PropertyChanged += MsAccountStats_PropertyChanged;
+                            acc.PropertyChanged += MsAccount_PropertyChanged;
 
                             if (!_rt.CacheMSAccStats.TryAdd(acc.DbId, cache))
                             {
@@ -360,6 +361,27 @@ namespace MSRewardsBot.Server.Core
             }
         }
 
+        private async void MsAccount_PropertyChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)
+        {
+            try
+            {
+                if (sender is MSAccount account)
+                {
+                    ClientInfo info = _connectionManager.GetConnection(account.UserId);
+                    if (info == null)
+                    {
+                        return;
+                    }
+
+                    await _commandHubProxy.SendUpdateMSAccount(info.ConnectionId, account, e.PropertyName);
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.Log(LogLevel.Error, ex, "Error pushing account update to client");
+            }
+        }
+
         public void Dispose()
         {
             _isDisposing = true;
@@ -379,6 +401,7 @@ namespace MSRewardsBot.Server.Core
                 foreach (KeyValuePair<int, MSAccountServerData> acc in _rt.CacheMSAccStats)
                 {
                     acc.Value.Account.Stats.PropertyChanged -= MsAccountStats_PropertyChanged;
+                    acc.Value.Account.PropertyChanged -= MsAccount_PropertyChanged;
                 }
             }
         }

@@ -153,6 +153,21 @@ namespace MSRewardsBot.Client
                 }
             }
 
+            // Sync mutable fields on existing accounts so the UI reflects server-side updates
+            // (e.g. Email populated after the server reads the cookies of a freshly-added account)
+            foreach (MSAccount existing in _appInfo.Accounts)
+            {
+                MSAccount fresh = user.MSAccounts.FirstOrDefault(a => a.DbId == existing.DbId);
+                if (fresh == null)
+                {
+                    continue;
+                }
+
+                existing.Email = fresh.Email;
+                existing.IsCookiesExpired = fresh.IsCookiesExpired;
+                existing.IsAccountBanned = fresh.IsAccountBanned;
+            }
+
             return true;
         }
 
