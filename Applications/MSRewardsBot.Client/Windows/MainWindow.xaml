@@ -44,7 +44,52 @@
                 <ComboBox.ItemTemplate>
                     <DataTemplate>
                         <StackPanel Orientation="Horizontal">
-                            <TextBlock Text="{Binding Email}" />
+                            <TextBlock Text="{Binding Email}"
+                                       VerticalAlignment="Center" />
+                            <Border CornerRadius="3"
+                                    Padding="5,1"
+                                    Margin="6,0,0,0"
+                                    Background="#C62828">
+                                <Border.Style>
+                                    <Style TargetType="Border">
+                                        <Setter Property="Visibility"
+                                                Value="Collapsed" />
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding IsAccountBanned}"
+                                                         Value="True">
+                                                <Setter Property="Visibility"
+                                                        Value="Visible" />
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </Border.Style>
+                                <TextBlock Text="BANNED"
+                                           Foreground="White"
+                                           FontSize="10"
+                                           FontWeight="Bold" />
+                            </Border>
+                            <Border CornerRadius="3"
+                                    Padding="5,1"
+                                    Margin="6,0,0,0"
+                                    Background="#F57C00">
+                                <Border.Style>
+                                    <Style TargetType="Border">
+                                        <Setter Property="Visibility"
+                                                Value="Collapsed" />
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding IsCookiesExpired}"
+                                                         Value="True">
+                                                <Setter Property="Visibility"
+                                                        Value="Visible" />
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </Border.Style>
+                                <TextBlock Text="EXPIRED"
+                                           Foreground="White"
+                                           FontSize="10"
+                                           FontWeight="Bold" />
+                            </Border>
                         </StackPanel>
                     </DataTemplate>
                 </ComboBox.ItemTemplate>
