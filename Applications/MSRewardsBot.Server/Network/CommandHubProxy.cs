@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.SignalR;
 using Microsoft.Extensions.Logging;
@@ -59,6 +60,22 @@ namespace MSRewardsBot.Server.Network
             using (ScopedBusiness scope = _businessFactory.Create())
             {
                 return Task.FromResult(scope.Business.InsertMSAccount(token, account));
+            }
+        }
+
+        public Task<bool> DeleteMSAccount(Guid token, int msAccountId)
+        {
+            using (ScopedBusiness scope = _businessFactory.Create())
+            {
+                return Task.FromResult(scope.Business.DeleteMSAccount(token, msAccountId));
+            }
+        }
+
+        public Task<bool> UpdateMSAccountCookies(Guid token, int msAccountId, List<AccountCookie> cookies)
+        {
+            using (ScopedBusiness scope = _businessFactory.Create())
+            {
+                return Task.FromResult(scope.Business.UpdateMSAccountCookies(token, msAccountId, cookies));
             }
         }
 

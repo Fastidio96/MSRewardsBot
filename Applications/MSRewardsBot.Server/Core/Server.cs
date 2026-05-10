@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
@@ -101,6 +102,22 @@ namespace MSRewardsBot.Server.Core
                     using (ScopedBusiness scope = _businessFactory.Create())
                     {
                         accounts = scope.Business.GetAllMSAccounts();
+                    }
+
+                    // Drop cache entries for accounts that no longer exist in DB (deleted by user)
+                    // or whose cookies have been refreshed via UpdateMSAccountCookies (cache pre-removed by Business).
+                    // Unsubscribe events to avoid pushing stale data to the client.
+                    foreach (int cachedId in _rt.CacheMSAccStats.Keys.ToList())
+                    {
+                        if (accounts.Any(a => a.DbId == cachedId))
+                        {
+                            continue;
+                        }
+                        if (_rt.CacheMSAccStats.TryRemove(cachedId, out MSAccountServerData removed))
+                        {
+                            removed.Account.Stats.PropertyChanged -= MsAccountStats_PropertyChanged;
+                            removed.Account.PropertyChanged -= MsAccount_PropertyChanged;
+                        }
                     }
 
                     foreach (MSAccount acc in accounts)

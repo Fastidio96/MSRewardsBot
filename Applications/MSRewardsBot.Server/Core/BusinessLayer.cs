@@ -162,5 +162,47 @@ namespace MSRewardsBot.Server.Core
         {
             return _data.InvalidateUserAuthToken(token);
         }
+
+        public bool DeleteMSAccount(Guid token, int msAccountId)
+        {
+            if (!IsUserLogged(token, out User user))
+            {
+                return false;
+            }
+
+            if (!_data.DeleteMSAccount(user.DbId, msAccountId))
+            {
+                _logger.Log(LogLevel.Warning, "DeleteMSAccount failed for {User} on account {Id}", user.Username, msAccountId);
+                return false;
+            }
+
+            // Drop cache so the main loop stops scheduling jobs for the deleted account
+            _rt.CacheMSAccStats.TryRemove(msAccountId, out _);
+            return true;
+        }
+
+        public bool UpdateMSAccountCookies(Guid token, int msAccountId, List<AccountCookie> cookies)
+        {
+            if (!IsUserLogged(token, out User user))
+            {
+                return false;
+            }
+
+            if (!InputValidator.IsValidCookies(cookies, out string reason))
+            {
+                _logger.Log(LogLevel.Warning, "UpdateMSAccountCookies rejected for user {User}: {Reason}", user.Username, reason);
+                return false;
+            }
+
+            if (!_data.UpdateMSAccountCookies(user.DbId, msAccountId, cookies))
+            {
+                _logger.Log(LogLevel.Warning, "UpdateMSAccountCookies failed for {User} on account {Id}", user.Username, msAccountId);
+                return false;
+            }
+
+            // Drop cache so the main loop re-creates the entry with fresh cookies and a clean IsCookiesExpired flag
+            _rt.CacheMSAccStats.TryRemove(msAccountId, out _);
+            return true;
+        }
     }
 }

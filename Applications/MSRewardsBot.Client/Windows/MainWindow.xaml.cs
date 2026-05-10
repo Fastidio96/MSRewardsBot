@@ -2,6 +2,7 @@
 using System.Diagnostics;
 using System.Windows;
 using MSRewardsBot.Client.DataEntities;
+using MSRewardsBot.Common.DataEntities.Accounting;
 
 namespace MSRewardsBot.Client.Windows
 {
@@ -62,6 +63,43 @@ namespace MSRewardsBot.Client.Windows
         private void BtnAddAcc_Click(object sender, RoutedEventArgs e)
         {
             _vm.AddMSAccount();
+        }
+
+        private void BtnRefreshAcc_Click(object sender, RoutedEventArgs e)
+        {
+            if (_appInfo.SelectedAccount == null)
+            {
+                return;
+            }
+
+            _vm.RefreshMSAccountCookies(_appInfo.SelectedAccount);
+        }
+
+        private async void BtnDeleteAcc_Click(object sender, RoutedEventArgs e)
+        {
+            MSAccount account = _appInfo.SelectedAccount;
+            if (account == null)
+            {
+                return;
+            }
+
+            string label = string.IsNullOrWhiteSpace(account.Email) ? "this account" : account.Email;
+            MessageBoxResult res = MessageBox.Show(
+                $"Delete {label}?\nThis will remove the account and all its cookies from the server. The action cannot be undone.",
+                "Delete MS account",
+                MessageBoxButton.YesNo,
+                MessageBoxImage.Warning,
+                MessageBoxResult.No);
+
+            if (res != MessageBoxResult.Yes)
+            {
+                return;
+            }
+
+            if (!await _vm.DeleteMSAccount(account))
+            {
+                Utils.ShowMessage("Unable to delete the account.");
+            }
         }
 
         private async void BtnLogout_Click(object sender, RoutedEventArgs e)

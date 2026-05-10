@@ -33,6 +33,8 @@
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="4*" />
                 <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="*" />
             </Grid.ColumnDefinitions>
 
             <ComboBox Grid.Row="0"
@@ -96,6 +98,53 @@
             </ComboBox>
             <Button Grid.Row="0"
                     Grid.Column="1"
+                    Name="btnDeleteAcc"
+                    Content="Delete account"
+                    Margin="0,0,10,0"
+                    Padding="8,0"
+                    Click="BtnDeleteAcc_Click"
+                    ToolTip="Delete the selected account"
+                    IsEnabled="{Binding ConnectedToServer}">
+                <Button.Style>
+                    <Style TargetType="Button"
+                           BasedOn="{StaticResource {x:Type Button}}">
+                        <Setter Property="Visibility"
+                                Value="Collapsed" />
+                        <Style.Triggers>
+                            <DataTrigger Binding="{Binding SelectedAccount, Converter={x:Static window:NotNullToBoolConverter.Instance}}"
+                                         Value="True">
+                                <Setter Property="Visibility"
+                                        Value="Visible" />
+                            </DataTrigger>
+                        </Style.Triggers>
+                    </Style>
+                </Button.Style>
+            </Button>
+            <Button Grid.Row="0"
+                    Grid.Column="2"
+                    Name="btnRefreshAcc"
+                    Content="Re-login"
+                    Margin="0,0,5,0"
+                    Padding="8,0"
+                    Click="BtnRefreshAcc_Click"
+                    ToolTip="Re-login this account to refresh expired cookies">
+                <Button.Style>
+                    <Style TargetType="Button"
+                           BasedOn="{StaticResource {x:Type Button}}">
+                        <Setter Property="Visibility"
+                                Value="Collapsed" />
+                        <Style.Triggers>
+                            <DataTrigger Binding="{Binding SelectedAccount.IsCookiesExpired}"
+                                         Value="True">
+                                <Setter Property="Visibility"
+                                        Value="Visible" />
+                            </DataTrigger>
+                        </Style.Triggers>
+                    </Style>
+                </Button.Style>
+            </Button>
+            <Button Grid.Row="0"
+                    Grid.Column="3"
                     Name="btnAddAcc"
                     Content="+ Add MS account"
                     Click="BtnAddAcc_Click"

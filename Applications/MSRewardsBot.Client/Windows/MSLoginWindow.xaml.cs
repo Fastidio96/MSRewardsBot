@@ -13,13 +13,20 @@ namespace MSRewardsBot.Client.Windows
     public partial class MSLoginWindow : Window
     {
         private readonly ViewModel _vm;
+        private readonly int? _refreshAccountId;
         private event EventHandler InitCompleted;
 
-        public MSLoginWindow(ViewModel vm)
+        public MSLoginWindow(ViewModel vm, int? refreshAccountId)
         {
             InitializeComponent();
 
             _vm = vm;
+            _refreshAccountId = refreshAccountId;
+
+            if (_refreshAccountId.HasValue)
+            {
+                this.Title = "Re-login MS account";
+            }
 
             webview.NavigationCompleted += Webview_DetectInit_NavigationCompleted;
             InitCompleted += WebViewWorker_InitCompleted;
@@ -89,9 +96,15 @@ namespace MSRewardsBot.Client.Windows
                 });
             }
 
-            if (!await _vm.InsertMSAccount(cookies))
+            bool ok = _refreshAccountId.HasValue
+                ? await _vm.UpdateMSAccountCookies(_refreshAccountId.Value, cookies)
+                : await _vm.InsertMSAccount(cookies);
+
+            if (!ok)
             {
-                Utils.ShowMessage("Unable to save ms account!");
+                Utils.ShowMessage(_refreshAccountId.HasValue
+                    ? "Unable to refresh ms account cookies!"
+                    : "Unable to save ms account!");
             }
             else
             {

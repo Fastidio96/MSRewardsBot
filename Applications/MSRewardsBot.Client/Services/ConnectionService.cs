@@ -167,6 +167,16 @@ namespace MSRewardsBot.Client.Services
             return _connection.InvokeAsync<bool>(nameof(IBotAPI.InsertMSAccount), token, account);
         }
 
+        public Task<bool> DeleteMSAccount(Guid token, int msAccountId)
+        {
+            return _connection.InvokeAsync<bool>(nameof(IBotAPI.DeleteMSAccount), token, msAccountId);
+        }
+
+        public Task<bool> UpdateMSAccountCookies(Guid token, int msAccountId, List<AccountCookie> cookies)
+        {
+            return _connection.InvokeAsync<bool>(nameof(IBotAPI.UpdateMSAccountCookies), token, msAccountId, cookies);
+        }
+
         public Task<bool> Logout(Guid token)
         {
             return _connection.InvokeAsync<bool>(nameof(IBotAPI.Logout), token);

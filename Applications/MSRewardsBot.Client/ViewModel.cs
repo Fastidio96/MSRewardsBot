@@ -255,7 +255,24 @@ namespace MSRewardsBot.Client
                 return;
             }
 
-            _msLoginWindow = new MSLoginWindow(this);
+            _msLoginWindow = new MSLoginWindow(this, refreshAccountId: null);
+            _msLoginWindow.Owner = App.Current.MainWindow;
+            _msLoginWindow.Show();
+        }
+
+        public void RefreshMSAccountCookies(MSAccount account)
+        {
+            if (account == null)
+            {
+                return;
+            }
+
+            if (_msLoginWindow != null && _msLoginWindow.IsVisible)
+            {
+                return;
+            }
+
+            _msLoginWindow = new MSLoginWindow(this, refreshAccountId: account.DbId);
             _msLoginWindow.Owner = App.Current.MainWindow;
             _msLoginWindow.Show();
         }
@@ -268,6 +285,26 @@ namespace MSRewardsBot.Client
             };
 
             return _connection.InsertMSAccount(_token, acc);
+        }
+
+        public Task<bool> UpdateMSAccountCookies(int msAccountId, List<AccountCookie> cookies)
+        {
+            return _connection.UpdateMSAccountCookies(_token, msAccountId, cookies);
+        }
+
+        public async Task<bool> DeleteMSAccount(MSAccount account)
+        {
+            if (account == null)
+            {
+                return false;
+            }
+
+            bool ok = await _connection.DeleteMSAccount(_token, account.DbId);
+            if (ok)
+            {
+                _appInfo.Accounts.Remove(account);
+            }
+            return ok;
         }
 
         public void ApplyUpdate()
