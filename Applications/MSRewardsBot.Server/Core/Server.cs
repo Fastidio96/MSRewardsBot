@@ -343,7 +343,7 @@ namespace MSRewardsBot.Server.Core
                                     {
                                         _logger.LogWarning("Job {name} failed", nameof(DashboardUpdateCommand));
 
-                                        if (!data.Account.IsCookiesExpired || !data.Account.IsAccountBanned)
+                                        if (data.Account.IsCookiesExpired || data.Account.IsAccountBanned)
                                         {
                                             return;
                                         }
