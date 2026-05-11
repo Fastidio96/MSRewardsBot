@@ -19,6 +19,10 @@
 
 - [Overview](#-overview)
 - [Features](#-features)
+- [How It Works](#-how-it-works)
+  - [Windows Client (Initial Setup & Monitoring)](#1-windows-client-initial-setup--monitoring)
+  - [Server (Runs Continuously)](#2-server-runs-continuously)
+- [Typical Workflow](#-typical-workflow)
 - [Automation & Stealth Features](#%EF%B8%8F-automation--stealth-features)
   - [Human-like Automation](#-human-like-automation)
   - [Anti-Bot Browser Patching)](#%EF%B8%8F-anti-bot-browser-patching)
@@ -49,6 +53,81 @@ The goal is to automate searches and periodically update Microsoft Rewards stati
 | 🎯 Dashboard Tasks | Collect additional Microsoft Rewards points available in the dashboard |
 | 🖥️ PC Searches | Perform automated searches from desktop |
 | 📱 Mobile Searches | Perform automated searches emulating a mobile device |
+
+---
+
+## 🚀 How It Works
+
+The project is divided into two components:
+
+### 1. Windows Client (Initial Setup & Monitoring)
+
+The WPF client is used to:
+
+- Register/login users
+- Connect to a server
+- Add Microsoft accounts
+- Delete Microsoft accounts from the server (v1.3.0)
+- Re-authenticate expired Microsoft sessions (v1.3.0)
+- Monitor account statistics and automation status
+
+Displayed statistics include:
+
+- Microsoft Rewards level
+- Total points
+- Remaining searches
+- Completed searches
+- Account status (v1.3.0)
+
+The client also detects common account issues, including:
+
+- Expired authentication cookies (v1.3.0)
+- Accounts requiring re-login (v1.3.0)
+- Potentially banned accounts (v1.3.0)
+
+When authentication expires, the user can re-login directly through the client.
+
+> The client is mainly required for the initial setup and account management.
+
+---
+
+### 2. Server (Runs Continuously)
+
+The server handles all automation tasks:
+
+- PC searches
+- Mobile searches
+- Dashboard tasks
+- Scheduled jobs
+- Keyword refresh
+- Statistics updates
+
+The server can run on:
+
+- Windows
+- Linux
+- Docker
+
+Statistics are updated periodically according to the configured scheduler intervals in `appsettings.json`.
+
+Once the initial configuration is completed, the server can operate completely autonomously without user interaction.
+
+**It is designed to stay online 24/7.**
+
+---
+
+## ⚡ Typical Workflow
+
+1. Start the server
+2. Open the Windows client
+3. Create an account
+4. Connect the client to the server
+5. Add Microsoft accounts
+6. Verify account statistics/status
+7. Close the client
+8. Leave the server running
+
+After that, the automation continues automatically on the server side.
 
 ---
 
