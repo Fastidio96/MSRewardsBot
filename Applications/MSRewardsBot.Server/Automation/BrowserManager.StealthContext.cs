@@ -224,7 +224,7 @@ Object.defineProperty(navigator,'userAgent',{get:()=>${JSON.stringify(ua)}});
                 data.Context = await _browser.NewContextAsync(new BrowserNewContextOptions
                 {
                     UserAgent = BrowserConstants.UA_PC_FIREFOX,
-                    ViewportSize = new ViewportSize() { Width = 1366, Height = 768 },
+                    ViewportSize = new ViewportSize() { Width = 1920, Height = 1080 },
                     Locale = CultureInfo.CurrentCulture.Name
                 });
             }

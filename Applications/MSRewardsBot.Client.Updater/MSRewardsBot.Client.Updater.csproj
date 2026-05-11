@@ -1,15 +1,15 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
 	<PropertyGroup>
-		<OutputType>Exe</OutputType>
+		<OutputType>WinExe</OutputType>
 		<TargetFramework>net9.0</TargetFramework>
 		<ImplicitUsings>disable</ImplicitUsings>
 		<Nullable>annotations</Nullable>
 
 		<PackageReadmeFile>README.md</PackageReadmeFile>
 		<RepositoryUrl>https://github.com/Fastidio96/MSRewardsBot.git</RepositoryUrl>
-		<FileVersion>1.2.1.0</FileVersion>
-		<AssemblyVersion>1.2.1.0</AssemblyVersion>
+		<FileVersion>1.3.0.0</FileVersion>
+		<AssemblyVersion>1.3.0.0</AssemblyVersion>
 		<Title>MS Rewards Bot Client Updater</Title>
 		<PackageLicenseFile>LICENSE</PackageLicenseFile>
 		<Authors>Fastidio96</Authors>

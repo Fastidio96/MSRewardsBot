@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
@@ -12,7 +13,7 @@ using MSRewardsBot.Server.DataEntities;
 
 namespace MSRewardsBot.Server.Automation
 {
-    public partial class BrowserManager : IDisposable
+    public partial class BrowserManager : IAsyncDisposable
     {
         private readonly ILogger<BrowserManager> _logger;
         private readonly IOptions<Settings> _settings;
@@ -22,9 +23,10 @@ namespace MSRewardsBot.Server.Automation
         private IBrowser _browser;
 
         private DateTime _lastUsed;
-        private Thread _idleCheckThread;
+        private Task _idleCheckTask;
+        private CancellationTokenSource _idleCheckCts;
 
-        private bool _isDisposing = false;
+        private readonly SemaphoreSlim _browserLock = new SemaphoreSlim(1, 1);
 
         public BrowserManager(ILogger<BrowserManager> logger, IOptions<Settings> settings, RealTimeData rt)
         {
@@ -33,7 +35,7 @@ namespace MSRewardsBot.Server.Automation
             _rt = rt;
         }
 
-        public async void Init()
+        public async Task Init()
         {
             _logger.Log(LogLevel.Information, "Checking and installing browser dependencies..");
 
@@ -52,115 +54,154 @@ namespace MSRewardsBot.Server.Automation
 
             _lastUsed = DateTime.Now;
 
-            _idleCheckThread = new Thread(IdleCheckLoop);
-            _idleCheckThread.Name = nameof(IdleCheckLoop);
-            _idleCheckThread.Start();
+            _idleCheckCts = new CancellationTokenSource();
+            _idleCheckTask = Task.Run(() => IdleCheckLoopAsync(_idleCheckCts.Token));
 
             _logger.Log(LogLevel.Information, "BrowserManager init completed");
         }
 
         private async Task CreateBrowser()
         {
-            if (_playwright == null)
+            await _browserLock.WaitAsync();
+
+            try
             {
-                _playwright = await Playwright.CreateAsync();
+                if (_playwright == null)
+                {
+                    _playwright = await Playwright.CreateAsync();
+                }
+
+                if (_browser == null)
+                {
+                    if (_settings.Value.UseFirefox)
+                    {
+                        Dictionary<string, object> args = new Dictionary<string, object>()
+                        {
+                            ["network.http.http3.enabled"] = false,
+                            ["security.webauth.webauthn"] = false,
+                            ["media.autoplay.default"] = 0,
+                            ["media.autoplay.blocking_policy"] = 0,
+                            ["browser.shell.checkDefaultBrowser"] = false,
+                            ["startup.homepage_welcome_url"] = BrowserConstants.URL_BLANK_PAGE,
+                            ["startup.homepage_welcome_url.additional"] = "",
+                            ["browser.startup.firstrunSkipsHomepage"] = false,
+                            ["extensions.autoDisableScopes"] = 15,
+                            ["extensions.systemAddon.update.enabled"] = false
+                        };
+
+                        if (RuntimeEnvironment.IsDocker())
+                        {
+                            args.Add("layers.gpu-process.enabled", false);
+                        }
+
+                        _browser = await _playwright.Firefox.LaunchAsync(new BrowserTypeLaunchOptions()
+                        {
+#if DEBUG
+                            //Headless = false,
+#endif
+                            FirefoxUserPrefs = args
+                        });
+                    }
+                    else
+                    {
+                        List<string> args =
+                        [
+                            "--no-default-browser-check",
+                            "--disable-extensions",
+                            "--disable-blink-features=AutomationControlled",
+                            "--disable-infobars",
+                            "--no-default-browser-check",
+                            "--disable-extensions"
+                        ];
+
+                        if (RuntimeEnvironment.IsDocker())
+                        {
+                            args.Add("--disable-dev-shm-usage");
+                        }
+
+                        _browser = await _playwright.Chromium.LaunchAsync(new BrowserTypeLaunchOptions()
+                        {
+#if DEBUG
+                            //Headless = false,
+#endif
+                            Args = args
+                        });
+                    }
+                }
             }
-
-            if (_browser == null)
+            finally
             {
-                if (_settings.Value.UseFirefox)
-                {
-                    Dictionary<string, object> args = new Dictionary<string, object>()
-                    {
-                        ["network.http.http3.enabled"] = false,
-                        ["security.webauth.webauthn"] = false,
-                        ["media.autoplay.default"] = 0,
-                        ["media.autoplay.blocking_policy"] = 0,
-                        ["browser.shell.checkDefaultBrowser"] = false,
-                        ["startup.homepage_welcome_url"] = BrowserConstants.URL_BLANK_PAGE,
-                        ["startup.homepage_welcome_url.additional"] = "",
-                        ["browser.startup.firstrunSkipsHomepage"] = false,
-                        ["extensions.autoDisableScopes"] = 15,
-                        ["extensions.systemAddon.update.enabled"] = false
-                    };
-
-                    if (RuntimeEnvironment.IsDocker())
-                    {
-                        args.Add("layers.gpu-process.enabled", false);
-                    }
-
-                    _browser = await _playwright.Firefox.LaunchAsync(new BrowserTypeLaunchOptions()
-                    {
-#if DEBUG
-                        //Headless = false,
-#endif
-                        FirefoxUserPrefs = args
-                    });
-                }
-                else
-                {
-                    List<string> args =
-                    [
-                        "--no-default-browser-check",
-                        "--disable-extensions",
-                        "--disable-blink-features=AutomationControlled",
-                        "--disable-infobars",
-                        "--no-default-browser-check",
-                        "--disable-extensions"
-                    ];
-
-                    if (RuntimeEnvironment.IsDocker())
-                    {
-                        args.Add("--disable-dev-shm-usage");
-                    }
-
-                    _browser = await _playwright.Chromium.LaunchAsync(new BrowserTypeLaunchOptions()
-                    {
-#if DEBUG
-                        //Headless = false,
-#endif
-                        Args = args
-                    });
-                }
+                _browserLock.Release();
             }
         }
 
         private async Task CloseBrowser()
         {
-            _logger.LogDebug("Deleting context references..");
-            foreach (KeyValuePair<int, MSAccountServerData> data in _rt.CacheMSAccStats) // Delete refs before disposing
+            await _browserLock.WaitAsync();
+
+            try
             {
-                await DeleteContext(data.Value);
-            }
-
-            if (_browser != null)
-            {
-                await _browser.CloseAsync();
-                await _browser.DisposeAsync();
-                _browser = null;
-
-                _logger.LogDebug("Browser disposed");
-            }
-
-            _playwright?.Dispose();
-            _playwright = null;
-
-            _logger.LogDebug("Playwright disposed");
-        }
-
-        private async void IdleCheckLoop()
-        {
-            _logger.LogDebug("BrowserManager idle check thread started");
-
-            while (!_isDisposing)
-            {
-                if (_browser != null && DateTime.Now - _lastUsed > new TimeSpan(0, 0, _settings.Value.MaxSecsWaitBetweenSearches + 60))
+                _logger.LogDebug("Deleting context references..");
+                foreach (KeyValuePair<int, MSAccountServerData> data in _rt.CacheMSAccStats) // Delete refs before disposing
                 {
-                    _logger.LogDebug("Browser idle timeout reached, closing...");
-                    await CloseBrowser();
+                    await DeleteContext(data.Value);
                 }
 
-                Thread.Sleep(1000);
+                if (_browser != null)
+                {
+                    await _browser.CloseAsync();
+                    await _browser.DisposeAsync();
+                    _browser = null;
+
+                    _logger.LogDebug("Browser disposed");
+                }
+
+                _playwright?.Dispose();
+                _playwright = null;
+
+                _logger.LogDebug("Playwright disposed");
+            }
+            finally
+            {
+                _browserLock.Release();
+            }
+        }
+
+        public async Task RebootBrowser()
+        {
+            await CloseBrowser();
+            await CreateBrowser();
+
+            _logger.LogDebug("Browser rebooted");
+        }
+
+        private async Task IdleCheckLoopAsync(CancellationToken ct)
+        {
+            _logger.LogDebug("BrowserManager idle check loop started");
+
+            while (!ct.IsCancellationRequested)
+            {
+                try
+                {
+                    if (_browser != null && DateTime.Now - _lastUsed > new TimeSpan(0, 0, _settings.Value.MaxSecsWaitBetweenSearches + 60))
+                    {
+                        _logger.LogDebug("Browser idle timeout reached, closing...");
+                        await CloseBrowser();
+                    }
+                }
+                catch (Exception ex)
+                {
+                    _logger.Log(LogLevel.Error, ex, "Error in IdleCheckLoop");
+                }
+
+                try
+                {
+                    await Task.Delay(1000, ct);
+                }
+                catch (OperationCanceledException)
+                {
+                    break;
+                }
             }
         }
 
@@ -186,7 +227,7 @@ namespace MSRewardsBot.Server.Automation
 
                 if (!await StartLoggedSession(data))
                 {
-                    _logger.LogWarning("Cannot install cookies for {Email} | {User}", data.Account.Email, data.Account.User.Username);
+                    await DeleteContext(data);
                     return false;
                 }
 
@@ -214,16 +255,18 @@ namespace MSRewardsBot.Server.Automation
 
         public async Task DeleteContext(MSAccountServerData data)
         {
-            _logger.LogDebug("Deleting context for {Email} | {User}", data.Account.Email, data.Account.User.Username);
-
-            if (data.Context != null)
+            if (data.Context == null)
             {
-                await data.Context.CloseAsync();
-                await data.Context.DisposeAsync();
+                return;
             }
+
+            await data.Context.CloseAsync();
+            await data.Context.DisposeAsync();
 
             data.Context = null;
             data.Page = null;
+
+            _logger.LogDebug("Deleted context for {Email} | {User}", data.Account.Email, data.Account.User.Username);
         }
 
         private async Task<bool> StartLoggedSession(MSAccountServerData data)
@@ -237,7 +280,7 @@ namespace MSRewardsBot.Server.Automation
 
             await data.Context.AddCookiesAsync(ConvertToPWCookies(data.Account.Cookies));
 
-            if (!await CheckIsLogged(data))
+            if (!await NavigateToURL(data, BrowserConstants.URL_DASHBOARD))
             {
                 _logger.LogError("Cannot proceed. Redirect failed for {Email} | {User}.",
                     data.Account.Email, data.Account.User.Username);
@@ -247,65 +290,36 @@ namespace MSRewardsBot.Server.Automation
             return true;
         }
 
-        private async Task<bool> CheckIsLogged(MSAccountServerData data)
-        {
-            if (!await NavigateToURL(data, BrowserConstants.URL_DASHBOARD))
-            {
-                return false;
-            }
-
-            int retries = 0;
-            while (data.Page.Url.StartsWith(BrowserConstants.URL_EXPIRED_COOKIES))
-            {
-                retries += 1;
-                if (retries > 5)
-                {
-                    break;
-                }
-
-                await Task.Delay(1000);
-            }
-
-            if (retries > 5)
-            {
-                data.Account.IsCookiesExpired = true;
-                return false;
-            }
-
-            return true;
-        }
-
-        public async Task CloseLoggedSession(IBrowserContext context)
+        private async Task<bool> NavigateToURL(MSAccountServerData data, string url, bool force = false)
         {
             try
             {
-                await context.ClearCookiesAsync();
-                await context.CloseAsync();
-
-                _logger.LogDebug("Context closed");
-            }
-            catch (Exception ex)
-            {
-                _logger.LogWarning("Error {e}", ex.Message);
-            }
-        }
-
-        private async Task<bool> NavigateToURL(MSAccountServerData data, string url)
-        {
-            try
-            {
-                if (data.Page.Url != url)
+                if (force || data.Page.Url != url)
                 {
                     IResponse response = await data.Page.GotoAsync(url, new PageGotoOptions()
                     {
-                        WaitUntil = WaitUntilState.Load,
+                        WaitUntil = WaitUntilState.NetworkIdle,
                         Timeout = 15000
                     });
                     if (url != BrowserConstants.URL_BLANK_PAGE)
                     {
                         if (response == null || !response.Ok)
                         {
-                            _logger.LogWarning("Failed to navigate to {url}. Request failed.", url);
+                            _logger.LogWarning("Failed to navigate to {url}. Returned status {code}", url, response?.Status);
+                            return false;
+                        }
+                        else if (data.Page.Url.StartsWith(BrowserConstants.URL_MS_CHECK))
+                        {
+                            await data.Page.ClickAsync(BrowserConstants.SELECTOR_BUTTON_MS_CHECK);
+                            await data.Page.WaitForLoadStateAsync(LoadState.NetworkIdle);
+                        }
+
+                        if (data.Page.Url.StartsWith(BrowserConstants.URL_EXPIRED_COOKIES))
+                        {
+                            _logger.LogError("Failed to navigate to {url} for {email} | {user}. The cookies are expired. The user needs to login again",
+                                url, data.Account.Email, data.Account.User.Username);
+
+                            data.Account.IsCookiesExpired = true;
                             return false;
                         }
                     }
@@ -342,11 +356,52 @@ namespace MSRewardsBot.Server.Automation
             {
                 await page.Mouse.WheelAsync(0, diff);
 
-                if (Random.Shared.Next(0, 1) == 1)
+                if (Random.Shared.Next(0, 2) == 1)
                 {
                     await Task.Delay(Random.Shared.Next(3, 8));
                 }
             }
+        }
+
+        // Scrolls top-bottom in viewport-sized steps until the count of `selector` stops growing,
+        // then returns to the top. Needed because Firefox headless does not trigger
+        // IntersectionObserver-based lazy loading on cards below the initial viewport.
+        private async Task ScrollUntilLocatorStable(IPage page, string selector, int maxIterations = 14)
+        {
+            await page.BringToFrontAsync();
+
+            ILocator loc = page.Locator(selector);
+
+            // Reset to top
+            await page.Mouse.WheelAsync(0, -100000);
+            await WaitRandomMs(300, 600);
+
+            int previousCount = -1;
+            int stableHits = 0;
+
+            for (int i = 0; i < maxIterations; i++)
+            {
+                await page.Mouse.WheelAsync(0, 700);
+                await WaitRandomMs(400, 700);
+
+                int currentCount = await loc.CountAsync();
+                if (currentCount == previousCount)
+                {
+                    stableHits++;
+                    if (stableHits >= 2 && currentCount > 0)
+                    {
+                        break;
+                    }
+                }
+                else
+                {
+                    stableHits = 0;
+                    previousCount = currentCount;
+                }
+            }
+
+            await page.Mouse.WheelAsync(0, -100000);
+            await WaitRandomMs(500, 900);
         }
 
         private async Task<bool> WriteSearchAsHuman(IPage page, string keyword)
@@ -381,7 +436,7 @@ namespace MSRewardsBot.Server.Automation
         private List<Cookie> ConvertToPWCookies(IEnumerable<AccountCookie> cookies)
         {
             List<Cookie> result = new List<Cookie>();
-            foreach (var c in cookies)
+            foreach (AccountCookie c in cookies)
             {
                 Cookie cookie = new Cookie()
                 {
@@ -409,36 +464,70 @@ namespace MSRewardsBot.Server.Automation
             return result;
         }
 
-        public async void Dispose()
+        public async ValueTask DisposeAsync()
         {
-            _isDisposing = true;
-
-            if (_browser != null)
+            // Stop the idle check loop FIRST so it can't race with our teardown.
+            _idleCheckCts?.Cancel();
+            try
             {
-                try
+                if (_idleCheckTask != null)
                 {
-                    foreach (IBrowserContext ctx in _browser.Contexts)
-                    {
-                        await ctx.CloseAsync();
-                        await ctx.DisposeAsync();
-                    }
-
-                    await _browser.CloseAsync();
-                }
-                catch (Exception ex)
-                {
-                    _logger.Log(LogLevel.Error, ex, "Error while disposing browser");
+                    await _idleCheckTask.WaitAsync(TimeSpan.FromSeconds(5));
                 }
             }
-
-            if (_idleCheckThread != null)
+            catch
             {
-                if (_idleCheckThread.IsAlive)
+                // task may have faulted or timed out; nothing actionable
+            }
+            _idleCheckCts?.Dispose();
+            _idleCheckCts = null;
+            _idleCheckTask = null;
+
+            // Acquire the same lock CreateBrowser/CloseBrowser use, so we don't tear down a browser
+            // while another caller is mid-create. WaitAsync without a timeout would deadlock if the
+            // lock was leaked; bound it.
+            bool lockTaken = false;
+            try
+            {
+                lockTaken = await _browserLock.WaitAsync(TimeSpan.FromSeconds(10));
+            }
+            catch
+            {
+                lockTaken = false;
+            }
+
+            try
+            {
+                if (_browser != null)
                 {
-                    _idleCheckThread.Join(5000);
+                    try
+                    {
+                        foreach (IBrowserContext ctx in _browser.Contexts)
+                        {
+                            await ctx.CloseAsync();
+                            await ctx.DisposeAsync();
+                        }
+
+                        await _browser.CloseAsync();
+                        await _browser.DisposeAsync();
+                        _browser = null;
+                    }
+                    catch (Exception ex)
+                    {
+                        _logger.Log(LogLevel.Error, ex, "Error while disposing browser");
+                    }
                 }
 
-                _idleCheckThread = null;
+                _playwright?.Dispose();
+                _playwright = null;
+            }
+            finally
+            {
+                if (lockTaken)
+                {
+                    _browserLock.Release();
+                }
+                _browserLock.Dispose();
             }
         }
     }

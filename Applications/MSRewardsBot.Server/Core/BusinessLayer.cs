@@ -1,18 +1,15 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Security.Cryptography;
-using System.Text;
 using Microsoft.Extensions.Logging;
 using MSRewardsBot.Common.DataEntities.Accounting;
 using MSRewardsBot.Server.DataEntities;
 using MSRewardsBot.Server.DB;
+using MSRewardsBot.Server.Helpers;
 
 namespace MSRewardsBot.Server.Core
 {
     public partial class BusinessLayer
     {
-        private const string PWD_SALT = @"C3tn5yrPYPiAv9Pm59L4Y1tArw6eEjYK";
-
         private readonly ILogger<BusinessLayer> _logger;
         private readonly RealTimeData _rt;
         private readonly DataLayer _data;
@@ -31,9 +28,9 @@ namespace MSRewardsBot.Server.Core
 
         public Guid Login(User input)
         {
-            if (input == null || string.IsNullOrEmpty(input.Username) || string.IsNullOrEmpty(input.Password))
+            if (input == null || !InputValidator.IsValidUsername(input.Username) || string.IsNullOrEmpty(input.Password))
             {
-                _logger.Log(LogLevel.Warning, "LoginWithToken failed. Username/password is empty. {Username}|{Password}", input.Username, input.Password);
+                _logger.Log(LogLevel.Warning, "Login failed. Invalid username or empty password");
                 return Guid.Empty;
             }
 
@@ -44,7 +41,7 @@ namespace MSRewardsBot.Server.Core
                 return Guid.Empty;
             }
 
-            if (dbUser.Password != GenerateHashFromPassword(input.Password))
+            if(!AuthUtils.VerifyPassword(input.Password, dbUser.Password))
             {
                 _logger.Log(LogLevel.Warning, "LoginWithToken failed. The password do not match for user {User}", input.Username);
                 return Guid.Empty;
@@ -55,9 +52,9 @@ namespace MSRewardsBot.Server.Core
 
         public Guid Register(User user)
         {
-            if (user == null ||
-                user.Username.Length == 0 || user.Username.Length > 32 ||
-                user.Password.Length == 0 || user.Password.Length > 32)
+            if (user == null
+                || !InputValidator.IsValidUsername(user.Username)
+                || !InputValidator.IsValidPassword(user.Password))
             {
                 _logger.Log(LogLevel.Warning, "Register failed. The username/password does not meet the minimum requirements");
                 return Guid.Empty;
@@ -69,7 +66,7 @@ namespace MSRewardsBot.Server.Core
                 return Guid.Empty;
             }
 
-            user.Password = GenerateHashFromPassword(user.Password);
+            user.Password = AuthUtils.HashPassword(user.Password);
 
             if (!_data.CreateUser(user.Username, user.Password))
             {
@@ -79,12 +76,6 @@ namespace MSRewardsBot.Server.Core
 
             return _data.GetUserAuthToken(user.Username);
         }
-
-        private static string GenerateHashFromPassword(string password)
-        {
-            return Convert.ToBase64String(SHA256.HashData(Encoding.UTF8.GetBytes(PWD_SALT + password)));
-        }
-
 
         private bool IsUserLogged(Guid token, out User user)
         {
@@ -114,11 +105,6 @@ namespace MSRewardsBot.Server.Core
                 return null;
             }
 
-            if (user == null)
-            {
-                return null;
-            }
-
             foreach (MSAccount acc in user.MSAccounts)
             {
                 if (!_rt.CacheMSAccStats.TryGetValue(acc.DbId, out MSAccountServerData data))
@@ -130,6 +116,7 @@ namespace MSRewardsBot.Server.Core
                 acc.Stats = data.Stats;
             }
 
+            user.Password = null;
             return user;
         }
 
@@ -138,15 +125,22 @@ namespace MSRewardsBot.Server.Core
             return _data.GetAllMSAccounts();
         }
 
-        internal User GetUser(string username)
-        {
-            return _data.GetUser(username);
-        }
-
         public bool InsertMSAccount(Guid token, MSAccount account)
         {
             if (!IsUserLogged(token, out User user))
             {
+                return false;
+            }
+
+            if (account == null)
+            {
+                _logger.Log(LogLevel.Warning, "InsertMSAccount rejected: invalid email for user {User}", user.Username);
+                return false;
+            }
+
+            if (!InputValidator.IsValidCookies(account.Cookies, out string reason))
+            {
+                _logger.Log(LogLevel.Warning, "InsertMSAccount rejected for user {User}: {Reason}", user.Username, reason);
                 return false;
             }
 
@@ -163,6 +157,48 @@ namespace MSRewardsBot.Server.Core
         public bool Logout(Guid token)
         {
             return _data.InvalidateUserAuthToken(token);
+        }
+
+        public bool DeleteMSAccount(Guid token, int msAccountId)
+        {
+            if (!IsUserLogged(token, out User user))
+            {
+                return false;
+            }
+
+            if (!_data.DeleteMSAccount(user.DbId, msAccountId))
+            {
+                _logger.Log(LogLevel.Warning, "DeleteMSAccount failed for {User} on account {Id}", user.Username, msAccountId);
+                return false;
+            }
+
+            // Drop cache so the main loop stops scheduling jobs for the deleted account
+            _rt.CacheMSAccStats.TryRemove(msAccountId, out _);
+            return true;
+        }
+
+        public bool UpdateMSAccountCookies(Guid token, int msAccountId, List<AccountCookie> cookies)
+        {
+            if (!IsUserLogged(token, out User user))
+            {
+                return false;
+            }
+
+            if (!InputValidator.IsValidCookies(cookies, out string reason))
+            {
+                _logger.Log(LogLevel.Warning, "UpdateMSAccountCookies rejected for user {User}: {Reason}", user.Username, reason);
+                return false;
+            }
+
+            if (!_data.UpdateMSAccountCookies(user.DbId, msAccountId, cookies))
+            {
+                _logger.Log(LogLevel.Warning, "UpdateMSAccountCookies failed for {User} on account {Id}", user.Username, msAccountId);
+                return false;
+            }
+
+            // Drop cache so the main loop re-creates the entry with fresh cookies and a clean IsCookiesExpired flag
+            _rt.CacheMSAccStats.TryRemove(msAccountId, out _);
+            return true;
         }
     }
 }

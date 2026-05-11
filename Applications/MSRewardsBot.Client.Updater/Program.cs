@@ -1,9 +1,8 @@
-﻿using System;
+using System;
 using System.Diagnostics;
 using System.IO;
 using System.IO.Compression;
 using System.Linq;
-using System.Runtime.InteropServices;
 using System.Threading;
 
 namespace MSRewardsBot.Client.Updater
@@ -11,6 +10,12 @@ namespace MSRewardsBot.Client.Updater
     internal class Program
     {
         const string APP_NAME = "MSRewardsBot.Client.exe";
+        // Process.GetProcessesByName wants the name WITHOUT extension on Windows.
+        static readonly string APP_PROCESS_NAME = Path.GetFileNameWithoutExtension(APP_NAME);
+
+        // Hard cap so we never hang forever if some unrelated process matches the name
+        // or if the client crashes mid-shutdown without releasing handles cleanly.
+        const int WAIT_FOR_CLIENT_EXIT_TIMEOUT_MS = 30_000;
 
         static string AppFolderPath;
         static string CurrentDir => new Uri(AppDomain.CurrentDomain.BaseDirectory).LocalPath;
@@ -19,19 +24,19 @@ namespace MSRewardsBot.Client.Updater
 
         static void Main(string[] args)
         {
-            nint handle = GetConsoleWindow();
-            ShowWindow(handle, SW_HIDE);
-
             if (args.Length != 1)
             {
                 Environment.Exit(-1);
             }
 
             AppFolderPath = args[0];
-            if (string.IsNullOrEmpty(AppFolderPath) || !Uri.TryCreate(AppFolderPath, UriKind.RelativeOrAbsolute, out _))
+            if (string.IsNullOrWhiteSpace(AppFolderPath) || !Directory.Exists(AppFolderPath))
             {
                 Environment.Exit(-1);
             }
+
+            // Normalize so internal path comparisons are stable.
+            AppFolderPath = Path.GetFullPath(AppFolderPath);
 
             WaitMainAppToClose();
             Install();
@@ -39,14 +44,23 @@ namespace MSRewardsBot.Client.Updater
 
         private static void WaitMainAppToClose()
         {
-            while (Process.GetProcessesByName(APP_NAME).Any())
+            Stopwatch sw = Stopwatch.StartNew();
+            while (Process.GetProcessesByName(APP_PROCESS_NAME).Any())
             {
+                if (sw.ElapsedMilliseconds > WAIT_FOR_CLIENT_EXIT_TIMEOUT_MS)
+                {
+                    // Give up: client did not exit.
+                    Environment.Exit(-1);
+                }
                 Thread.Sleep(500);
             }
         }
 
         private static void Install()
         {
+            bool updateApplied = false;
+            bool rollbackOk = false;
+
             try
             {
                 if (!File.Exists(UpdatePackagePath))
@@ -59,20 +73,58 @@ namespace MSRewardsBot.Client.Updater
                     Environment.Exit(-1);
                 }
 
-                if (!ApplyUpdate())
+                if (ApplyUpdate())
                 {
-                    RollbackUpdate();
+                    updateApplied = true;
                 }
-
-                Directory.Delete(BackupFolderPath, true);
+                else
+                {
+                    rollbackOk = RollbackUpdate();
+                }
             }
             catch
             {
-                RollbackUpdate();
+                // Apply/Backup threw. Try to rollback if we have a backup to roll back to.
+                if (!updateApplied && Directory.Exists(BackupFolderPath))
+                {
+                    try
+                    { rollbackOk = RollbackUpdate(); }
+                    catch { rollbackOk = false; }
+                }
             }
 
-            Process.Start(Path.Combine(AppFolderPath, APP_NAME));
-            Environment.Exit(0);
+            // Only delete the backup if either the new install succeeded OR the rollback succeeded.
+            // If both failed, KEEP the backup so the user has a manual recovery path.
+            if (updateApplied || rollbackOk)
+            {
+                TryDeleteBackup();
+            }
+
+            // Only launch the client if the executable actually exists on disk.
+            string clientExe = Path.Combine(AppFolderPath, APP_NAME);
+            if (File.Exists(clientExe))
+            {
+                try
+                { Process.Start(clientExe); }
+                catch { /* nothing useful to do */ }
+            }
+
+            Environment.Exit(updateApplied || rollbackOk ? 0 : -1);
+        }
+
+        private static void TryDeleteBackup()
+        {
+            try
+            {
+                if (Directory.Exists(BackupFolderPath))
+                {
+                    Directory.Delete(BackupFolderPath, true);
+                }
+            }
+            catch
+            {
+                // Backup cleanup failure must NOT trigger a rollback of an already-applied update.
+            }
         }
 
         private static bool ApplyUpdate()
@@ -118,7 +170,7 @@ namespace MSRewardsBot.Client.Updater
 
                 foreach (DirectoryInfo dir in src.GetDirectories())
                 {
-                    if (dir.FullName == BackupFolderPath)
+                    if (IsBackupFolder(dir.FullName))
                     {
                         continue;
                     }
@@ -162,7 +214,10 @@ namespace MSRewardsBot.Client.Updater
                     return false;
                 }
 
-                DeleteAppFiles();
+                if (!DeleteAppFiles())
+                {
+                    return false;
+                }
 
                 CopyDirectory(BackupFolderPath, AppFolderPath);
 
@@ -176,22 +231,19 @@ namespace MSRewardsBot.Client.Updater
 
         public static void CopyDirectory(string sourceDir, string destinationDir)
         {
-            // Get information about the source directory
             DirectoryInfo dir = new DirectoryInfo(sourceDir);
 
-            // Check if the source directory exists
             if (!dir.Exists)
             {
                 throw new DirectoryNotFoundException($"Source directory not found: {dir.FullName}");
             }
 
-            // Cache directories before we start copying
+            // Cache directories before we start copying — also lets us filter out the backup folder
+            // if it happens to be a child of the source (which it is during BackupAppFiles).
             DirectoryInfo[] dirs = dir.GetDirectories();
 
-            // Create the destination directory
             Directory.CreateDirectory(destinationDir);
 
-            // Get the files in the source directory and copy to the destination directory
             foreach (FileInfo file in dir.GetFiles())
             {
                 string targetFilePath = Path.Combine(destinationDir, file.Name);
@@ -202,26 +254,29 @@ namespace MSRewardsBot.Client.Updater
                 }
 #endif
 
-                file.CopyTo(targetFilePath);
+                file.CopyTo(targetFilePath, true);
             }
 
             foreach (DirectoryInfo subDir in dirs)
             {
+                if (IsBackupFolder(subDir.FullName))
+                {
+                    continue;
+                }
+
                 string newDestinationDir = Path.Combine(destinationDir, subDir.Name);
                 CopyDirectory(subDir.FullName, newDestinationDir);
             }
         }
 
-        #region Hide console
-
-        [DllImport("kernel32.dll")]
-        static extern IntPtr GetConsoleWindow();
-
-        [DllImport("user32.dll")]
-        static extern bool ShowWindow(IntPtr hWnd, int nCmdShow);
-
-        const int SW_HIDE = 0;
-
-        #endregion
+        // Case-insensitive, normalized path comparison: on Windows two paths that point to the same
+        // folder may differ in casing or trailing separators, so a raw == check is unsafe.
+        private static bool IsBackupFolder(string path)
+        {
+            return string.Equals(
+                Path.GetFullPath(path).TrimEnd(Path.DirectorySeparatorChar),
+                Path.GetFullPath(BackupFolderPath).TrimEnd(Path.DirectorySeparatorChar),
+                StringComparison.OrdinalIgnoreCase);
+        }
     }
 }

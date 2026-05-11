@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Threading;
+using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
 using MSRewardsBot.Server.Automation;
 using MSRewardsBot.Server.Core.Factories;
@@ -12,13 +13,13 @@ namespace MSRewardsBot.Server.Core
     public class TaskScheduler : IDisposable
     {
         private readonly SortedList<DateTime, Job> _todo;
-        private Thread _threadScheduler;
+        private Task _loopTask;
+        private CancellationTokenSource _cts;
 
         private readonly BrowserManager _browser;
         private readonly BusinessFactory _businessFactory;
         private readonly ILogger<TaskScheduler> _logger;
 
-        private bool _isDisposing = false;
         private readonly Lock _lock = new Lock();
 
         public TaskScheduler(ILogger<TaskScheduler> logger, BrowserManager browser, BusinessFactory businessFactory)
@@ -34,10 +35,11 @@ namespace MSRewardsBot.Server.Core
 
         private void Init()
         {
-            _threadScheduler = new Thread(Loop);
-            _threadScheduler.IsBackground = false;
-            _threadScheduler.Name = nameof(TaskScheduler);
-            _threadScheduler.Start();
+            _cts = new CancellationTokenSource();
+            // Run the scheduler as a Task so awaited operations (browser RebootAsync, CreateContext,
+            // command execution) actually integrate with the async machinery instead of fire-and-forget
+            // on a Thread, where exceptions get swallowed and Thread.Join cannot wait for in-flight awaits.
+            _loopTask = Task.Run(() => LoopAsync(_cts.Token));
         }
 
         public void AddJob(DateTime dt, Job job)
@@ -127,106 +129,136 @@ namespace MSRewardsBot.Server.Core
             return res;
         }
 
-        private async void Loop()
+        private async Task LoopAsync(CancellationToken ct)
         {
-            while (!_isDisposing)
+            int jobExec = 0;
+
+            while (!ct.IsCancellationRequested)
             {
-                foreach (KeyValuePair<DateTime, Job> todo in GetTodoList())
+                try
                 {
-                    if (DateTime.Now.Day != todo.Key.Day)
+                    foreach (KeyValuePair<DateTime, Job> todo in GetTodoList())
                     {
-                        break;
-                    }
-
-                    if (todo.Key > DateTime.Now)
-                    {
-                        break;
-                    }
-
-                    Job job = todo.Value;
-
-                    if (!await _browser.CreateContext(job.Command.Data, job.Command is MobileSearchCommand))
-                    {
-                        job.Status = JobStatus.Failure;
-                    }
-                    else
-                    {
-                        if (job.Command is DashboardUpdateCommand dashCMD)
+                        if (DateTime.Now.Day != todo.Key.Day)
                         {
-                            job.Status = await _browser.DashboardUpdate(dashCMD.Data) ?
-                                JobStatus.Success : JobStatus.Failure;
-
-                            if (job.Status == JobStatus.Success)
-                            {
-                                dashCMD.Data.Stats.LastDashboardUpdate = DateTime.Now;
-                                using (ScopedBusiness scope = _businessFactory.Create())
-                                {
-                                    if (!scope.Business.UpdateMSAccount(dashCMD.Data.Account))
-                                    {
-                                        dashCMD.Data.Stats.LastDashboardUpdate = DateTime.MinValue;
-                                        job.Status = JobStatus.Failure;
-                                    }
-                                }
-                            }
+                            break;
                         }
-                        else if (job.Command is AdditionalPointsCommand addCMD)
+
+                        if (todo.Key > DateTime.Now)
                         {
-                            job.Status = await _browser.GetAdditionalPoints(addCMD.Data) ?
-                                JobStatus.Success : JobStatus.Failure;
+                            break;
                         }
-                        else if (job.Command is PCSearchCommand pcCMD)
+
+                        if (jobExec >= 20)
                         {
-                            job.Status = await _browser.PCSearch(pcCMD.Data, pcCMD.Keyword) ?
-                                JobStatus.Success : JobStatus.Failure;
+                            jobExec = 0;
+
+                            _logger.LogDebug("Max jobs reached. Rebooting browser...");
+                            await _browser.RebootBrowser();
                         }
-                        else if (job.Command is MobileSearchCommand mobileCMD)
+
+                        Job job = todo.Value;
+
+                        if (!await _browser.CreateContext(job.Command.Data, job.Command is MobileSearchCommand))
                         {
-                            job.Status = await _browser.MobileSearch(mobileCMD.Data, mobileCMD.Keyword) ?
-                                JobStatus.Success : JobStatus.Failure;
+                            job.Status = JobStatus.Failure;
                         }
                         else
                         {
-                            _logger.LogError("Unknown command received! Command {cmd}", job.Command);
-                            job.Status = JobStatus.CriticalFailure;
+                            if (job.Command is DashboardUpdateCommand dashCMD)
+                            {
+                                job.Status = await _browser.DashboardUpdate(dashCMD.Data) ?
+                                    JobStatus.Success : JobStatus.Failure;
+
+                                if (job.Status == JobStatus.Success)
+                                {
+                                    dashCMD.Data.Stats.LastDashboardUpdate = DateTime.Now;
+                                    using (ScopedBusiness scope = _businessFactory.Create())
+                                    {
+                                        if (!scope.Business.UpdateMSAccount(dashCMD.Data.Account))
+                                        {
+                                            dashCMD.Data.Stats.LastDashboardUpdate = DateTime.MinValue;
+                                            job.Status = JobStatus.Failure;
+                                        }
+                                    }
+                                }
+                            }
+                            else if (job.Command is AdditionalPointsCommand addCMD)
+                            {
+                                job.Status = await _browser.GetAdditionalPoints(addCMD.Data) ?
+                                    JobStatus.Success : JobStatus.Failure;
+                            }
+                            else if (job.Command is PCSearchCommand pcCMD)
+                            {
+                                job.Status = await _browser.PCSearch(pcCMD.Data, pcCMD.Keyword) ?
+                                    JobStatus.Success : JobStatus.Failure;
+                            }
+                            else if (job.Command is MobileSearchCommand mobileCMD)
+                            {
+                                job.Status = await _browser.MobileSearch(mobileCMD.Data, mobileCMD.Keyword) ?
+                                    JobStatus.Success : JobStatus.Failure;
+                            }
+                            else
+                            {
+                                _logger.LogError("Unknown command received! Command {cmd}", job.Command);
+                                job.Status = JobStatus.CriticalFailure;
+                            }
                         }
-                    }
 
-                    await _browser.DeleteContext(job.Command.Data);
+                        await _browser.DeleteContext(job.Command.Data);
+                        jobExec += 1;
 
-
-                    if (job.Status != JobStatus.Pending)
-                    {
-                        if (job.Status == JobStatus.Success)
+                        if (job.Status != JobStatus.Pending)
                         {
-                            job.Command.OnSuccess?.Invoke();
-                        }
-                        else if (job.Status == JobStatus.Failure)
-                        {
-                            job.Command.OnFail?.Invoke();
-                        }
+                            if (job.Status == JobStatus.Success)
+                            {
+                                job.Command.OnSuccess?.Invoke();
+                            }
+                            else if (job.Status == JobStatus.Failure)
+                            {
+                                job.Command.OnFail?.Invoke();
+                            }
 
-                        RemoveJob(todo.Key);
+                            RemoveJob(todo.Key);
+                        }
                     }
                 }
+                catch (Exception ex)
+                {
+                    _logger.Log(LogLevel.Error, ex, "Error in TaskScheduler.Loop iteration");
+                }
 
-                Thread.Sleep(1000);
+                try
+                {
+                    await Task.Delay(1000, ct);
+                }
+                catch (OperationCanceledException)
+                {
+                    break;
+                }
             }
         }
 
         public void Dispose()
         {
-            _isDisposing = true;
-            _todo.Clear();
+            _cts?.Cancel();
 
-            if (_threadScheduler != null)
+            using (_lock.EnterScope())
             {
-                if (_threadScheduler.IsAlive)
-                {
-                    _threadScheduler.Join(5000);
-                }
-
-                _threadScheduler = null;
+                _todo.Clear();
             }
+
+            try
+            {
+                _loopTask?.Wait(5000);
+            }
+            catch
+            {
+            }
+
+            _cts?.Dispose();
+            _cts = null;
+            _loopTask = null;
         }
     }
 }

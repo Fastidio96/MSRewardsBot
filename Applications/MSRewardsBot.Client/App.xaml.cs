@@ -24,10 +24,10 @@ namespace MSRewardsBot.Client
             _viewModel.Init();
         }
 
-        private void App_DispatcherUnhandledException(object sender, System.Windows.Threading.DispatcherUnhandledExceptionEventArgs e)
+        private async void App_DispatcherUnhandledException(object sender, System.Windows.Threading.DispatcherUnhandledExceptionEventArgs e)
         {
             e.Handled = true;
-            _viewModel.Dispose();
+            await _viewModel.DisposeAsync();
 
             MessageBoxResult res = MessageBox.Show(e.Exception.Message, "Unhandled exception occurred", MessageBoxButton.OK, MessageBoxImage.Error);
             if (res == MessageBoxResult.OK)

@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.SignalR;
 using Microsoft.Extensions.Logging;
@@ -62,6 +63,22 @@ namespace MSRewardsBot.Server.Network
             }
         }
 
+        public Task<bool> DeleteMSAccount(Guid token, int msAccountId)
+        {
+            using (ScopedBusiness scope = _businessFactory.Create())
+            {
+                return Task.FromResult(scope.Business.DeleteMSAccount(token, msAccountId));
+            }
+        }
+
+        public Task<bool> UpdateMSAccountCookies(Guid token, int msAccountId, List<AccountCookie> cookies)
+        {
+            using (ScopedBusiness scope = _businessFactory.Create())
+            {
+                return Task.FromResult(scope.Business.UpdateMSAccountCookies(token, msAccountId, cookies));
+            }
+        }
+
         public Task<bool> Logout(Guid token)
         {
             using (ScopedBusiness scope = _businessFactory.Create())
@@ -75,6 +92,11 @@ namespace MSRewardsBot.Server.Network
             await _hubContext.Clients.Client(connectionId).SendAsync(nameof(SendUpdateMSAccountStats), accountStat, propertyName);
         }
 
+        internal async Task SendUpdateMSAccount(string connectionId, MSAccount account, string propertyName)
+        {
+            await _hubContext.Clients.Client(connectionId).SendAsync(nameof(SendUpdateMSAccount), account, propertyName);
+        }
+
         internal async Task RequestClientVersion(string connectionId)
         {
             _logger.LogDebug("Requesting client version from {id}..", connectionId);
@@ -83,7 +105,7 @@ namespace MSRewardsBot.Server.Network
 
         public void SendClientVersion(string connectionId, Version version)
         {
-            _logger.LogDebug("Received new client version {ver} from {id}..", version, connectionId);
+            _logger.LogDebug("Received client version ({ver}) from {id}..", version, connectionId);
             _connectionManager.UpdateClientVersion(connectionId, version);
         }
 

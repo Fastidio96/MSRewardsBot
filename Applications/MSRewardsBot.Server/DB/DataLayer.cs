@@ -32,13 +32,44 @@ namespace MSRewardsBot.Server.DB
 
         public bool UpdateMSAccount(MSAccount account)
         {
-            MSAccount acc = _db.Accounts.AsNoTracking().FirstOrDefault(a => a.DbId == account.DbId);
-            if (acc == null)
+            MSAccount tracked = _db.Accounts.FirstOrDefault(a => a.DbId == account.DbId);
+            if (tracked == null)
             {
                 return false;
             }
 
-            _db.Accounts.Update(account);
+            tracked.Email = account.Email;
+
+            return _db.SaveChanges() >= 0;
+        }
+
+        public bool DeleteMSAccount(int userId, int msAccountId)
+        {
+            MSAccount tracked = _db.Accounts
+                .Include(a => a.Cookies)
+                .FirstOrDefault(a => a.DbId == msAccountId && a.UserId == userId);
+            if (tracked == null)
+            {
+                return false;
+            }
+
+            _db.Accounts.Remove(tracked);
+            return _db.SaveChanges() > 0;
+        }
+
+        public bool UpdateMSAccountCookies(int userId, int msAccountId, List<AccountCookie> cookies)
+        {
+            MSAccount tracked = _db.Accounts
+                .Include(a => a.Cookies)
+                .FirstOrDefault(a => a.DbId == msAccountId && a.UserId == userId);
+            if (tracked == null)
+            {
+                return false;
+            }
+
+            _db.RemoveRange(tracked.Cookies);
+            tracked.Cookies = cookies;
+
             return _db.SaveChanges() > 0;
         }
     }

@@ -49,10 +49,9 @@ namespace MSRewardsBot.Client.Services
                 _isDisposing = false;
 
                 _disposables.Add(_connection.On<Guid>(nameof(IBotAPI.GetUserInfo), GetUserInfo));
-                _disposables.Add(_connection.On<bool>(nameof(IBotAPI.Logout), delegate ()
+                _disposables.Add(_connection.On<Guid>(nameof(IBotAPI.Logout), _ =>
                 {
                     _appInfo.IsUserLogged = false;
-                    return true;
                 }));
                 _disposables.Add(_connection.On("SendUpdateMSAccountStats", delegate (MSAccountStats changedAcc, string propertyName)
                 {
@@ -60,6 +59,14 @@ namespace MSRewardsBot.Client.Services
                     {
                         _appInfo.Accounts.FirstOrDefault(c => c.DbId == changedAcc.MSAccountId)
                             ?.Stats.ChangeProperty(changedAcc, propertyName);
+                    });
+                }));
+                _disposables.Add(_connection.On("SendUpdateMSAccount", delegate (MSAccount changedAcc, string propertyName)
+                {
+                    App.Current.Dispatcher.Invoke(() =>
+                    {
+                        _appInfo.Accounts.FirstOrDefault(c => c.DbId == changedAcc.DbId)
+                            ?.ChangeProperty(changedAcc, propertyName);
                     });
                 }));
                 _disposables.Add(_connection.On("RequestClientVersion", async delegate (string clientId)
@@ -82,7 +89,7 @@ namespace MSRewardsBot.Client.Services
         private async Task TryConnect()
         {
             bool exit = false;
-            while (_connection != null && (!exit || _isDisposing))
+            while (_connection != null && !exit && !_isDisposing)
             {
                 _appInfo.ConnectionState = _connection.State;
 
@@ -158,6 +165,16 @@ namespace MSRewardsBot.Client.Services
         public Task<bool> InsertMSAccount(Guid token, MSAccount account)
         {
             return _connection.InvokeAsync<bool>(nameof(IBotAPI.InsertMSAccount), token, account);
+        }
+
+        public Task<bool> DeleteMSAccount(Guid token, int msAccountId)
+        {
+            return _connection.InvokeAsync<bool>(nameof(IBotAPI.DeleteMSAccount), token, msAccountId);
+        }
+
+        public Task<bool> UpdateMSAccountCookies(Guid token, int msAccountId, List<AccountCookie> cookies)
+        {
+            return _connection.InvokeAsync<bool>(nameof(IBotAPI.UpdateMSAccountCookies), token, msAccountId, cookies);
         }
 
         public Task<bool> Logout(Guid token)

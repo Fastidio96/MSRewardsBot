@@ -3,7 +3,7 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-        xmlns:window="clr-namespace:MSRewardsBot.Client.Windows"
+        xmlns:converter="clr-namespace:MSRewardsBot.Client.Converters"
         xmlns:local="clr-namespace:MSRewardsBot.Common.DataEntities.Accounting;assembly=MSRewardsBot.Common"
         mc:Ignorable="d"
         Title="MS Rewards Bot"
@@ -33,6 +33,8 @@
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="4*" />
                 <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="*" />
             </Grid.ColumnDefinitions>
 
             <ComboBox Grid.Row="0"
@@ -44,13 +46,105 @@
                 <ComboBox.ItemTemplate>
                     <DataTemplate>
                         <StackPanel Orientation="Horizontal">
-                            <TextBlock Text="{Binding Email}" />
+                            <TextBlock Text="{Binding Email}"
+                                       VerticalAlignment="Center" />
+                            <Border CornerRadius="3"
+                                    Padding="5,1"
+                                    Margin="6,0,0,0"
+                                    Background="#C62828">
+                                <Border.Style>
+                                    <Style TargetType="Border">
+                                        <Setter Property="Visibility"
+                                                Value="Collapsed" />
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding IsAccountBanned}"
+                                                         Value="True">
+                                                <Setter Property="Visibility"
+                                                        Value="Visible" />
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </Border.Style>
+                                <TextBlock Text="BANNED"
+                                           Foreground="White"
+                                           FontSize="10"
+                                           FontWeight="Bold" />
+                            </Border>
+                            <Border CornerRadius="3"
+                                    Padding="5,1"
+                                    Margin="6,0,0,0"
+                                    Background="#F57C00">
+                                <Border.Style>
+                                    <Style TargetType="Border">
+                                        <Setter Property="Visibility"
+                                                Value="Collapsed" />
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding IsCookiesExpired}"
+                                                         Value="True">
+                                                <Setter Property="Visibility"
+                                                        Value="Visible" />
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </Border.Style>
+                                <TextBlock Text="EXPIRED"
+                                           Foreground="White"
+                                           FontSize="10"
+                                           FontWeight="Bold" />
+                            </Border>
                         </StackPanel>
                     </DataTemplate>
                 </ComboBox.ItemTemplate>
             </ComboBox>
             <Button Grid.Row="0"
                     Grid.Column="1"
+                    Name="btnDeleteAcc"
+                    Content="Delete account"
+                    Margin="0,0,10,0"
+                    Padding="8,0"
+                    Click="BtnDeleteAcc_Click"
+                    ToolTip="Delete the selected account"
+                    IsEnabled="{Binding ConnectedToServer}">
+                <Button.Style>
+                    <Style TargetType="Button"
+                           BasedOn="{StaticResource {x:Type Button}}">
+                        <Setter Property="Visibility"
+                                Value="Collapsed" />
+                        <Style.Triggers>
+                            <DataTrigger Binding="{Binding SelectedAccount, Converter={x:Static converter:NotNullToBoolConverter.Instance}}"
+                                         Value="True">
+                                <Setter Property="Visibility"
+                                        Value="Visible" />
+                            </DataTrigger>
+                        </Style.Triggers>
+                    </Style>
+                </Button.Style>
+            </Button>
+            <Button Grid.Row="0"
+                    Grid.Column="2"
+                    Name="btnRefreshAcc"
+                    Content="Re-login"
+                    Margin="0,0,5,0"
+                    Padding="8,0"
+                    Click="BtnRefreshAcc_Click"
+                    ToolTip="Re-login this account to refresh expired cookies">
+                <Button.Style>
+                    <Style TargetType="Button"
+                           BasedOn="{StaticResource {x:Type Button}}">
+                        <Setter Property="Visibility"
+                                Value="Collapsed" />
+                        <Style.Triggers>
+                            <DataTrigger Binding="{Binding SelectedAccount.IsCookiesExpired}"
+                                         Value="True">
+                                <Setter Property="Visibility"
+                                        Value="Visible" />
+                            </DataTrigger>
+                        </Style.Triggers>
+                    </Style>
+                </Button.Style>
+            </Button>
+            <Button Grid.Row="0"
+                    Grid.Column="3"
                     Name="btnAddAcc"
                     Content="+ Add MS account"
                     Click="BtnAddAcc_Click"
@@ -86,9 +180,49 @@
                                    FontWeight="Bold"
                                    FontSize="15px"
                                    HorizontalAlignment="Center" />
+                        <!-- AutoRedeemPoints == null: show just "Total points available: N" -->
                         <TextBlock Grid.Row="1"
-                                   Grid.Column="0"
-                                   Text="{Binding TotalAccountPoints, StringFormat=Total points available: {0}}" />
+                                   Grid.Column="0">
+                            <TextBlock.Style>
+                                <Style TargetType="TextBlock"
+                                       BasedOn="{StaticResource {x:Type TextBlock}}">
+                                    <Setter Property="Visibility"
+                                            Value="Visible" />
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding AutoRedeemPoints, Converter={x:Static converter:NotNullToBoolConverter.Instance}}"
+                                                     Value="True">
+                                            <Setter Property="Visibility"
+                                                    Value="Collapsed" />
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </TextBlock.Style>
+                            <Run Text="Total points available: " />
+                            <Run Text="{Binding TotalAccountPoints}" />
+                        </TextBlock>
+
+                        <!-- AutoRedeemPoints != null: show "Total points available: N / M" -->
+                        <TextBlock Grid.Row="1"
+                                   Grid.Column="0">
+                            <TextBlock.Style>
+                                <Style TargetType="TextBlock"
+                                       BasedOn="{StaticResource {x:Type TextBlock}}">
+                                    <Setter Property="Visibility"
+                                            Value="Collapsed" />
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding AutoRedeemPoints, Converter={x:Static converter:NotNullToBoolConverter.Instance}}"
+                                                     Value="True">
+                                            <Setter Property="Visibility"
+                                                    Value="Visible" />
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </TextBlock.Style>
+                            <Run Text="Total points available: " />
+                            <Run Text="{Binding TotalAccountPoints}" />
+                            <Run Text=" / " />
+                            <Run Text="{Binding AutoRedeemPoints}" />
+                        </TextBlock>
                         <TextBlock Grid.Row="2"
                                    Grid.Column="0"
                                    Text="{Binding CurrentAccountLevel, StringFormat=Current account level: {0}}" />
@@ -201,16 +335,16 @@
                     </InlineUIContainer>
                 </Hyperlink>
             </TextBlock>
-            <DockPanel 
-                        Grid.Row="0"
-                        Grid.Column="2">
+            <DockPanel Grid.Row="0"
+                       Grid.Column="2">
                 <Button DockPanel.Dock="Left"
                         x:Name="btnUpdate"
                         Content=" Update now "
                         Click="BtnUpdate_Click"
                         HorizontalAlignment="Left">
                     <Button.Style>
-                        <Style TargetType="Button" BasedOn="{StaticResource {x:Type Button}}">
+                        <Style TargetType="Button"
+                               BasedOn="{StaticResource {x:Type Button}}">
                             <Setter Property="Visibility"
                                     Value="Collapsed" />
                             <Style.Triggers>
@@ -228,7 +362,7 @@
                  <Run Text="{Binding Version}" />
                 </TextBlock>
             </DockPanel>
-            
+
         </Grid>
     </Grid>
 </Window>

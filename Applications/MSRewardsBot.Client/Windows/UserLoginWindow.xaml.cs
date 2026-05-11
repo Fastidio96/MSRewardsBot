@@ -30,7 +30,7 @@ namespace MSRewardsBot.Client.Windows
             _splashScreenWindow.Hide();
         }
 
-        private void UserLoginWindow_Closed(object? sender, EventArgs e)
+        private async void UserLoginWindow_Closed(object? sender, EventArgs e)
         {
             this.Closed -= UserLoginWindow_Closed;
 
@@ -40,7 +40,7 @@ namespace MSRewardsBot.Client.Windows
             }
             else
             {
-                _viewModel.Dispose();
+                await _viewModel.DisposeAsync();
                 Environment.Exit(0);
             }
         }

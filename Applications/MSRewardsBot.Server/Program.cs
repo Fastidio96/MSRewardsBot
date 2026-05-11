@@ -24,7 +24,7 @@ namespace MSRewardsBot.Server
 {
     public class Program
     {
-        public static void Main(string[] args)
+        public static async Task Main(string[] args)
         {
             WebApplicationBuilder builder = WebApplication.CreateBuilder(args);
 
@@ -128,7 +128,7 @@ namespace MSRewardsBot.Server
 
             app.UseAuthorization();
 
-            server.Start();
+            await server.Start();
             updater.Start();
 
             app.Lifetime.ApplicationStopping.Register(() =>
@@ -138,10 +138,12 @@ namespace MSRewardsBot.Server
                 updater.Dispose();
                 taskScheduler.Dispose();
                 server.Dispose();
-                browser.Dispose();
+                // BrowserManager is IAsyncDisposable: block on disposal so the process
+                // does not exit before Playwright has a chance to close cleanly.
+                browser.DisposeAsync().AsTask().GetAwaiter().GetResult();
             });
 
-            app.Run();
+            await app.RunAsync();
         }
 
         private static void TaskScheduler_UnobservedTaskException(object? sender, UnobservedTaskExceptionEventArgs e)

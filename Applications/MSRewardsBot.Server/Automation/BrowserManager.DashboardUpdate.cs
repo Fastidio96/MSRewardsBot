@@ -43,8 +43,7 @@ namespace MSRewardsBot.Server.Automation
             {
                 if (string.IsNullOrEmpty(data.Account.Email))
                 {
-                    data.Account.Email = await data.Page.Locator(BrowserConstants.SELECTOR_EMAIL).InnerHTMLAsync();
-                    data.Account.Email = data.Account.Email.Trim();
+                    data.Account.Email = (await data.Page.Locator(BrowserConstants.SELECTOR_EMAIL).InnerHTMLAsync()).Trim();
                     _logger.LogInformation("New account email found. {Email}", data.Account.Email);
                 }
             }
@@ -113,6 +112,33 @@ namespace MSRewardsBot.Server.Automation
             {
                 _logger.LogError("Error: {e}", e.Message);
                 res = false;
+            }
+
+            try
+            {   // Optional selector => int || null
+                ILocator loc = data.Page.Locator(BrowserConstants.SELECTOR_ACCOUNT_AUTO_REDEEM_POINTS);
+                if (await loc.IsVisibleAsync())
+                {
+                    string autoRedeem = await loc?.InnerTextAsync();
+                    if (!string.IsNullOrEmpty(autoRedeem))
+                    {
+                        autoRedeem = autoRedeem.Trim().Replace("/", "").Replace(",", "").Replace(".", "");
+
+                        if (int.TryParse(autoRedeem, out int autoRedeemPts) || autoRedeemPts != 0)
+                        {
+                            _logger.LogDebug("Found value for {stat}: {val}", nameof(MSAccountStats.AutoRedeemPoints), autoRedeemPts);
+                            data.Account.Stats.AutoRedeemPoints = autoRedeemPts;
+                        }
+                        else
+                        {
+                            _logger.LogWarning("Cannot parse {stat}", nameof(MSAccountStats.AutoRedeemPoints));
+                        }
+                    }
+                }
+            }
+            catch (Exception e)
+            {
+                _logger.LogError("Error: {e}", e.Message);
             }
 
             if (data.Account.Stats.CurrentAccountLevel < 2)
@@ -197,7 +223,7 @@ namespace MSRewardsBot.Server.Automation
                 await locTotPts.WaitForAsync(new LocatorWaitForOptions() { State = WaitForSelectorState.Visible });
 
                 string totPts = await locTotPts.InnerTextAsync();
-                totPts = totPts.Trim().Replace(",", "").Replace(".","");
+                totPts = totPts.Trim().Replace(",", "").Replace(".", "");
 
                 if (int.TryParse(totPts, out int totalPts))
                 {

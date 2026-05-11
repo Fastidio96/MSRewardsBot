@@ -11,7 +11,7 @@ using MSRewardsBot.Common.DataEntities.Accounting;
 
 namespace MSRewardsBot.Client
 {
-    public class ViewModel : IDisposable
+    public class ViewModel : IAsyncDisposable
     {
         public bool IsLogged => _appInfo.IsUserLogged;
         private Guid _token => !_appData.AuthToken.HasValue ? Guid.Empty : _appData.AuthToken.Value;
@@ -112,8 +112,18 @@ namespace MSRewardsBot.Client
 
         public async Task<bool> GetUserInfo()
         {
-            User user = await _connection.GetUserInfo(_token);
-            if (user == null)
+            User user;
+
+            try
+            {
+                user = await _connection.GetUserInfo(_token);
+                if (user == null)
+                {
+                    await Logout();
+                    return false;
+                }
+            }
+            catch
             {
                 await Logout();
                 return false;
@@ -143,27 +153,53 @@ namespace MSRewardsBot.Client
                 }
             }
 
+            // Sync mutable fields on existing accounts so the UI reflects server-side updates
+            // (e.g. Email populated after the server reads the cookies of a freshly-added account)
+            foreach (MSAccount existing in _appInfo.Accounts)
+            {
+                MSAccount fresh = user.MSAccounts.FirstOrDefault(a => a.DbId == existing.DbId);
+                if (fresh == null)
+                {
+                    continue;
+                }
+
+                existing.Email = fresh.Email;
+                existing.IsCookiesExpired = fresh.IsCookiesExpired;
+                existing.IsAccountBanned = fresh.IsAccountBanned;
+            }
+
             return true;
         }
 
         public async Task Logout(bool deleteData = true)
         {
-            if (_token != Guid.Empty)
+            try
             {
-                await _connection.Logout(_token);
+                if (_token != Guid.Empty)
+                {
+                    await _connection.Logout(_token);
+                }
+            }
+            catch
+            {
             }
 
             if (deleteData)
             {
-                FileManager.SaveData(new AppData());
+                FileManager.SaveData(new AppData()
+                {
+                    IsHttpsEnabled = _appData.IsHttpsEnabled,
+                    ServerHost = _appData.ServerHost,
+                    ServerPort = _appData.ServerPort
+                });
             }
 
-            RestartApp();
+            await RestartApp();
         }
 
-        public void RestartApp()
+        public async Task RestartApp()
         {
-            Dispose();
+            await DisposeAsync();
 
             Process.Start(Environment.ProcessPath);
             Environment.Exit(0);
@@ -192,7 +228,7 @@ namespace MSRewardsBot.Client
                 return false;
             }
 
-            if (port.Length != 5 || !int.TryParse(port, out _))
+            if (!int.TryParse(port, out int p) || p < 1 || p > 65535)
             {
                 return false;
             }
@@ -207,9 +243,8 @@ namespace MSRewardsBot.Client
                 return false;
             }
 
-            _appData.AuthToken = null;
-
             await Logout(false);
+            _appData.AuthToken = null;
             return true;
         }
 
@@ -220,7 +255,24 @@ namespace MSRewardsBot.Client
                 return;
             }
 
-            _msLoginWindow = new MSLoginWindow(this);
+            _msLoginWindow = new MSLoginWindow(this, refreshAccountId: null);
+            _msLoginWindow.Owner = App.Current.MainWindow;
+            _msLoginWindow.Show();
+        }
+
+        public void RefreshMSAccountCookies(MSAccount account)
+        {
+            if (account == null)
+            {
+                return;
+            }
+
+            if (_msLoginWindow != null && _msLoginWindow.IsVisible)
+            {
+                return;
+            }
+
+            _msLoginWindow = new MSLoginWindow(this, refreshAccountId: account.DbId);
             _msLoginWindow.Owner = App.Current.MainWindow;
             _msLoginWindow.Show();
         }
@@ -233,6 +285,26 @@ namespace MSRewardsBot.Client
             };
 
             return _connection.InsertMSAccount(_token, acc);
+        }
+
+        public Task<bool> UpdateMSAccountCookies(int msAccountId, List<AccountCookie> cookies)
+        {
+            return _connection.UpdateMSAccountCookies(_token, msAccountId, cookies);
+        }
+
+        public async Task<bool> DeleteMSAccount(MSAccount account)
+        {
+            if (account == null)
+            {
+                return false;
+            }
+
+            bool ok = await _connection.DeleteMSAccount(_token, account.DbId);
+            if (ok)
+            {
+                _appInfo.Accounts.Remove(account);
+            }
+            return ok;
         }
 
         public void ApplyUpdate()
@@ -268,7 +340,7 @@ namespace MSRewardsBot.Client
             File.Delete(FileManager.LocalUpdatePackagePath);
         }
 
-        public async void Dispose()
+        public async ValueTask DisposeAsync()
         {
             if (_connection != null)
             {
