@@ -29,8 +29,8 @@ namespace MSRewardsBot.Server.Core
         private readonly IKeywordProvider _keywordProvider;
         private readonly KeywordStore _keywordStore;
 
-        private Thread _mainThread;
-        private bool _isDisposing = false;
+        private Task _mainLoopTask;
+        private CancellationTokenSource _cts;
 
         public Server
         (
@@ -61,19 +61,18 @@ namespace MSRewardsBot.Server.Core
         {
             await _browser.Init();
 
-            _mainThread = new Thread(AccountLoop);
-            _mainThread.Name = nameof(AccountLoop);
-            _mainThread.Start();
+            _cts = new CancellationTokenSource();
+            _mainLoopTask = Task.Run(() => AccountLoopAsync(_cts.Token));
         }
 
-        private async void AccountLoop()
+        private async Task AccountLoopAsync(CancellationToken ct)
         {
-            _logger.LogDebug("Accounts thread started");
+            _logger.LogDebug("Accounts loop started");
 
             DateTime now = DateTime.Now;
             List<MSAccount> accounts;
 
-            while (!_isDisposing)
+            while (!ct.IsCancellationRequested)
             {
                 try
                 {
@@ -136,24 +135,32 @@ namespace MSRewardsBot.Server.Core
                             continue;
                         }
 
-                        if (!_rt.CacheMSAccStats.TryGetValue(acc.DbId, out MSAccountServerData cache))
+                        // Use GetOrAdd so the (insert + side-effects) is atomic w.r.t. concurrent
+                        // TryRemove from DeleteMSAccount/UpdateMSAccountCookies. Side-effects (event
+                        // subscriptions, UserId/MSAccountId assignment) only run on actual insertion.
+                        bool inserted = false;
+                        MSAccountServerData cache = _rt.CacheMSAccStats.GetOrAdd(acc.DbId, _ =>
                         {
-                            cache = new MSAccountServerData()
+                            inserted = true;
+                            acc.Stats.UserId = acc.UserId;
+                            acc.Stats.MSAccountId = acc.DbId;
+                            acc.Stats.PropertyChanged += MsAccountStats_PropertyChanged;
+                            acc.PropertyChanged += MsAccount_PropertyChanged;
+                            return new MSAccountServerData()
                             {
                                 Account = acc,
                                 IsFirstTimeUpdateStats = true,
                                 Stats = acc.Stats
                             };
+                        });
 
-                            acc.Stats.UserId = acc.UserId;
-                            acc.Stats.MSAccountId = acc.DbId;
-                            acc.Stats.PropertyChanged += MsAccountStats_PropertyChanged;
-                            acc.PropertyChanged += MsAccount_PropertyChanged;
-
-                            if (!_rt.CacheMSAccStats.TryAdd(acc.DbId, cache))
-                            {
-                                _logger.LogWarning("Cannot add account {id} to the cache!", acc.DbId);
-                            }
+                        // GetOrAdd may invoke the factory more than once under contention. If our
+                        // factory ran but the dictionary kept another instance, undo our subscriptions
+                        // so they don't fire on a now-orphaned MSAccount instance.
+                        if (inserted && !ReferenceEquals(cache.Account, acc))
+                        {
+                            acc.Stats.PropertyChanged -= MsAccountStats_PropertyChanged;
+                            acc.PropertyChanged -= MsAccount_PropertyChanged;
                         }
 
                         if (DateTimeUtilities.HasElapsed(now, cache.Stats.LastDashboardUpdate, _settings.Value.DashboardCheck))
@@ -322,7 +329,14 @@ namespace MSRewardsBot.Server.Core
                     _logger.Log(LogLevel.Error, ex, "Error in AccountLoop iteration");
                 }
 
-                Thread.Sleep(1000);
+                try
+                {
+                    await Task.Delay(1000, ct);
+                }
+                catch (OperationCanceledException)
+                {
+                    break;
+                }
             }
         }
 
@@ -390,7 +404,17 @@ namespace MSRewardsBot.Server.Core
                         return;
                     }
 
-                    await _commandHubProxy.SendUpdateMSAccount(info.ConnectionId, account, e.PropertyName);
+                    MSAccount payload = new MSAccount
+                    {
+                        DbId = account.DbId,
+                        UserId = account.UserId,
+                        Email = account.Email,
+                        IsCookiesExpired = account.IsCookiesExpired,
+                        IsAccountBanned = account.IsAccountBanned,
+                        Stats = account.Stats
+                    };
+
+                    await _commandHubProxy.SendUpdateMSAccount(info.ConnectionId, payload, e.PropertyName);
                 }
             }
             catch (Exception ex)
@@ -401,17 +425,23 @@ namespace MSRewardsBot.Server.Core
 
         public void Dispose()
         {
-            _isDisposing = true;
+            _cts?.Cancel();
 
-            if (_mainThread != null)
+            try
             {
-                if (_mainThread.IsAlive)
-                {
-                    _mainThread.Join(5000);
-                }
-
-                _mainThread = null;
+                // Wait for the loop to actually finish so we don't unsubscribe events
+                // mid-iteration (which can race with PropertyChanged invocations on the
+                // browser threads).
+                _mainLoopTask?.Wait(5000);
             }
+            catch
+            {
+                // task may have faulted; nothing actionable here
+            }
+
+            _cts?.Dispose();
+            _cts = null;
+            _mainLoopTask = null;
 
             if (_rt?.CacheMSAccStats != null)
             {
