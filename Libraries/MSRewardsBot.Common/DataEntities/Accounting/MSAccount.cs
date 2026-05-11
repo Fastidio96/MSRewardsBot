@@ -23,7 +23,7 @@ namespace MSRewardsBot.Common.DataEntities.Accounting
         [Column("user_id")]
         public int UserId { get; set; }
 
-        private string? _email;
+        
         [Column("email")]
         public string? Email
         {
@@ -38,12 +38,13 @@ namespace MSRewardsBot.Common.DataEntities.Accounting
                 NotifyPropertyChanged();
             }
         }
+        private string? _email;
 
         [JsonIgnore]
         public User User { get; set; }
         public List<AccountCookie> Cookies { get; set; }
 
-        private bool _isCookiesExpired;
+        
         [NotMapped]
         public bool IsCookiesExpired
         {
@@ -58,8 +59,8 @@ namespace MSRewardsBot.Common.DataEntities.Accounting
                 NotifyPropertyChanged();
             }
         }
+        private bool _isCookiesExpired;
 
-        private bool _isAccountBanned;
         [NotMapped]
         public bool IsAccountBanned
         {
@@ -74,6 +75,7 @@ namespace MSRewardsBot.Common.DataEntities.Accounting
                 NotifyPropertyChanged();
             }
         }
+        private bool _isAccountBanned;
 
         [NotMapped]
         public MSAccountStats Stats { get; set; }
