@@ -40,7 +40,7 @@ namespace MSRewardsBot.Server.Automation
                     return true;
                 }
 
-                _logger.LogInformation("Found {n} additional point icons", initialCount);
+                _logger.LogDebug("Found {n} additional point icons", initialCount);
 
                 async Task<bool> ProcessIconAsync(ILocator loc)
                 {
