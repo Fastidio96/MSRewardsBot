@@ -11,9 +11,6 @@ namespace MSRewardsBot.Server.DB
         {
             return _db.Users
                     .AsNoTracking()
-                    .Include(u => u.AuthToken)
-                    .Include(m => m.MSAccounts)
-                        .ThenInclude(c => c.Cookies)
                     .FirstOrDefault(u => u.Username == username);
         }
 
@@ -23,14 +20,12 @@ namespace MSRewardsBot.Server.DB
                     .AsNoTracking()
                     .Include(u => u.AuthToken)
                     .Include(m => m.MSAccounts)
-                        .ThenInclude(c => c.Cookies)
                     .FirstOrDefault(u => u.AuthToken.Token == authToken);
         }
 
         public bool InvalidateUserAuthToken(Guid token)
         {
             UserAuthToken auth = _db.UserAuthTokens
-                    .AsNoTracking()
                     .FirstOrDefault(t => t.Token == token);
             if (auth == null)
             {
@@ -100,8 +95,7 @@ namespace MSRewardsBot.Server.DB
         public bool IsUsernameAlreadyExists(string username)
         {
             return _db.Users
-                    .AsNoTracking()
-                    .Count(u => u.Username == username) > 0;
+                    .AsNoTracking().Any(u => u.Username.ToLower() == username.ToLower());
         }
 
         public bool UpdateUser(User user)
