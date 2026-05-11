@@ -48,7 +48,8 @@ namespace MSRewardsBot.Common.DataEntities.Accounting
                 if (_currentPointsPCSearches != value)
                 {
                     _currentPointsPCSearches = value;
-                    NotifyPropertyChanged();
+                    NotifyPropertyChanged(); // [CallerMemberName] → "CurrentPointsPCSearches"
+                    NotifyPropertyChanged(nameof(PCSearchesToDo)); // Explicit PCSearchesToDo
                 }
             }
         }
@@ -62,7 +63,8 @@ namespace MSRewardsBot.Common.DataEntities.Accounting
                 if (_maxPointsPCSearches != value)
                 {
                     _maxPointsPCSearches = value;
-                    NotifyPropertyChanged();
+                    NotifyPropertyChanged(); 
+                    NotifyPropertyChanged(nameof(PCSearchesToDo));
                 }
             }
         }
@@ -84,6 +86,7 @@ namespace MSRewardsBot.Common.DataEntities.Accounting
                 {
                     _currentPointsMobileSearches = value;
                     NotifyPropertyChanged();
+                    NotifyPropertyChanged(nameof(MobileSearchesToDo));
                 }
             }
         }
@@ -98,6 +101,7 @@ namespace MSRewardsBot.Common.DataEntities.Accounting
                 {
                     _maxPointsMobileSearches = value;
                     NotifyPropertyChanged();
+                    NotifyPropertyChanged(nameof(MobileSearchesToDo));
                 }
             }
         }
