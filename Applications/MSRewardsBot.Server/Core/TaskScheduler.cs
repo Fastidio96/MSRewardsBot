@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Threading;
+using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
 using MSRewardsBot.Server.Automation;
 using MSRewardsBot.Server.Core.Factories;
@@ -12,13 +13,13 @@ namespace MSRewardsBot.Server.Core
     public class TaskScheduler : IDisposable
     {
         private readonly SortedList<DateTime, Job> _todo;
-        private Thread _threadScheduler;
+        private Task _loopTask;
+        private CancellationTokenSource _cts;
 
         private readonly BrowserManager _browser;
         private readonly BusinessFactory _businessFactory;
         private readonly ILogger<TaskScheduler> _logger;
 
-        private bool _isDisposing = false;
         private readonly Lock _lock = new Lock();
 
         public TaskScheduler(ILogger<TaskScheduler> logger, BrowserManager browser, BusinessFactory businessFactory)
@@ -34,10 +35,11 @@ namespace MSRewardsBot.Server.Core
 
         private void Init()
         {
-            _threadScheduler = new Thread(Loop);
-            _threadScheduler.IsBackground = false;
-            _threadScheduler.Name = nameof(TaskScheduler);
-            _threadScheduler.Start();
+            _cts = new CancellationTokenSource();
+            // Run the scheduler as a Task so awaited operations (browser RebootAsync, CreateContext,
+            // command execution) actually integrate with the async machinery instead of fire-and-forget
+            // on a Thread, where exceptions get swallowed and Thread.Join cannot wait for in-flight awaits.
+            _loopTask = Task.Run(() => LoopAsync(_cts.Token));
         }
 
         public void AddJob(DateTime dt, Job job)
@@ -127,11 +129,11 @@ namespace MSRewardsBot.Server.Core
             return res;
         }
 
-        private async void Loop()
+        private async Task LoopAsync(CancellationToken ct)
         {
             int jobExec = 0;
 
-            while (!_isDisposing)
+            while (!ct.IsCancellationRequested)
             {
                 try
                 {
@@ -226,28 +228,37 @@ namespace MSRewardsBot.Server.Core
                     _logger.Log(LogLevel.Error, ex, "Error in TaskScheduler.Loop iteration");
                 }
 
-                Thread.Sleep(1000);
+                try
+                {
+                    await Task.Delay(1000, ct);
+                }
+                catch (OperationCanceledException)
+                {
+                    break;
+                }
             }
         }
 
         public void Dispose()
         {
-            _isDisposing = true;
+            _cts?.Cancel();
 
             using (_lock.EnterScope())
             {
                 _todo.Clear();
             }
 
-            if (_threadScheduler != null)
+            try
             {
-                if (_threadScheduler.IsAlive)
-                {
-                    _threadScheduler.Join(5000);
-                }
-
-                _threadScheduler = null;
+                _loopTask?.Wait(5000);
             }
+            catch
+            {
+            }
+
+            _cts?.Dispose();
+            _cts = null;
+            _loopTask = null;
         }
     }
 }
