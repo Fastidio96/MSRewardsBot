@@ -3,7 +3,7 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-        xmlns:window="clr-namespace:MSRewardsBot.Client.Windows"
+        xmlns:converter="clr-namespace:MSRewardsBot.Client.Converters"
         xmlns:local="clr-namespace:MSRewardsBot.Common.DataEntities.Accounting;assembly=MSRewardsBot.Common"
         mc:Ignorable="d"
         Title="MS Rewards Bot"
@@ -111,7 +111,7 @@
                         <Setter Property="Visibility"
                                 Value="Collapsed" />
                         <Style.Triggers>
-                            <DataTrigger Binding="{Binding SelectedAccount, Converter={x:Static window:NotNullToBoolConverter.Instance}}"
+                            <DataTrigger Binding="{Binding SelectedAccount, Converter={x:Static converter:NotNullToBoolConverter.Instance}}"
                                          Value="True">
                                 <Setter Property="Visibility"
                                         Value="Visible" />
