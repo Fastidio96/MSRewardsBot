@@ -44,10 +44,33 @@ namespace MSRewardsBot.Server.Helpers
         /// </summary>
         internal static bool VerifyPassword(string password, string storedHash)
         {
-            string[] parts = storedHash.Split('.', 3);
+            if (string.IsNullOrEmpty(password) || string.IsNullOrEmpty(storedHash))
+            {
+                return false;
+            }
 
-            byte[] salt = Convert.FromBase64String(parts[0]);
-            byte[] stored = Convert.FromBase64String(parts[1]);
+            string[] parts = storedHash.Split('.', 3);
+            if (parts.Length < 2)
+            {
+                return false;
+            }
+
+            byte[] salt;
+            byte[] stored;
+            try
+            {
+                salt = Convert.FromBase64String(parts[0]);
+                stored = Convert.FromBase64String(parts[1]);
+            }
+            catch (FormatException)
+            {
+                return false;
+            }
+
+            if (salt.Length == 0 || stored.Length == 0)
+            {
+                return false;
+            }
 
             byte[] passwordBytes;
             using (HMACSHA256 hmac = new HMACSHA256(Encoding.UTF8.GetBytes(PEPPER)))
