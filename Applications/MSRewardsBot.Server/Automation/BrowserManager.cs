@@ -23,11 +23,10 @@ namespace MSRewardsBot.Server.Automation
         private IBrowser _browser;
 
         private DateTime _lastUsed;
-        private Thread _idleCheckThread;
+        private Task _idleCheckTask;
+        private CancellationTokenSource _idleCheckCts;
 
         private readonly SemaphoreSlim _browserLock = new SemaphoreSlim(1, 1);
-
-        private bool _isDisposing = false;
 
         public BrowserManager(ILogger<BrowserManager> logger, IOptions<Settings> settings, RealTimeData rt)
         {
@@ -55,9 +54,8 @@ namespace MSRewardsBot.Server.Automation
 
             _lastUsed = DateTime.Now;
 
-            _idleCheckThread = new Thread(IdleCheckLoop);
-            _idleCheckThread.Name = nameof(IdleCheckLoop);
-            _idleCheckThread.Start();
+            _idleCheckCts = new CancellationTokenSource();
+            _idleCheckTask = Task.Run(() => IdleCheckLoopAsync(_idleCheckCts.Token));
 
             _logger.Log(LogLevel.Information, "BrowserManager init completed");
         }
@@ -177,11 +175,11 @@ namespace MSRewardsBot.Server.Automation
             _logger.LogDebug("Browser rebooted");
         }
 
-        private async void IdleCheckLoop()
+        private async Task IdleCheckLoopAsync(CancellationToken ct)
         {
-            _logger.LogDebug("BrowserManager idle check thread started");
+            _logger.LogDebug("BrowserManager idle check loop started");
 
-            while (!_isDisposing)
+            while (!ct.IsCancellationRequested)
             {
                 try
                 {
@@ -196,7 +194,14 @@ namespace MSRewardsBot.Server.Automation
                     _logger.Log(LogLevel.Error, ex, "Error in IdleCheckLoop");
                 }
 
-                Thread.Sleep(1000);
+                try
+                {
+                    await Task.Delay(1000, ct);
+                }
+                catch (OperationCanceledException)
+                {
+                    break;
+                }
             }
         }
 
@@ -222,6 +227,7 @@ namespace MSRewardsBot.Server.Automation
 
                 if (!await StartLoggedSession(data))
                 {
+                    await DeleteContext(data);
                     return false;
                 }
 
@@ -460,42 +466,69 @@ namespace MSRewardsBot.Server.Automation
 
         public async ValueTask DisposeAsync()
         {
-            _isDisposing = true;
-
-            if (_idleCheckThread != null)
+            // Stop the idle check loop FIRST so it can't race with our teardown.
+            _idleCheckCts?.Cancel();
+            try
             {
-                if (_idleCheckThread.IsAlive)
+                if (_idleCheckTask != null)
                 {
-                    _idleCheckThread.Join(5000);
+                    await _idleCheckTask.WaitAsync(TimeSpan.FromSeconds(5));
                 }
+            }
+            catch
+            {
+                // task may have faulted or timed out; nothing actionable
+            }
+            _idleCheckCts?.Dispose();
+            _idleCheckCts = null;
+            _idleCheckTask = null;
 
-                _idleCheckThread = null;
+            // Acquire the same lock CreateBrowser/CloseBrowser use, so we don't tear down a browser
+            // while another caller is mid-create. WaitAsync without a timeout would deadlock if the
+            // lock was leaked; bound it.
+            bool lockTaken = false;
+            try
+            {
+                lockTaken = await _browserLock.WaitAsync(TimeSpan.FromSeconds(10));
+            }
+            catch
+            {
+                lockTaken = false;
             }
 
-            if (_browser != null)
+            try
             {
-                try
+                if (_browser != null)
                 {
-                    foreach (IBrowserContext ctx in _browser.Contexts)
+                    try
                     {
-                        await ctx.CloseAsync();
-                        await ctx.DisposeAsync();
+                        foreach (IBrowserContext ctx in _browser.Contexts)
+                        {
+                            await ctx.CloseAsync();
+                            await ctx.DisposeAsync();
+                        }
+
+                        await _browser.CloseAsync();
+                        await _browser.DisposeAsync();
+                        _browser = null;
                     }
+                    catch (Exception ex)
+                    {
+                        _logger.Log(LogLevel.Error, ex, "Error while disposing browser");
+                    }
+                }
 
-                    await _browser.CloseAsync();
-                    await _browser.DisposeAsync();
-                    _browser = null;
-                }
-                catch (Exception ex)
-                {
-                    _logger.Log(LogLevel.Error, ex, "Error while disposing browser");
-                }
+                _playwright?.Dispose();
+                _playwright = null;
             }
-
-            _playwright?.Dispose();
-            _playwright = null;
-
-            _browserLock.Dispose();
+            finally
+            {
+                if (lockTaken)
+                {
+                    _browserLock.Release();
+                }
+                _browserLock.Dispose();
+            }
         }
     }
 }
