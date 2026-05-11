@@ -43,8 +43,7 @@ namespace MSRewardsBot.Server.Automation
             {
                 if (string.IsNullOrEmpty(data.Account.Email))
                 {
-                    data.Account.Email = await data.Page.Locator(BrowserConstants.SELECTOR_EMAIL).InnerHTMLAsync();
-                    data.Account.Email = data.Account.Email.Trim();
+                    data.Account.Email = (await data.Page.Locator(BrowserConstants.SELECTOR_EMAIL).InnerHTMLAsync()).Trim();
                     _logger.LogInformation("New account email found. {Email}", data.Account.Email);
                 }
             }
@@ -197,7 +196,7 @@ namespace MSRewardsBot.Server.Automation
                 await locTotPts.WaitForAsync(new LocatorWaitForOptions() { State = WaitForSelectorState.Visible });
 
                 string totPts = await locTotPts.InnerTextAsync();
-                totPts = totPts.Trim().Replace(",", "").Replace(".","");
+                totPts = totPts.Trim().Replace(",", "").Replace(".", "");
 
                 if (int.TryParse(totPts, out int totalPts))
                 {
