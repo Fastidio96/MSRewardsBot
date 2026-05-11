@@ -32,15 +32,18 @@ namespace MSRewardsBot.Server.DB
             modelBuilder.Entity<UserAuthToken>()
                 .HasOne(t => t.User)
                 .WithOne(u => u.AuthToken)
-                .HasForeignKey<UserAuthToken>(t => t.UserId);
+                .HasForeignKey<UserAuthToken>(t => t.UserId)
+                .OnDelete(DeleteBehavior.Cascade);
             modelBuilder.Entity<MSAccount>()
                 .HasOne(m => m.User)
                 .WithMany(u => u.MSAccounts)
-                .HasForeignKey(m => m.UserId);
+                .HasForeignKey(m => m.UserId)
+                .OnDelete(DeleteBehavior.Cascade);
             modelBuilder.Entity<MSAccount>()
                 .HasMany(m => m.Cookies)
                 .WithOne(c => c.MSAccount)
-                .HasForeignKey(c => c.MSAccountId);
+                .HasForeignKey(c => c.MSAccountId)
+                .OnDelete(DeleteBehavior.Cascade);
             modelBuilder.Entity<AccountCookie>();
 
             base.OnModelCreating(modelBuilder);
