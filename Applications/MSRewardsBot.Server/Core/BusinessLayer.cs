@@ -116,6 +116,7 @@ namespace MSRewardsBot.Server.Core
                 acc.Stats = data.Stats;
             }
 
+            user.Password = null;
             return user;
         }
 

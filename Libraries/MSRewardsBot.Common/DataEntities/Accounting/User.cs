@@ -15,7 +15,6 @@ namespace MSRewardsBot.Common.DataEntities.Accounting
         [Column("username")]
         public string Username { get; set; }
 
-        [JsonIgnore]
         [Column("password")]
         public string Password { get; set; }
 
