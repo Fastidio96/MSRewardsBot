@@ -180,9 +180,49 @@
                                    FontWeight="Bold"
                                    FontSize="15px"
                                    HorizontalAlignment="Center" />
+                        <!-- AutoRedeemPoints == null: show just "Total points available: N" -->
                         <TextBlock Grid.Row="1"
-                                   Grid.Column="0"
-                                   Text="{Binding TotalAccountPoints, StringFormat=Total points available: {0}}" />
+                                   Grid.Column="0">
+                            <TextBlock.Style>
+                                <Style TargetType="TextBlock"
+                                       BasedOn="{StaticResource {x:Type TextBlock}}">
+                                    <Setter Property="Visibility"
+                                            Value="Visible" />
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding AutoRedeemPoints, Converter={x:Static converter:NotNullToBoolConverter.Instance}}"
+                                                     Value="True">
+                                            <Setter Property="Visibility"
+                                                    Value="Collapsed" />
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </TextBlock.Style>
+                            <Run Text="Total points available: " />
+                            <Run Text="{Binding TotalAccountPoints}" />
+                        </TextBlock>
+
+                        <!-- AutoRedeemPoints != null: show "Total points available: N / M" -->
+                        <TextBlock Grid.Row="1"
+                                   Grid.Column="0">
+                            <TextBlock.Style>
+                                <Style TargetType="TextBlock"
+                                       BasedOn="{StaticResource {x:Type TextBlock}}">
+                                    <Setter Property="Visibility"
+                                            Value="Collapsed" />
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding AutoRedeemPoints, Converter={x:Static converter:NotNullToBoolConverter.Instance}}"
+                                                     Value="True">
+                                            <Setter Property="Visibility"
+                                                    Value="Visible" />
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </TextBlock.Style>
+                            <Run Text="Total points available: " />
+                            <Run Text="{Binding TotalAccountPoints}" />
+                            <Run Text=" / " />
+                            <Run Text="{Binding AutoRedeemPoints}" />
+                        </TextBlock>
                         <TextBlock Grid.Row="2"
                                    Grid.Column="0"
                                    Text="{Binding CurrentAccountLevel, StringFormat=Current account level: {0}}" />
@@ -295,16 +335,16 @@
                     </InlineUIContainer>
                 </Hyperlink>
             </TextBlock>
-            <DockPanel 
-                        Grid.Row="0"
-                        Grid.Column="2">
+            <DockPanel Grid.Row="0"
+                       Grid.Column="2">
                 <Button DockPanel.Dock="Left"
                         x:Name="btnUpdate"
                         Content=" Update now "
                         Click="BtnUpdate_Click"
                         HorizontalAlignment="Left">
                     <Button.Style>
-                        <Style TargetType="Button" BasedOn="{StaticResource {x:Type Button}}">
+                        <Style TargetType="Button"
+                               BasedOn="{StaticResource {x:Type Button}}">
                             <Setter Property="Visibility"
                                     Value="Collapsed" />
                             <Style.Triggers>
@@ -322,7 +362,7 @@
                  <Run Text="{Binding Version}" />
                 </TextBlock>
             </DockPanel>
-            
+
         </Grid>
     </Grid>
 </Window>

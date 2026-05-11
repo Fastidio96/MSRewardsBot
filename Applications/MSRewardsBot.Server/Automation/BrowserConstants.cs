@@ -19,6 +19,7 @@
         public const string SELECTOR_BREAKDOWN_MOBILE_POINTS = "#userPointsBreakdown > div > div:nth-child(2) > div > div:nth-child(2) > div > div.pointsDetail > mee-rewards-user-points-details > div > div > div > div > p.pointsDetail.c-subheading-3.ng-binding";
         public const string SELECTOR_ACCOUNT_LEVEL = "#meeGradientBanner > div > div > div > p";
         public const string SELECTOR_ACCOUNT_LEVEL_POINTS = "#earningreport-level-heading > p.pointsDetail.c-subheading-3.ng-binding.ng-scope";
+        public const string SELECTOR_ACCOUNT_AUTO_REDEEM_POINTS = "#giveToolTipDiv > div.pointContainer.ng-scope > div";
         public const string SELECTOR_ACCOUNT_BANNED = "#fraudErrorBody";
         public const string SELECTOR_BUTTON_MS_CHECK = "#start-earning-rewards-link";
         #endregion

@@ -114,6 +114,33 @@ namespace MSRewardsBot.Server.Automation
                 res = false;
             }
 
+            try
+            {   // Optional selector => int || null
+                ILocator loc = data.Page.Locator(BrowserConstants.SELECTOR_ACCOUNT_AUTO_REDEEM_POINTS);
+                if (await loc.IsVisibleAsync())
+                {
+                    string autoRedeem = await loc?.InnerTextAsync();
+                    if (!string.IsNullOrEmpty(autoRedeem))
+                    {
+                        autoRedeem = autoRedeem.Trim().Replace("/", "").Replace(",", "").Replace(".", "");
+
+                        if (int.TryParse(autoRedeem, out int autoRedeemPts) || autoRedeemPts != 0)
+                        {
+                            _logger.LogDebug("Found value for {stat}: {val}", nameof(MSAccountStats.AutoRedeemPoints), autoRedeemPts);
+                            data.Account.Stats.AutoRedeemPoints = autoRedeemPts;
+                        }
+                        else
+                        {
+                            _logger.LogWarning("Cannot parse {stat}", nameof(MSAccountStats.AutoRedeemPoints));
+                        }
+                    }
+                }
+            }
+            catch (Exception e)
+            {
+                _logger.LogError("Error: {e}", e.Message);
+            }
+
             if (data.Account.Stats.CurrentAccountLevel < 2)
             {
                 try

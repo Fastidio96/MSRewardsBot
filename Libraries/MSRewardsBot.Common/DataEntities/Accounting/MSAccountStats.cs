@@ -139,6 +139,20 @@ namespace MSRewardsBot.Common.DataEntities.Accounting
         }
         private int _currentAccountLevelPoints;
 
+        public int? AutoRedeemPoints
+        {
+            get => _autoRedeemPoints;
+            set
+            {
+                if (_autoRedeemPoints != value)
+                {
+                    _autoRedeemPoints = value;
+                    NotifyPropertyChanged();
+                }
+            }
+        }
+        private int? _autoRedeemPoints;
+
         public DateTime LastDashboardUpdate
         {
             get => _lastDashboardUpdate;
@@ -182,6 +196,11 @@ namespace MSRewardsBot.Common.DataEntities.Accounting
                 case nameof(CurrentAccountLevelPoints):
                     {
                         CurrentAccountLevelPoints = stats.CurrentAccountLevelPoints;
+                        break;
+                    }
+                case nameof(AutoRedeemPoints):
+                    {
+                        AutoRedeemPoints = stats.AutoRedeemPoints;
                         break;
                     }
                 case nameof(CurrentPointsPCSearches):
